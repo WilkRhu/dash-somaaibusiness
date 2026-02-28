@@ -1,63 +1,625 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useCartStore } from '@/lib/stores/cart-store';
+import { useInventory } from '@/lib/hooks/use-inventory';
+import { useSales } from '@/lib/hooks/use-sales';
+import { useUIStore } from '@/lib/stores/ui-store';
+import CheckoutModal from '@/components/sales/checkout-modal';
+import SalePreviewModal from '@/components/sales/sale-preview-modal';
+import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
+import DiscountModal from '@/components/sales/discount-modal';
+import WeightInputModal from '@/components/sales/weight-input-modal';
+import SelectWeightProductModal from '@/components/sales/select-weight-product-modal';
+import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { PaymentMethod } from '@/lib/types/sale';
+import { showToast } from '@/components/ui/toast';
+import { InventoryItem } from '@/lib/types/inventory';
 
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
-  const { items, total, clear } = useCartStore();
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showClearCartModal, setShowClearCartModal] = useState(false);
+  const [showCustomItemModal, setShowCustomItemModal] = useState(false);
+  const [showDiscountModal, setShowDiscountModal] = useState(false);
+  const [showItemDiscountModal, setShowItemDiscountModal] = useState(false);
+  const [selectedItemForDiscount, setSelectedItemForDiscount] = useState<string | null>(null);
+  const [showWeightModal, setShowWeightModal] = useState(false);
+  const [showSelectWeightProductModal, setShowSelectWeightProductModal] = useState(false);
+  const [selectedProductForWeight, setSelectedProductForWeight] = useState<InventoryItem | null>(null);
+  const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
+  const { items: products, refetch: refetchInventory } = useInventory();
+  const { createSale, isLoading } = useSales();
+  const { setFullscreenMode } = useUIStore();
+
+  // Atalhos de teclado
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (e.key === 'F2') {
+        e.preventDefault();
+        if (items.length > 0 && !isPreviewOpen && !isCheckoutOpen) {
+          setIsPreviewOpen(true);
+        }
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        if (isCheckoutOpen) {
+          setIsCheckoutOpen(false);
+        } else if (isPreviewOpen) {
+          setIsPreviewOpen(false);
+        } else if (items.length > 0) {
+          setShowClearCartModal(true);
+        }
+      } else if (e.key === 'F4') {
+        e.preventDefault();
+        if (items.length > 0) {
+          setShowDiscountModal(true);
+        }
+      } else if (e.key === 'F11') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [items, isCheckoutOpen, isPreviewOpen]);
+
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      // Entrar em fullscreen
+      document.documentElement.requestFullscreen?.();
+      setFullscreenMode(true);
+      setIsFullscreen(true);
+    } else {
+      // Sair de fullscreen
+      document.exitFullscreen?.();
+      setFullscreenMode(false);
+      setIsFullscreen(false);
+    }
+  };
+
+  // Detectar quando sai do fullscreen pelo ESC do navegador
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement) {
+        setIsFullscreen(false);
+        setFullscreenMode(false);
+      }
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
+  const handleBarcodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!barcode.trim()) return;
+
+    const product = products.find((p: InventoryItem) => p.barcode === barcode);
+    if (product) {
+      addItem({
+        itemId: product.id,
+        name: product.name,
+        quantity: 1,
+        unitPrice: product.salePrice,
+        discount: 0,
+      });
+      setBarcode('');
+      showToast('Produto adicionado', 'success');
+    } else {
+      showToast('Produto não encontrado', 'error');
+    }
+  };
+
+  const handleCheckout = async (paymentMethod: PaymentMethod, notes?: string) => {
+    try {
+      await createSale({
+        items: items.map(item => ({
+          itemId: item.itemId,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          discount: item.discount,
+        })),
+        paymentMethod,
+        discount,
+        notes,
+      });
+      
+      showToast('Venda realizada com sucesso!', 'success');
+      clear();
+      setIsCheckoutOpen(false);
+      
+      // Atualiza o estoque dos produtos após a venda
+      refetchInventory();
+    } catch (error: any) {
+      showToast(error.message || 'Erro ao finalizar venda', 'error');
+    }
+  };
+
+  const handleAddCustomItem = (customItem: { name: string; unitPrice: number; quantity: number }) => {
+    addItem({
+      itemId: `custom-${Date.now()}`, // ID temporário para item avulso
+      name: customItem.name,
+      quantity: customItem.quantity,
+      unitPrice: customItem.unitPrice,
+      discount: 0,
+    });
+  };
+
+  const handleAddProductToCart = (product: InventoryItem) => {
+    // Adicionar produto normalmente (quantidade 1)
+    const salePrice = Number(product.salePrice ?? 0);
+    addItem({
+      itemId: product.id,
+      name: product.name,
+      quantity: 1,
+      unitPrice: salePrice,
+      discount: 0,
+    });
+    showToast('Produto adicionado', 'success');
+  };
+
+  const handleAddWeightProduct = (weight: number) => {
+    if (!selectedProductForWeight) return;
+    
+    const salePrice = Number(selectedProductForWeight.salePrice ?? 0);
+    addItem({
+      itemId: selectedProductForWeight.id,
+      name: `${selectedProductForWeight.name} (${weight}${selectedProductForWeight.unit})`,
+      quantity: weight,
+      unitPrice: salePrice,
+      discount: 0,
+    });
+    showToast('Produto adicionado', 'success');
+    setSelectedProductForWeight(null);
+  };
+
+  const filteredProducts = products.filter((p: InventoryItem) => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    p.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div className="grid grid-cols-2 gap-4 h-[calc(100vh-12rem)]">
-      <div className="space-y-4">
-        <h1 className="text-2xl font-bold text-brand-navy">PDV - Ponto de Venda</h1>
-        
-        <div className="bg-white rounded-lg shadow p-6">
-          <input
-            type="text"
-            placeholder="Digite ou escaneie o código de barras"
-            value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
-            className="w-full px-4 py-2 border border-gray-300 rounded-lg"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold mb-4">Carrinho</h2>
-        
-        {items.length === 0 ? (
-          <p className="text-gray-500">Carrinho vazio</p>
-        ) : (
-          <div className="space-y-2">
-            {items.map((item) => (
-              <div key={item.id} className="flex justify-between">
-                <span>{item.name}</span>
-                <span>R$ {item.subtotal.toFixed(2)}</span>
-              </div>
-            ))}
+    <>
+      <div className={`flex gap-4 ${isFullscreen ? 'h-screen p-6 bg-gray-100' : 'h-[calc(100vh-8rem)]'}`}>
+        {/* Indicador de Caixa Livre - Aparece apenas quando não há itens */}
+        {items.length === 0 && (
+          <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
+            <div className="w-3 h-3 bg-white rounded-full"></div>
+            <span>Caixa Livre</span>
           </div>
         )}
-        
-        <div className="mt-4 pt-4 border-t">
-          <div className="flex justify-between text-2xl font-bold">
-            <span>Total:</span>
-            <span>R$ {total.toFixed(2)}</span>
+
+        {/* Botão Fullscreen */}
+        <button
+          onClick={toggleFullscreen}
+          className="fixed top-6 right-6 z-50 p-3 bg-white rounded-lg shadow-lg hover:bg-gray-50 transition-colors border-2 border-gray-200"
+          title={isFullscreen ? 'Sair do modo tela cheia (F11)' : 'Modo tela cheia (F11)'}
+        >
+          {isFullscreen ? (
+            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : (
+            <svg className="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+          )}
+        </button>
+
+        {/* Lado Esquerdo - Produtos e Lista de Itens */}
+        <div className="flex-1 flex flex-col space-y-4">
+          {/* Busca de Produtos */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <form onSubmit={handleBarcodeSubmit} className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Código de Barras
+                </label>
+                <input
+                  type="text"
+                  placeholder="Escaneie ou digite o código"
+                  value={barcode}
+                  onChange={(e) => setBarcode(e.target.value)}
+                  className="w-full px-4 py-3 text-lg border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                  autoFocus
+                />
+              </div>
+              <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Buscar Produto
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Nome ou código do produto"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    &nbsp;
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowSelectWeightProductModal(true)}
+                    className="h-[42px] px-4 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-semibold whitespace-nowrap flex items-center gap-2"
+                    title="Vender produto por peso/volume"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                    </svg>
+                    Por Peso
+                  </button>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    &nbsp;
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setShowCustomItemModal(true)}
+                    className="h-[42px] px-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold whitespace-nowrap flex items-center gap-2"
+                    title="Adicionar item avulso (não cadastrado)"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Item Avulso
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          {/* Grid de Produtos */}
+          <div className="bg-white rounded-lg shadow p-3 overflow-hidden flex flex-col h-[30%]">
+            <h2 className="text-base font-semibold text-brand-navy mb-2">Produtos</h2>
+            <div className="grid grid-cols-4 gap-2 overflow-y-auto flex-1">
+              {filteredProducts.slice(0, 50).map((product: InventoryItem) => {
+                const salePrice = Number(product.salePrice ?? 0);
+                const quantity = Number(product.quantity ?? 0);
+                const formattedPrice = `R$ ${salePrice.toFixed(2)}`;
+                // Prioriza o array de imagens, depois a imagem única
+                const imageUrl = (product.images && product.images.length > 0) ? product.images[0] : product.image;
+                
+                return (
+                  <button
+                    key={product.id}
+                    onClick={() => handleAddProductToCart(product)}
+                    disabled={quantity === 0}
+                    className={`p-2 border-2 rounded-md transition-all text-left overflow-hidden h-[85px] ${
+                      quantity === 0 
+                        ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
+                        : 'border-gray-200 hover:border-brand-blue hover:shadow-md'
+                    }`}
+                  >
+                    <div className="flex gap-2 h-[52px]">
+                      {/* Imagem do produto */}
+                      <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded overflow-hidden border border-gray-200">
+                        {imageUrl ? (
+                          <img 
+                            src={imageUrl} 
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center bg-gray-200">
+                            <span className="text-gray-400 text-xl">📦</span>
+                          </div>
+                        )}
+                      </div>
+                      
+                      {/* Informações do produto */}
+                      <div className="flex-1 min-w-0 flex flex-col justify-between">
+                        <div>
+                          <div className="font-semibold text-[10px] text-gray-900 truncate leading-tight">
+                            {product.name}
+                          </div>
+                          {product.brand && (
+                            <div className="text-[9px] text-gray-500 truncate leading-tight mt-0.5">
+                              {product.brand}
+                            </div>
+                          )}
+                          {product.description && (
+                            <div className="text-[8px] text-gray-400 truncate leading-tight mt-0.5" title={product.description}>
+                              {product.description.length > 30 
+                                ? `${product.description.substring(0, 30)}...` 
+                                : product.description}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-baseline gap-1">
+                          <div className="text-brand-blue font-bold text-xs leading-tight">
+                            {formattedPrice}
+                          </div>
+                          {product.unit && (
+                            <div className="text-[8px] text-gray-500 leading-tight">
+                              /{product.unit}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Status do estoque */}
+                    <div className={`text-[9px] leading-tight text-center py-0.5 rounded mt-1 ${
+                      quantity > 0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+                    }`}>
+                      {quantity > 0 ? `Estoque: ${quantity}` : 'Indisponível'}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Lista de Itens (Nota Fiscal) */}
+          <div className="bg-white rounded-lg shadow p-4 overflow-hidden flex flex-col flex-1">
+            <h2 className="text-lg font-semibold text-brand-navy mb-3">Itens da Venda</h2>
+            
+            {items.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <svg className="w-20 h-20 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-gray-400">Nenhum item adicionado</p>
+                </div>
+              </div>
+            ) : (
+              <div className="flex-1 overflow-y-auto border border-gray-200 rounded-lg">
+                <table className="w-full">
+                  <thead className="bg-gray-50 sticky top-0 border-b border-gray-200">
+                    <tr>
+                      <th className="text-left py-2 px-3 font-semibold text-gray-700 text-xs">Item</th>
+                      <th className="text-center py-2 px-2 font-semibold text-gray-700 text-xs w-20">Qtd</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-700 text-xs w-24">Unit.</th>
+                      <th className="text-right py-2 px-2 font-semibold text-gray-700 text-xs w-24">Desc.</th>
+                      <th className="text-right py-2 px-3 font-semibold text-gray-700 text-xs w-28">Total</th>
+                      <th className="text-center py-2 px-2 font-semibold text-gray-700 text-xs w-16">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {items.map((item, index) => (
+                      <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="py-2 px-3">
+                          <div className="font-medium text-gray-900 text-sm">{item.name}</div>
+                        </td>
+                        <td className="py-2 px-2">
+                          <div className="flex items-center justify-center gap-1">
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                              className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100 text-xs font-bold"
+                            >
+                              −
+                            </button>
+                            <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                            <button
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              className="w-6 h-6 flex items-center justify-center border border-gray-300 rounded hover:bg-gray-100 text-xs font-bold"
+                            >
+                              +
+                            </button>
+                          </div>
+                        </td>
+                        <td className="py-2 px-2 text-right text-gray-700 text-sm">
+                          R$ {item.unitPrice.toFixed(2)}
+                        </td>
+                        <td className="py-2 px-2">
+                          <button
+                            onClick={() => {
+                              setSelectedItemForDiscount(item.id);
+                              setShowItemDiscountModal(true);
+                            }}
+                            className="w-full text-right text-red-600 text-sm hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                            title="Clique para editar desconto"
+                          >
+                            {item.discount > 0 ? `R$ ${item.discount.toFixed(2)}` : '−'}
+                          </button>
+                        </td>
+                        <td className="py-2 px-3 text-right font-semibold text-brand-navy text-sm">
+                          R$ {item.subtotal.toFixed(2)}
+                        </td>
+                        <td className="py-2 px-2 text-center">
+                          <button
+                            onClick={() => removeItem(item.id)}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Remover item"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
-        <div className="mt-4 space-y-2">
-          <button className="w-full px-4 py-3 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity text-lg font-semibold">
-            Finalizar Venda
-          </button>
-          <button 
-            onClick={clear}
-            className="w-full px-4 py-2 border-2 border-brand-blue/30 text-brand-navy rounded-lg hover:bg-brand-blue/5 transition-colors font-medium"
-          >
-            Limpar
-          </button>
+        {/* Lado Direito - Carrinho e Total */}
+        <div className="w-[420px] flex flex-col space-y-4">
+          {/* Display do Total - Estilo Caixa de Mercado */}
+          <div className="bg-gradient-to-br from-brand-navy to-brand-blue rounded-lg shadow-lg p-6 text-white">
+            <div className="text-sm opacity-90 mb-1">TOTAL A PAGAR</div>
+            <div className="text-5xl font-bold tracking-tight">
+              R$ {total.toFixed(2)}
+            </div>
+            {items.length > 0 && (
+              <div className="mt-3 text-sm opacity-90">
+                {items.reduce((sum, item) => sum + item.quantity, 0)} item(s)
+              </div>
+            )}
+          </div>
+
+          {/* Resumo Financeiro */}
+          {items.length > 0 && (
+            <div className="bg-white rounded-lg shadow p-4 space-y-2">
+              <div className="flex justify-between text-gray-700">
+                <span className="font-medium">Subtotal:</span>
+                <span className="font-semibold">R$ {subtotal.toFixed(2)}</span>
+              </div>
+              {discount > 0 && (
+                <div className="flex justify-between text-red-600">
+                  <span className="font-medium">Desconto:</span>
+                  <span className="font-semibold">− R$ {discount.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-xl font-bold text-brand-navy pt-2 border-t border-gray-300">
+                <span>TOTAL:</span>
+                <span>R$ {total.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Botões de Ação */}
+          <div className="space-y-2">
+            <button 
+              onClick={() => setIsPreviewOpen(true)}
+              disabled={items.length === 0 || isLoading}
+              className="w-full px-6 py-4 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity text-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-lg flex items-center justify-center gap-2"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+              </svg>
+              {isLoading ? 'Processando...' : 'FINALIZAR VENDA (F2)'}
+            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <button 
+                onClick={() => setShowClearCartModal(true)}
+                disabled={items.length === 0}
+                className="px-4 py-3 border-2 border-red-500 text-red-600 rounded-lg hover:bg-red-50 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Limpar (ESC)
+              </button>
+              <button 
+                onClick={() => setShowDiscountModal(true)}
+                disabled={items.length === 0}
+                className="px-4 py-3 border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue/5 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Desconto (F4)
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <SalePreviewModal
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        onConfirm={() => {
+          setIsPreviewOpen(false);
+          setIsCheckoutOpen(true);
+        }}
+        items={items}
+        subtotal={subtotal}
+        discount={discount}
+        total={total}
+      />
+
+      <CheckoutModal
+        isOpen={isCheckoutOpen}
+        onClose={() => setIsCheckoutOpen(false)}
+        onConfirm={handleCheckout}
+        total={total}
+        isLoading={isLoading}
+      />
+
+      <AddCustomItemModal
+        isOpen={showCustomItemModal}
+        onClose={() => setShowCustomItemModal(false)}
+        onAdd={handleAddCustomItem}
+      />
+
+      <WeightInputModal
+        isOpen={showWeightModal}
+        onClose={() => {
+          setShowWeightModal(false);
+          setSelectedProductForWeight(null);
+        }}
+        onConfirm={handleAddWeightProduct}
+        productName={selectedProductForWeight?.name || ''}
+        unit={selectedProductForWeight?.unit || 'kg'}
+        pricePerUnit={Number(selectedProductForWeight?.salePrice ?? 0)}
+      />
+
+      <SelectWeightProductModal
+        isOpen={showSelectWeightProductModal}
+        onClose={() => setShowSelectWeightProductModal(false)}
+        onSelect={(product) => {
+          setSelectedProductForWeight(product);
+          setShowWeightModal(true);
+        }}
+        products={products}
+      />
+
+      <DiscountModal
+        isOpen={showDiscountModal}
+        onClose={() => setShowDiscountModal(false)}
+        onApply={(value) => {
+          setDiscount(value);
+          showToast(value > 0 ? 'Desconto aplicado' : 'Desconto removido', 'success');
+        }}
+        title="Desconto Geral"
+        currentDiscount={discount}
+        maxDiscount={subtotal}
+      />
+
+      <DiscountModal
+        isOpen={showItemDiscountModal}
+        onClose={() => {
+          setShowItemDiscountModal(false);
+          setSelectedItemForDiscount(null);
+        }}
+        onApply={(value) => {
+          if (selectedItemForDiscount) {
+            updateItemDiscount(selectedItemForDiscount, value);
+            showToast(value > 0 ? 'Desconto aplicado' : 'Desconto removido', 'success');
+          }
+        }}
+        title={`Desconto - ${items.find(i => i.id === selectedItemForDiscount)?.name || 'Item'}`}
+        currentDiscount={items.find(i => i.id === selectedItemForDiscount)?.discount || 0}
+        maxDiscount={
+          selectedItemForDiscount 
+            ? (items.find(i => i.id === selectedItemForDiscount)?.unitPrice || 0) * 
+              (items.find(i => i.id === selectedItemForDiscount)?.quantity || 1)
+            : undefined
+        }
+      />
+
+      {showClearCartModal && (
+        <ConfirmModal
+          title="Limpar Carrinho"
+          message="Deseja limpar o carrinho?"
+          confirmText="Limpar"
+          cancelText="Cancelar"
+          confirmVariant="danger"
+          onConfirm={() => {
+            clear();
+            setShowClearCartModal(false);
+            showToast('Carrinho limpo', 'success');
+          }}
+          onCancel={() => setShowClearCartModal(false)}
+        />
+      )}
+    </>
   );
 }

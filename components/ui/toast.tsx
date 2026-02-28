@@ -81,3 +81,9 @@ export function ToastContainer() {
     </div>
   );
 }
+
+// Helper function to show toasts
+export function showToast(message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') {
+  const { addToast } = useUIStore.getState();
+  addToast({ message, type });
+}

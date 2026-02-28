@@ -24,9 +24,11 @@ export function CurrencyInput({
 
   useEffect(() => {
     // Inicializa o display com o valor formatado
-    const formatted = maskCurrency((value * 100).toString());
+    // Converte o valor em reais para centavos (multiplica por 100)
+    const valueInCents = Math.round(value * 100).toString();
+    const formatted = maskCurrency(valueInCents);
     setDisplayValue(formatted);
-  }, []);
+  }, [value]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const inputValue = e.target.value;

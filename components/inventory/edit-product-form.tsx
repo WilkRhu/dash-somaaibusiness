@@ -21,6 +21,8 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
     unit: product.unit,
     expirationDate: product.expirationDate || '',
     description: product.description || '',
+    image: product.image,
+    images: product.images,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -28,7 +30,24 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(formData);
+      // Preparar dados para envio
+      const dataToSend: any = {};
+      
+      // Adicionar apenas campos que foram modificados ou que têm valor
+      if (formData.name !== product.name) dataToSend.name = formData.name;
+      if (formData.category !== (product.category || '')) dataToSend.category = formData.category || undefined;
+      if (formData.brand !== (product.brand || '')) dataToSend.brand = formData.brand || undefined;
+      if (formData.costPrice !== product.costPrice) dataToSend.costPrice = formData.costPrice;
+      if (formData.salePrice !== product.salePrice) dataToSend.salePrice = formData.salePrice;
+      if (formData.minQuantity !== product.minQuantity) dataToSend.minQuantity = formData.minQuantity;
+      if (formData.unit !== product.unit) dataToSend.unit = formData.unit;
+      if (formData.expirationDate !== (product.expirationDate || '')) dataToSend.expirationDate = formData.expirationDate || undefined;
+      if (formData.description !== (product.description || '')) dataToSend.description = formData.description || undefined;
+      
+      // NUNCA enviar image ou images no update - eles são gerenciados separadamente
+      // Isso evita sobrescrever as imagens existentes
+      
+      await onSubmit(dataToSend);
     } finally {
       setIsSubmitting(false);
     }
@@ -122,6 +141,13 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
               </option>
             ))}
           </select>
+          {['kg', 'g', 'l', 'ml'].includes(formData.unit) && (
+            <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded-lg">
+              <p className="text-xs text-green-800">
+                <strong>💡 Dica:</strong> No PDV, você poderá vender este produto informando o peso/volume exato (ex: 2.5kg, 350ml)
+              </p>
+            </div>
+          )}
         </div>
 
         <div>

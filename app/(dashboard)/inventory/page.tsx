@@ -19,11 +19,13 @@ export default function InventoryPage() {
   const [deletingProduct, setDeletingProduct] = useState<InventoryItem | null>(null);
   const [filters, setFilters] = useState<InventoryFilters>({
     search: '',
+    category: '',
     sortBy: 'name',
     sortOrder: 'ASC',
   });
   const [lowStockCount, setLowStockCount] = useState(0);
   const [expiringCount, setExpiringCount] = useState(0);
+  const [categories, setCategories] = useState<string[]>([]);
 
   const { addToast } = useUIStore();
   const { 
@@ -51,6 +53,10 @@ export default function InventoryPage() {
       setExpiringCount(expiring.length);
     };
     fetchAlerts();
+    
+    // Extrair categorias únicas dos produtos
+    const uniqueCategories = Array.from(new Set(items.map(item => item.category).filter(Boolean))) as string[];
+    setCategories(uniqueCategories.sort());
   }, [items]);
 
   const handleAddProduct = async (data: AddProductDto, imageFiles: File[]) => {
@@ -177,32 +183,89 @@ export default function InventoryPage() {
       )}
 
       <div className="bg-white rounded-lg shadow p-4">
-        <div className="flex flex-col md:flex-row gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Buscar por nome ou código de barras..."
-            value={filters.search}
-            onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-          />
-          <select
-            value={filters.sortBy}
-            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-          >
-            <option value="name">Nome</option>
-            <option value="quantity">Quantidade</option>
-            <option value="salePrice">Preço</option>
-            <option value="createdAt">Data de Cadastro</option>
-          </select>
-          <select
-            value={filters.sortOrder}
-            onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value as any })}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-          >
-            <option value="ASC">Crescente</option>
-            <option value="DESC">Decrescente</option>
-          </select>
+        <div className="flex flex-col gap-4">
+          {/* Filtros de Categoria em Destaque */}
+          {categories.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Categorias
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setFilters({ ...filters, category: '' })}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    !filters.category
+                      ? 'bg-brand-blue text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                >
+                  Todas ({items.length})
+                </button>
+                {categories.slice(0, 6).map((category) => {
+                  const count = items.filter(item => item.category === category).length;
+                  return (
+                    <button
+                      key={category}
+                      onClick={() => setFilters({ ...filters, category })}
+                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                        filters.category === category
+                          ? 'bg-brand-blue text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      {category} ({count})
+                    </button>
+                  );
+                })}
+                {categories.length > 6 && (
+                  <select
+                    value={categories.slice(0, 6).includes(filters.category || '') ? '' : filters.category || ''}
+                    onChange={(e) => setFilters({ ...filters, category: e.target.value || '' })}
+                    className="px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    <option value="">Mais categorias...</option>
+                    {categories.slice(6).map((category) => {
+                      const count = items.filter(item => item.category === category).length;
+                      return (
+                        <option key={category} value={category}>
+                          {category} ({count})
+                        </option>
+                      );
+                    })}
+                  </select>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Busca e Ordenação */}
+          <div className="flex flex-col md:flex-row gap-4">
+            <input
+              type="text"
+              placeholder="Buscar por nome ou código de barras..."
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+            />
+            <select
+              value={filters.sortBy}
+              onChange={(e) => setFilters({ ...filters, sortBy: e.target.value as any })}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+            >
+              <option value="name">Nome</option>
+              <option value="quantity">Quantidade</option>
+              <option value="salePrice">Preço</option>
+              <option value="createdAt">Data de Cadastro</option>
+            </select>
+            <select
+              value={filters.sortOrder}
+              onChange={(e) => setFilters({ ...filters, sortOrder: e.target.value as any })}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+            >
+              <option value="ASC">Crescente</option>
+              <option value="DESC">Decrescente</option>
+            </select>
+          </div>
         </div>
       </div>
 

@@ -13,6 +13,7 @@ interface UIStore {
   modalOpen: boolean;
   modalContent: React.ReactNode | null;
   toasts: Toast[];
+  isFullscreenMode: boolean;
   
   toggleSidebar: () => void;
   setSidebarOpen: (open: boolean) => void;
@@ -25,6 +26,8 @@ interface UIStore {
   addToast: (toast: Omit<Toast, 'id'>) => void;
   removeToast: (id: string) => void;
   clearAllToasts: () => void;
+  
+  setFullscreenMode: (enabled: boolean) => void;
 }
 
 export const useUIStore = create<UIStore>((set) => ({
@@ -33,6 +36,7 @@ export const useUIStore = create<UIStore>((set) => ({
   modalOpen: false,
   modalContent: null,
   toasts: [],
+  isFullscreenMode: false,
   
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -66,4 +70,6 @@ export const useUIStore = create<UIStore>((set) => ({
     })),
   
   clearAllToasts: () => set({ toasts: [] }),
+  
+  setFullscreenMode: (enabled) => set({ isFullscreenMode: enabled }),
 }));
