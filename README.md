@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SomaAI Business - Frontend
 
-## Getting Started
+Sistema de gestão empresarial desenvolvido com Next.js 14+ e TypeScript.
 
-First, run the development server:
+## 🚀 Stack Tecnológica
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework**: Next.js 14+ (App Router)
+- **Linguagem**: TypeScript
+- **Estilização**: Tailwind CSS
+- **Gerenciamento de Estado**: Zustand
+- **Formulários**: React Hook Form + Zod
+- **API**: Axios + React Query
+- **Gráficos**: Recharts
+- **Tabelas**: TanStack Table
+
+## 📁 Estrutura do Projeto
+
+```
+├── app/
+│   ├── (auth)/          # Páginas de autenticação
+│   ├── (dashboard)/     # Páginas do dashboard
+│   └── api/             # API routes
+├── components/
+│   ├── dashboard/       # Componentes do dashboard
+│   └── ui/              # Componentes UI reutilizáveis
+├── lib/
+│   ├── api/             # Serviços de API
+│   ├── stores/          # Stores Zustand
+│   ├── types/           # Definições TypeScript
+│   └── utils/           # Funções utilitárias
+└── public/              # Arquivos estáticos
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🛠️ Instalação
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+# Instalar dependências
+npm install
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+# Configurar variáveis de ambiente
+cp .env.local.example .env.local
 
-## Learn More
+# Executar em desenvolvimento
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 🔧 Variáveis de Ambiente
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000/api
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 📦 Funcionalidades
 
-## Deploy on Vercel
+- ✅ Gestão de Estabelecimentos
+- ✅ Controle de Estoque
+- ✅ PDV (Ponto de Venda)
+- ✅ Gestão de Vendas
+- ✅ Ofertas e Promoções
+- ✅ Cadastro de Clientes
+- ✅ Gestão de Fornecedores
+- ✅ Relatórios e Análises
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎯 Próximos Passos
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Implementar autenticação com NextAuth.js
+2. Integrar com API backend
+3. Adicionar componentes shadcn/ui
+4. Implementar scanner de código de barras
+5. Criar dashboards com gráficos
+6. Adicionar sistema de permissões
+
+## 📚 Documentação
+
+Consulte o arquivo `docs/FRONTEND_GUIDE.md` para mais detalhes sobre a arquitetura e implementação.

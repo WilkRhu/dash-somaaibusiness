@@ -1,0 +1,52 @@
+export enum BusinessRole {
+  OWNER = 'business_owner',
+  ADMIN = 'business_admin',
+  SALES = 'business_sales',
+  STOCK = 'business_stock',
+  MARKETING = 'business_marketing',
+}
+
+export interface Establishment {
+  id: string;
+  name: string;
+  cnpj: string;
+  type: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  latitude?: number;
+  longitude?: number;
+  logo?: string;
+  description?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EstablishmentMember {
+  id: string;
+  userId: string;
+  role: BusinessRole;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+export interface CreateEstablishmentDto {
+  name: string;
+  cnpj: string;
+  type: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
+  state?: string;
+  zipCode?: string;
+  latitude?: number;
+  longitude?: number;
+}
