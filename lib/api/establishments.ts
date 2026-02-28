@@ -3,13 +3,13 @@ import { Establishment, CreateEstablishmentDto } from '@/lib/types/establishment
 
 export const establishmentsApi = {
   list: async () => {
-    const { data } = await apiClient.get<Establishment[]>('/business/establishments');
-    return data;
+    const response = await apiClient.get<{ success: boolean; data: Establishment[] }>('/business/establishments');
+    return response.data.data;
   },
 
   getById: async (id: string) => {
-    const { data } = await apiClient.get<Establishment>(`/business/establishments/${id}`);
-    return data;
+    const response = await apiClient.get<{ success: boolean; data: Establishment }>(`/business/establishments/${id}`);
+    return response.data.data;
   },
 
   create: async (dto: CreateEstablishmentDto) => {
@@ -24,6 +24,23 @@ export const establishmentsApi = {
 
   delete: async (id: string) => {
     await apiClient.delete(`/business/establishments/${id}`);
+  },
+
+  uploadLogo: async (establishmentId: string, file: File) => {
+    const formData = new FormData();
+    formData.append('logo', file);
+
+    const { data } = await apiClient.post(
+      `/business/establishments/${establishmentId}/logo`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    return data;
   },
 
   addMember: async (establishmentId: string, userId: string, role: string) => {

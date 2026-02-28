@@ -11,6 +11,8 @@ export interface Establishment {
   name: string;
   cnpj: string;
   type: string;
+  logo?: string;
+  role: BusinessRole;
   phone?: string;
   email?: string;
   address?: string;
@@ -19,11 +21,10 @@ export interface Establishment {
   zipCode?: string;
   latitude?: number;
   longitude?: number;
-  logo?: string;
   description?: string;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isActive?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface EstablishmentMember {

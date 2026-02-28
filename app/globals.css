@@ -1,22 +1,95 @@
 @import "tailwindcss";
 
+@theme {
+  --color-brand-blue: #4C99C2;
+  --color-brand-blue-light: #6BB0D4;
+  --color-brand-blue-dark: #3A7A9A;
+  
+  --color-brand-green: #7CBD6A;
+  --color-brand-green-light: #95D082;
+  --color-brand-green-dark: #5FA04E;
+  
+  --color-brand-navy: #142D4A;
+  --color-brand-navy-light: #1E3F5F;
+  --color-brand-navy-dark: #0A1825;
+  
+  --color-brand-background: #F5F7F9;
+  
+  --color-primary-50: #EBF5FA;
+  --color-primary-100: #D7EBF5;
+  --color-primary-200: #AFD7EB;
+  --color-primary-300: #87C3E1;
+  --color-primary-400: #6BB0D4;
+  --color-primary-500: #4C99C2;
+  --color-primary-600: #3A7A9A;
+  --color-primary-700: #2C5C73;
+  --color-primary-800: #1E3E4D;
+  --color-primary-900: #0F1F26;
+  
+  --color-secondary-50: #F0F9ED;
+  --color-secondary-100: #E1F3DB;
+  --color-secondary-200: #C3E7B7;
+  --color-secondary-300: #A5DB93;
+  --color-secondary-400: #95D082;
+  --color-secondary-500: #7CBD6A;
+  --color-secondary-600: #5FA04E;
+  --color-secondary-700: #47783A;
+  --color-secondary-800: #2F5027;
+  --color-secondary-900: #182813;
+}
+
 :root {
   --background: #F5F7F9;
   --foreground: #142D4A;
-  --brand-blue: #4C99C2;
-  --brand-green: #7CBD6A;
-  --brand-navy: #142D4A;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+/* Animações customizadas */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(5deg);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-gradient {
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out;
 }

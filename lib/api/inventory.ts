@@ -1,54 +1,117 @@
 import apiClient from './client';
-import { InventoryItem, AddProductDto, StockMovement } from '@/lib/types/inventory';
+import { InventoryItem, AddProductDto, StockMovement, InventoryFilters, UpdateStockDto } from '@/lib/types/inventory';
+
+interface ApiResponse<T> {
+  success: boolean;
+  data: T;
+  message?: string;
+  total?: number;
+  page?: number;
+  limit?: number;
+  totalPages?: number;
+}
 
 export const inventoryApi = {
-  list: async (establishmentId: string, filters?: any) => {
-    const { data } = await apiClient.get<InventoryItem[]>('/business/inventory', {
-      params: { establishmentId, ...filters },
-    });
-    return data;
+  list: async (establishmentId: string, filters?: InventoryFilters) => {
+    const response = await apiClient.get<ApiResponse<InventoryItem[]>>(
+      `/business/establishments/${establishmentId}/inventory`,
+      { params: filters }
+    );
+    return response.data;
   },
 
-  getById: async (id: string) => {
-    const { data } = await apiClient.get<InventoryItem>(`/business/inventory/${id}`);
-    return data;
+  getById: async (establishmentId: string, id: string) => {
+    const response = await apiClient.get<ApiResponse<InventoryItem>>(
+      `/business/establishments/${establishmentId}/inventory/${id}`
+    );
+    return response.data;
   },
 
-  add: async (dto: AddProductDto) => {
-    const { data } = await apiClient.post<InventoryItem>('/business/inventory', dto);
-    return data;
+  add: async (establishmentId: string, dto: AddProductDto) => {
+    const response = await apiClient.post<ApiResponse<InventoryItem>>(
+      `/business/establishments/${establishmentId}/inventory`,
+      dto
+    );
+    return response.data;
   },
 
-  update: async (id: string, dto: Partial<AddProductDto>) => {
-    const { data } = await apiClient.patch<InventoryItem>(`/business/inventory/${id}`, dto);
-    return data;
+  update: async (establishmentId: string, id: string, dto: Partial<AddProductDto>) => {
+    const response = await apiClient.patch<ApiResponse<InventoryItem>>(
+      `/business/establishments/${establishmentId}/inventory/${id}`,
+      dto
+    );
+    return response.data;
   },
 
-  updateStock: async (id: string, quantity: number, type: string, reason?: string) => {
-    const { data } = await apiClient.post(`/business/inventory/${id}/stock`, {
-      quantity,
-      type,
-      reason,
-    });
-    return data;
+  delete: async (establishmentId: string, id: string) => {
+    const response = await apiClient.delete<ApiResponse<void>>(
+      `/business/establishments/${establishmentId}/inventory/${id}`
+    );
+    return response.data;
+  },
+
+  updateStock: async (establishmentId: string, id: string, dto: UpdateStockDto) => {
+    const response = await apiClient.post<ApiResponse<InventoryItem>>(
+      `/business/establishments/${establishmentId}/inventory/${id}/stock`,
+      dto
+    );
+    return response.data;
   },
 
   getLowStock: async (establishmentId: string) => {
-    const { data } = await apiClient.get<InventoryItem[]>('/business/inventory/alerts/low-stock', {
-      params: { establishmentId },
-    });
-    return data;
+    const response = await apiClient.get<ApiResponse<InventoryItem[]>>(
+      `/business/establishments/${establishmentId}/inventory/alerts/low-stock`
+    );
+    return response.data;
   },
 
-  getExpiring: async (establishmentId: string, days: number = 7) => {
-    const { data } = await apiClient.get<InventoryItem[]>('/business/inventory/alerts/expiring', {
-      params: { establishmentId, days },
-    });
-    return data;
+  getExpiring: async (establishmentId: string, daysAhead: number = 30) => {
+    const response = await apiClient.get<ApiResponse<InventoryItem[]>>(
+      `/business/establishments/${establishmentId}/inventory/alerts/expiring`,
+      { params: { daysAhead } }
+    );
+    return response.data;
   },
 
-  getHistory: async (id: string) => {
-    const { data } = await apiClient.get<StockMovement[]>(`/business/inventory/${id}/history`);
-    return data;
+  getHistory: async (establishmentId: string, id: string) => {
+    const response = await apiClient.get<ApiResponse<StockMovement[]>>(
+      `/business/establishments/${establishmentId}/inventory/${id}/history`
+    );
+    return response.data;
+  },
+
+  uploadImages: async (establishmentId: string, itemId: string, images: File[]) => {
+    const formData = new FormData();
+    images.forEach((image) => {
+      formData.append('images', image);
+    });
+
+    const response = await apiClient.post<ApiResponse<InventoryItem>>(
+      `/business/establishments/${establishmentId}/inventory/${itemId}/images`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+    return response.data;
+  },
+
+  deleteImage: async (establishmentId: string, itemId: string, imageUrl: string) => {
+    console.log('🗑️ Deletando imagem:', {
+      establishmentId,
+      itemId,
+      imageUrl,
+      url: `/business/establishments/${establishmentId}/inventory/${itemId}/images`
+    });
+    
+    const response = await apiClient.delete<ApiResponse<void>>(
+      `/business/establishments/${establishmentId}/inventory/${itemId}/images`,
+      {
+        data: { imageUrl },
+      }
+    );
+    return response.data;
   },
 };

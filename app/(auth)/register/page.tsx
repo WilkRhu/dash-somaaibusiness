@@ -6,26 +6,45 @@ import Image from 'next/image';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useRouter } from 'next/navigation';
 
-export default function LoginPage() {
+export default function RegisterPage() {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuthStore();
+  const { register, isLoading } = useAuthStore();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    console.log('Tentando fazer login...', { email });
+    if (password !== confirmPassword) {
+      setError('As senhas não coincidem');
+      return;
+    }
+    
+    if (password.length < 6) {
+      setError('A senha deve ter no mínimo 6 caracteres');
+      return;
+    }
+    
+    if (!acceptTerms) {
+      setError('Você precisa aceitar os termos de uso');
+      return;
+    }
+    
+    console.log('Tentando registrar...', { name, email });
     
     try {
-      await login(email, password);
-      console.log('Login bem-sucedido, redirecionando...');
+      await register(name, email, password, phone || undefined);
+      console.log('Registro bem-sucedido, redirecionando...');
       router.push('/home');
     } catch (err: any) {
-      console.error('Erro no login:', err);
-      setError(err.response?.data?.message || err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      console.error('Erro no registro:', err);
+      setError(err.response?.data?.message || err.message || 'Erro ao criar conta. Tente novamente.');
     }
   };
 
@@ -64,66 +83,67 @@ export default function LoginPage() {
           </div>
           
           <h2 className="text-3xl font-semibold mb-6">
-            Gestão Inteligente para Seu Negócio
+            Comece sua jornada hoje
           </h2>
           
           <p className="text-xl text-white/90 mb-12 leading-relaxed">
-            Sistema completo de gestão empresarial com controle de estoque, 
-            vendas, ofertas e relatórios em tempo real.
+            Junte-se a milhares de empresas que já transformaram sua gestão 
+            com o SomaAI Business.
           </p>
 
-          {/* Features */}
+          {/* Benefits */}
           <div className="space-y-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl">📦</span>
+                <span className="text-2xl">✓</span>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Controle de Estoque</h3>
-                <p className="text-white/80">Gerencie produtos e alertas em tempo real</p>
+                <h3 className="font-semibold text-lg mb-1">Teste Grátis por 14 dias</h3>
+                <p className="text-white/80">Sem necessidade de cartão de crédito</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl">💰</span>
+                <span className="text-2xl">✓</span>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">PDV Completo</h3>
-                <p className="text-white/80">Ponto de venda integrado e eficiente</p>
+                <h3 className="font-semibold text-lg mb-1">Suporte Dedicado</h3>
+                <p className="text-white/80">Equipe pronta para ajudar você</p>
               </div>
             </div>
 
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
-                <span className="text-2xl">📈</span>
+                <span className="text-2xl">✓</span>
               </div>
               <div>
-                <h3 className="font-semibold text-lg mb-1">Relatórios Detalhados</h3>
-                <p className="text-white/80">Análises completas para decisões inteligentes</p>
+                <h3 className="font-semibold text-lg mb-1">Configuração Rápida</h3>
+                <p className="text-white/80">Comece a usar em minutos</p>
               </div>
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="mt-16 grid grid-cols-3 gap-8">
-            <div>
-              <div className="text-4xl font-bold mb-1">1000+</div>
-              <div className="text-white/80 text-sm">Empresas</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-1">50K+</div>
-              <div className="text-white/80 text-sm">Vendas/mês</div>
-            </div>
-            <div>
-              <div className="text-4xl font-bold mb-1">99.9%</div>
-              <div className="text-white/80 text-sm">Uptime</div>
+          {/* Testimonial */}
+          <div className="mt-16 bg-white/10 backdrop-blur-sm rounded-2xl p-6">
+            <p className="text-white/90 italic mb-4">
+              "O SomaAI Business revolucionou a forma como gerenciamos nosso negócio. 
+              Simples, eficiente e completo!"
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-lg">👤</span>
+              </div>
+              <div>
+                <div className="font-semibold">João Silva</div>
+                <div className="text-sm text-white/70">CEO, Empresa XYZ</div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
+      {/* Right Side - Register Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-[#F5F7F9]">
         <div className="w-full max-w-md">
           {/* Mobile Logo */}
@@ -154,19 +174,33 @@ export default function LoginPage() {
                 />
               </div>
               <h2 className="text-3xl font-bold text-[#142D4A] mb-2">
-                Bem-vindo de volta!
+                Criar sua conta
               </h2>
               <p className="text-[#142D4A]/60">
-                Entre com suas credenciais para continuar
+                Preencha os dados para começar
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
                   {error}
                 </div>
               )}
+
+              <div>
+                <label className="block text-sm font-semibold text-[#142D4A] mb-2">
+                  Nome completo
+                </label>
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#4C99C2] focus:outline-none transition-colors text-[#142D4A]"
+                  placeholder="Seu nome"
+                  required
+                />
+              </div>
 
               <div>
                 <label className="block text-sm font-semibold text-[#142D4A] mb-2">
@@ -193,20 +227,44 @@ export default function LoginPage() {
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#4C99C2] focus:outline-none transition-colors text-[#142D4A]"
                   placeholder="••••••••"
                   required
+                  minLength={6}
                 />
               </div>
 
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="w-4 h-4 rounded border-gray-300 text-[#4C99C2] focus:ring-[#4C99C2]"
-                  />
-                  <span className="text-sm text-[#142D4A]/70">Lembrar-me</span>
+              <div>
+                <label className="block text-sm font-semibold text-[#142D4A] mb-2">
+                  Confirmar senha
                 </label>
-                <a href="#" className="text-sm text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
-                  Esqueceu a senha?
-                </a>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#4C99C2] focus:outline-none transition-colors text-[#142D4A]"
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                />
+              </div>
+
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="terms"
+                  checked={acceptTerms}
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  className="w-4 h-4 mt-1 rounded border-gray-300 text-[#4C99C2] focus:ring-[#4C99C2]"
+                  required
+                />
+                <label htmlFor="terms" className="text-sm text-[#142D4A]/70">
+                  Eu aceito os{' '}
+                  <a href="#" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
+                    Termos de Uso
+                  </a>
+                  {' '}e{' '}
+                  <a href="#" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
+                    Política de Privacidade
+                  </a>
+                </label>
               </div>
 
               <button
@@ -214,15 +272,15 @@ export default function LoginPage() {
                 disabled={isLoading}
                 className="w-full px-6 py-4 bg-gradient-to-r from-[#4C99C2] to-[#7CBD6A] text-white rounded-xl hover:opacity-90 hover:scale-[1.02] transition-all font-semibold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Entrando...' : 'Entrar'}
+                {isLoading ? 'Criando conta...' : 'Criar conta'}
               </button>
             </form>
 
             <div className="mt-8 text-center">
               <p className="text-[#142D4A]/60">
-                Não tem uma conta?{' '}
-                <Link href="/register" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
-                  Criar conta
+                Já tem uma conta?{' '}
+                <Link href="/login" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
+                  Fazer login
                 </Link>
               </p>
             </div>
@@ -230,11 +288,11 @@ export default function LoginPage() {
             {/* Divider */}
             <div className="mt-8 flex items-center gap-4">
               <div className="flex-1 h-px bg-gray-200"></div>
-              <span className="text-sm text-[#142D4A]/40">ou continue com</span>
+              <span className="text-sm text-[#142D4A]/40">ou registre-se com</span>
               <div className="flex-1 h-px bg-gray-200"></div>
             </div>
 
-            {/* Social Login */}
+            {/* Social Register */}
             <div className="mt-6 grid grid-cols-2 gap-4">
               <button className="px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-[#4C99C2] hover:bg-[#4C99C2]/5 transition-all flex items-center justify-center gap-2 font-semibold text-[#142D4A]">
                 <svg className="w-5 h-5" viewBox="0 0 24 24">

@@ -1,0 +1,268 @@
+'use client';
+
+import { StatsCard } from '@/components/dashboard/stats-card';
+import Link from 'next/link';
+
+export default function DashboardHomePage() {
+  // Dados mockados - depois virão da API
+  const salesData = [
+    { day: 'Seg', value: 1200 },
+    { day: 'Ter', value: 1900 },
+    { day: 'Qua', value: 1500 },
+    { day: 'Qui', value: 2100 },
+    { day: 'Sex', value: 2800 },
+    { day: 'Sáb', value: 3200 },
+    { day: 'Dom', value: 2400 },
+  ];
+
+  const topProducts = [
+    { name: 'Produto A', sales: 45, revenue: 'R$ 2.250,00' },
+    { name: 'Produto B', sales: 38, revenue: 'R$ 1.900,00' },
+    { name: 'Produto C', sales: 32, revenue: 'R$ 1.600,00' },
+    { name: 'Produto D', sales: 28, revenue: 'R$ 1.400,00' },
+    { name: 'Produto E', sales: 24, revenue: 'R$ 1.200,00' },
+  ];
+
+  const recentSales = [
+    { id: '#1234', customer: 'João Silva', amount: 'R$ 150,00', time: '10 min atrás', status: 'completed' },
+    { id: '#1233', customer: 'Maria Santos', amount: 'R$ 280,00', time: '25 min atrás', status: 'completed' },
+    { id: '#1232', customer: 'Pedro Costa', amount: 'R$ 95,00', time: '1h atrás', status: 'pending' },
+    { id: '#1231', customer: 'Ana Lima', amount: 'R$ 420,00', time: '2h atrás', status: 'completed' },
+  ];
+
+  const alerts = [
+    { type: 'warning', message: '5 produtos com estoque baixo', action: 'Ver produtos' },
+    { type: 'info', message: '3 ofertas expiram em 2 dias', action: 'Gerenciar ofertas' },
+  ];
+
+  const maxValue = Math.max(...salesData.map(d => d.value));
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-brand-navy">Dashboard</h1>
+          <p className="text-gray-600 mt-1">Bem-vindo de volta! Aqui está o resumo do seu negócio.</p>
+        </div>
+        <Link
+          href="/sales/pos"
+          className="px-6 py-3 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+        >
+          Nova Venda
+        </Link>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatsCard
+          title="Vendas Hoje"
+          value="R$ 3.450,00"
+          description="+12% vs ontem"
+          trend="up"
+        />
+        <StatsCard
+          title="Produtos"
+          value="248"
+          description="Total no estoque"
+        />
+        <StatsCard
+          title="Alertas"
+          value="5"
+          description="Produtos com estoque baixo"
+          trend="down"
+        />
+        <StatsCard
+          title="Clientes"
+          value="1.234"
+          description="+23 este mês"
+          trend="up"
+        />
+      </div>
+
+      {/* Alerts */}
+      {alerts.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {alerts.map((alert, index) => (
+            <div
+              key={index}
+              className={`p-4 rounded-lg border-l-4 ${
+                alert.type === 'warning'
+                  ? 'bg-yellow-50 border-yellow-400'
+                  : 'bg-blue-50 border-blue-400'
+              }`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {alert.type === 'warning' ? (
+                    <svg className="w-5 h-5 text-yellow-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                  <span className="text-sm font-medium text-gray-800">{alert.message}</span>
+                </div>
+                <button className="text-sm font-semibold text-brand-blue hover:underline">
+                  {alert.action}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Sales Chart */}
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-lg font-bold text-brand-navy">Vendas da Semana</h2>
+            <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
+              <option>Últimos 7 dias</option>
+              <option>Últimos 30 dias</option>
+              <option>Este mês</option>
+            </select>
+          </div>
+          <div className="flex items-end justify-between h-64 gap-4">
+            {salesData.map((data, index) => (
+              <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                <div className="relative w-full bg-gray-100 rounded-t-lg overflow-hidden" style={{ height: '200px' }}>
+                  <div
+                    className="absolute bottom-0 w-full bg-gradient-to-t from-brand-blue to-brand-green rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer group"
+                    style={{ height: `${(data.value / maxValue) * 100}%` }}
+                  >
+                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-brand-navy text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      R$ {data.value.toLocaleString('pt-BR')}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-sm font-medium text-gray-600">{data.day}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Actions */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-brand-navy mb-4">Ações Rápidas</h2>
+          <div className="space-y-3">
+            <Link
+              href="/sales/pos"
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-blue hover:bg-blue-50 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-blue to-brand-green flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-brand-navy text-sm">Nova Venda</p>
+                <p className="text-xs text-gray-500">Abrir PDV</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/inventory"
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-green hover:bg-green-50 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-green to-brand-blue flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-brand-navy text-sm">Adicionar Produto</p>
+                <p className="text-xs text-gray-500">Gerenciar estoque</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/customers"
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-blue hover:bg-blue-50 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-brand-navy to-brand-blue flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-brand-navy text-sm">Novo Cliente</p>
+                <p className="text-xs text-gray-500">Cadastrar cliente</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/reports"
+              className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 hover:border-brand-green hover:bg-green-50 transition-all group"
+            >
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center">
+                <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold text-brand-navy text-sm">Ver Relatórios</p>
+                <p className="text-xs text-gray-500">Análises e insights</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Products */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-brand-navy mb-4">Produtos Mais Vendidos</h2>
+          <div className="space-y-3">
+            {topProducts.map((product, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-green flex items-center justify-center text-white font-bold text-sm">
+                    {index + 1}
+                  </div>
+                  <div>
+                    <p className="font-semibold text-brand-navy text-sm">{product.name}</p>
+                    <p className="text-xs text-gray-500">{product.sales} vendas</p>
+                  </div>
+                </div>
+                <span className="font-bold text-brand-green">{product.revenue}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recent Sales */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-brand-navy">Vendas Recentes</h2>
+            <Link href="/sales" className="text-sm font-semibold text-brand-blue hover:underline">
+              Ver todas
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {recentSales.map((sale, index) => (
+              <div key={index} className="flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <p className="font-semibold text-brand-navy text-sm">{sale.id}</p>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                      sale.status === 'completed' 
+                        ? 'bg-green-100 text-green-700' 
+                        : 'bg-yellow-100 text-yellow-700'
+                    }`}>
+                      {sale.status === 'completed' ? 'Concluída' : 'Pendente'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">{sale.customer} • {sale.time}</p>
+                </div>
+                <span className="font-bold text-brand-navy">{sale.amount}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
