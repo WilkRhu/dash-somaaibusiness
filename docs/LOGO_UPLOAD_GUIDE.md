@@ -129,7 +129,7 @@ POST /api/business/establishments/:id/logo
 
 - Requer token JWT
 - Requer ser membro do estabelecimento
-- Requer role: `business_owner` ou `business_admin`
+- Requer role: `business_owner`
 
 ## 📤 Request
 
@@ -449,7 +449,7 @@ export const establishmentsApi = {
 
 ## 📝 Notas Importantes
 
-1. **Permissões:** Apenas `business_owner` e `business_admin` podem fazer upload
+1. **Permissões:** Apenas `business_owner` pode fazer upload
 2. **Substituição:** Upload novo substitui logo anterior
 3. **Storage:** Usa o mesmo sistema de upload do avatar (S3 ou FTP)
 4. **Path:** Imagens ficam em `establishments/logos/`

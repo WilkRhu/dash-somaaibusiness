@@ -142,7 +142,7 @@ Authorization: Bearer <token>
 ### 4. Atualizar Estabelecimento
 **PATCH** `/business/establishments/:id`
 
-**Permissões:** OWNER ou ADMIN
+**Permissões:** Apenas OWNER
 
 **Body:** (todos os campos opcionais)
 ```typescript
@@ -262,7 +262,7 @@ Authorization: Bearer <token>
 ### 9. Upload de Logo
 **POST** `/business/establishments/:id/logo`
 
-**Permissões:** OWNER ou ADMIN
+**Permissões:** Apenas OWNER
 
 **Content-Type:** `multipart/form-data`
 

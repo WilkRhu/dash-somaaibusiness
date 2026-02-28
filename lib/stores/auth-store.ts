@@ -1,6 +1,31 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { authApi } from '@/lib/api/auth';
+import { SubscriptionPlan } from '@/lib/types/subscription';
+
+// Helper para normalizar o plano do backend para o formato do frontend
+function normalizePlan(planType?: string): SubscriptionPlan {
+  if (!planType) return SubscriptionPlan.FREE;
+  
+  const normalized = planType.toUpperCase();
+  
+  // Mapear valores do backend para o enum
+  switch (normalized) {
+    case 'FREE':
+      return SubscriptionPlan.FREE;
+    case 'TRIAL':
+      return SubscriptionPlan.TRIAL;
+    case 'BASIC':
+      return SubscriptionPlan.BASIC;
+    case 'PREMIUM':
+      return SubscriptionPlan.PREMIUM;
+    case 'ENTERPRISE':
+      return SubscriptionPlan.ENTERPRISE;
+    default:
+      console.warn(`⚠️ Plano desconhecido: ${planType}, usando FREE como padrão`);
+      return SubscriptionPlan.FREE;
+  }
+}
 
 interface User {
   id: string;
@@ -8,6 +33,11 @@ interface User {
   email: string;
   role?: string;
   isActive?: boolean;
+  subscriptionPlan?: SubscriptionPlan;
+  trialEndsAt?: string | null;
+  trialDaysRemaining?: number;
+  planType?: string; // Campo do backend
+  planExpiresAt?: string;
 }
 
 interface AuthStore {
@@ -21,6 +51,7 @@ interface AuthStore {
   logout: () => void;
   loadUser: () => Promise<void>;
   setUser: (user: User, token: string) => void;
+  updateUserPlan: (plan: SubscriptionPlan, trialEndsAt?: string, trialDaysRemaining?: number) => void;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -40,12 +71,20 @@ export const useAuthStore = create<AuthStore>()(
           console.log('🔑 Token recebido:', response.token);
           console.log('👤 User recebido:', response.user);
           
+          // Normalizar o plano
+          const normalizedUser = {
+            ...response.user,
+            subscriptionPlan: normalizePlan(response.user.planType || (response.user as any).planType),
+          };
+          
+          console.log('✅ User normalizado:', normalizedUser);
+          
           localStorage.setItem('token', response.token);
           localStorage.setItem('refreshToken', response.refreshToken);
           console.log('💾 Token salvo no localStorage');
           
           set({
-            user: response.user,
+            user: normalizedUser,
             token: response.token,
             isAuthenticated: true,
             isLoading: false,
@@ -69,11 +108,17 @@ export const useAuthStore = create<AuthStore>()(
             userType: 'business' 
           });
           
+          // Normalizar o plano
+          const normalizedUser = {
+            ...response.user,
+            subscriptionPlan: normalizePlan(response.user.planType || (response.user as any).planType),
+          };
+          
           localStorage.setItem('token', response.token);
           localStorage.setItem('refreshToken', response.refreshToken);
           
           set({
-            user: response.user,
+            user: normalizedUser,
             token: response.token,
             isAuthenticated: true,
             isLoading: false,
@@ -101,13 +146,24 @@ export const useAuthStore = create<AuthStore>()(
         }
 
         try {
-          const user = await authApi.me();
+          const userData = await authApi.me();
+          console.log('👤 Dados do usuário carregados:', userData);
+          
+          // Normalizar o plano
+          const normalizedUser = {
+            ...userData,
+            subscriptionPlan: normalizePlan(userData.planType),
+          };
+          
+          console.log('✅ User normalizado no loadUser:', normalizedUser);
+          
           set({
-            user,
+            user: normalizedUser,
             token,
             isAuthenticated: true,
           });
         } catch (error) {
+          console.error('❌ Erro ao carregar usuário:', error);
           authApi.logout();
           set({
             user: null,
@@ -124,6 +180,18 @@ export const useAuthStore = create<AuthStore>()(
           token,
           isAuthenticated: true,
         });
+      },
+
+      updateUserPlan: (plan, trialEndsAt, trialDaysRemaining) => {
+        set((state) => ({
+          user: state.user ? {
+            ...state.user,
+            subscriptionPlan: plan,
+            planType: plan.toLowerCase(),
+            trialEndsAt,
+            trialDaysRemaining,
+          } : null,
+        }));
       },
     }),
     {

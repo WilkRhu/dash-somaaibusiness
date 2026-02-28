@@ -144,7 +144,7 @@ export default function DashboardHomePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Sales Chart */}
-        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-brand-navy">Vendas da Semana</h2>
             <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
@@ -153,7 +153,11 @@ export default function DashboardHomePage() {
               <option>Este mês</option>
             </select>
           </div>
-          <div className="flex items-end justify-between h-64 gap-4">
+          
+          {/* Gráfico */}
+          <div className={`flex items-end justify-between h-64 gap-4 ${
+            stats && (stats.userPlan === 'FREE') ? 'blur-sm' : ''
+          }`}>
             {salesData.map((data, index) => (
               <div key={index} className="flex-1 flex flex-col items-center gap-2">
                 <div className="relative w-full bg-gray-100 rounded-t-lg overflow-hidden" style={{ height: '200px' }}>
@@ -170,6 +174,31 @@ export default function DashboardHomePage() {
               </div>
             ))}
           </div>
+
+          {/* Overlay Premium para plano FREE */}
+          {stats && (stats.userPlan === 'FREE') && (
+            <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center rounded-lg">
+              <div className="text-center p-6 max-w-md">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  📊 Gráficos Avançados
+                </h3>
+                <p className="text-gray-600 mb-4">
+                  Visualize suas vendas com gráficos detalhados e análises avançadas
+                </p>
+                <Link
+                  href="/subscription"
+                  className="inline-block px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-lg font-semibold hover:shadow-lg transition-all"
+                >
+                  Fazer Upgrade
+                </Link>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}

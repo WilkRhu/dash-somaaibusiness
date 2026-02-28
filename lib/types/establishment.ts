@@ -22,6 +22,7 @@ export interface Establishment {
   latitude?: number;
   longitude?: number;
   description?: string;
+  cashRegistersCount?: number;
   isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -50,4 +51,5 @@ export interface CreateEstablishmentDto {
   zipCode?: string;
   latitude?: number;
   longitude?: number;
+  cashRegistersCount?: number;
 }

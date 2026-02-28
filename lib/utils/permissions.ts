@@ -9,7 +9,7 @@ export const PERMISSIONS = {
   VIEW_DASHBOARD: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // Estabelecimentos
-  MANAGE_ESTABLISHMENTS: [BusinessRole.OWNER, BusinessRole.ADMIN],
+  MANAGE_ESTABLISHMENTS: [BusinessRole.OWNER],
   
   // Estoque
   MANAGE_INVENTORY: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK],

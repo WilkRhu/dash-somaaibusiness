@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { maskCNPJ, maskPhone, maskCEP, unmask } from '@/lib/utils/format';
@@ -8,6 +8,9 @@ import { validateCNPJ } from '@/lib/utils/validation';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { establishmentsApi } from '@/lib/api/establishments';
+import { SubscriptionPlan, PLAN_LIMITS } from '@/lib/types/subscription';
+import { canCreateEstablishment } from '@/lib/utils/subscription';
+import { LimitReachedModal } from '@/components/subscription/limit-reached-modal';
 
 interface EstablishmentFormData {
   name: string;
@@ -24,17 +27,20 @@ interface EstablishmentFormData {
   latitude?: number;
   longitude?: number;
   description?: string;
+  cashRegistersCount?: number;
   logo?: string;
 }
 
 export function CreateEstablishmentForm() {
   const router = useRouter();
   const { addToast } = useUIStore();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [establishmentsCount, setEstablishmentsCount] = useState(0);
   
   const [formData, setFormData] = useState<EstablishmentFormData>({
     name: '',
@@ -49,6 +55,7 @@ export function CreateEstablishmentForm() {
     state: '',
     zipCode: '',
     description: '',
+    cashRegistersCount: 1,
   });
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -86,6 +93,16 @@ export function CreateEstablishmentForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar limite do plano
+    const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+    const limitCheck = canCreateEstablishment(establishmentsCount, userPlan);
+    
+    if (!limitCheck.allowed) {
+      setShowLimitModal(true);
+      return;
+    }
+    
     setLoading(true);
 
     // Validar CNPJ
@@ -207,8 +224,34 @@ export function CreateEstablishmentForm() {
     }
   };
 
+  // Buscar contagem de estabelecimentos ao montar o componente
+  useEffect(() => {
+    const fetchEstablishmentsCount = async () => {
+      try {
+        const establishments = await establishmentsApi.list();
+        setEstablishmentsCount(establishments.length);
+      } catch (error) {
+        console.error('Erro ao buscar estabelecimentos:', error);
+      }
+    };
+    fetchEstablishmentsCount();
+  }, []);
+
+  const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+  const planLimits = PLAN_LIMITS[userPlan];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        currentPlan={userPlan}
+        limitType="establishments"
+        currentLimit={planLimits.establishments || 0}
+        onUpgrade={() => router.push('/subscription')}
+      />
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Logo Upload */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-brand-navy mb-4">Logo do Estabelecimento</h3>
@@ -349,6 +392,25 @@ export function CreateEstablishmentForm() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
               placeholder="contato@estabelecimento.com"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-navy mb-2">
+              Quantidade de Caixas Registradoras
+            </label>
+            <input
+              type="number"
+              name="cashRegistersCount"
+              value={formData.cashRegistersCount || 1}
+              onChange={handleChange}
+              min="1"
+              max="99"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+              placeholder="1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Número de caixas disponíveis para vendas
+            </p>
           </div>
         </div>
 
@@ -532,5 +594,6 @@ export function CreateEstablishmentForm() {
         </button>
       </div>
     </form>
+    </>
   );
 }

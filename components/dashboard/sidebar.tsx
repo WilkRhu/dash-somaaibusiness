@@ -4,13 +4,17 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { canAccess, PERMISSIONS } from '@/lib/utils/permissions';
+import { canAccessRoute } from '@/lib/utils/plan-restrictions';
 import { BusinessRole } from '@/lib/types/establishment';
+import { SubscriptionPlan } from '@/lib/types/subscription';
+import { ReactNode } from 'react';
 
 interface MenuItem {
   href: string;
   label: string;
-  icon: JSX.Element;
+  icon: ReactNode;
   requiredPermissions: BusinessRole[];
 }
 
@@ -115,6 +119,16 @@ const menuItems: MenuItem[] = [
       </svg>
     )
   },
+  { 
+    href: '/subscription', 
+    label: 'Planos',
+    requiredPermissions: PERMISSIONS.VIEW_DASHBOARD,
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      </svg>
+    )
+  },
 ];
 
 interface SidebarProps {
@@ -125,9 +139,12 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { currentEstablishment } = useEstablishmentStore();
+  const { user } = useAuthStore();
   
   // Filtrar itens do menu baseado nas permissões do usuário
   const userRole = currentEstablishment?.role;
+  const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+  
   const visibleMenuItems = menuItems.filter(item => {
     // Se não tem role definido, mostra todos os itens (owner ou ainda carregando)
     if (!userRole) return true;
@@ -156,21 +173,33 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       </div>
       
       <nav className="px-4 space-y-1 mt-4 overflow-y-auto h-[calc(100vh-100px)]">
-        {visibleMenuItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            onClick={onClose}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-              pathname === item.href
-                ? 'bg-primary-50 text-primary-600 font-semibold'
-                : 'text-brand-navy hover:bg-gray-50'
-            }`}
-          >
-            <span className="flex-shrink-0">{item.icon}</span>
-            <span className="font-medium">{item.label}</span>
-          </Link>
-        ))}
+        {visibleMenuItems.map((item) => {
+          const { allowed } = canAccessRoute(item.href, userPlan);
+          const isLocked = !allowed;
+          
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              onClick={onClose}
+              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                pathname === item.href
+                  ? 'bg-primary-50 text-primary-600 font-semibold'
+                  : isLocked
+                  ? 'text-gray-400 hover:bg-gray-50 cursor-pointer'
+                  : 'text-brand-navy hover:bg-gray-50'
+              }`}
+            >
+              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="font-medium flex-1">{item.label}</span>
+              {isLocked && (
+                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+              )}
+            </Link>
+          );
+        })}
       </nav>
     </aside>
   );

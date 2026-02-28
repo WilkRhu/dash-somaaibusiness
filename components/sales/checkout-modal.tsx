@@ -6,8 +6,9 @@ import { PaymentMethod } from '@/lib/types/sale';
 interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConfirm: (paymentMethod: PaymentMethod, notes?: string) => void;
+  onConfirm: (paymentMethod: PaymentMethod, cashRegisterId?: number, notes?: string) => void;
   total: number;
+  maxCashRegisters?: number;
   isLoading?: boolean;
 }
 
@@ -64,15 +65,21 @@ export default function CheckoutModal({
   onClose, 
   onConfirm, 
   total,
+  maxCashRegisters = 99,
   isLoading = false 
 }: CheckoutModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
+  const [cashRegisterId, setCashRegisterId] = useState<number>(1);
   const [notes, setNotes] = useState('');
 
   if (!isOpen) return null;
 
   const handleConfirm = () => {
-    onConfirm(selectedMethod, notes || undefined);
+    if (cashRegisterId < 1 || cashRegisterId > maxCashRegisters) {
+      alert(`Número do caixa deve estar entre 1 e ${maxCashRegisters}`);
+      return;
+    }
+    onConfirm(selectedMethod, cashRegisterId, notes || undefined);
   };
 
   return (
@@ -114,6 +121,24 @@ export default function CheckoutModal({
                 </button>
               ))}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Número do Caixa *
+            </label>
+            <input
+              type="number"
+              min="1"
+              max={maxCashRegisters}
+              value={cashRegisterId}
+              onChange={(e) => setCashRegisterId(parseInt(e.target.value) || 1)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+              placeholder="Ex: 1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Caixas disponíveis: 1 a {maxCashRegisters}
+            </p>
           </div>
 
           <div>

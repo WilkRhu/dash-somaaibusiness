@@ -114,7 +114,7 @@ export default function POSPage() {
     }
   };
 
-  const handleCheckout = async (paymentMethod: PaymentMethod, notes?: string) => {
+  const handleCheckout = async (paymentMethod: PaymentMethod, cashRegisterId?: number, notes?: string) => {
     try {
       await createSale({
         items: items.map(item => ({
@@ -124,6 +124,7 @@ export default function POSPage() {
           discount: item.discount,
         })),
         paymentMethod,
+        cashRegisterId,
         discount,
         notes,
       });

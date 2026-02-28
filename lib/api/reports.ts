@@ -42,6 +42,7 @@ export interface DashboardStats {
     quantity: number;
     revenue: number;
   }>;
+  userPlan?: string; // Plano do usuário
 }
 
 export interface SalesDetailsResponse {
