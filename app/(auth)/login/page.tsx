@@ -50,11 +50,12 @@ export default function LoginPage() {
         <div className="relative z-10 flex flex-col justify-center px-16 text-white">
           <div className="mb-8 flex items-center gap-4">
             <Image 
-              src="/images/logo.png" 
+              src="https://somaaiuploads.s3.us-east-1.amazonaws.com/logomarca/logobusiness.png" 
               alt="SomaAI Business Logo" 
               width={60} 
               height={60}
               className="drop-shadow-lg"
+              unoptimized
               priority
             />
             <div>
@@ -129,10 +130,11 @@ export default function LoginPage() {
           {/* Mobile Logo */}
           <div className="lg:hidden text-center mb-8 flex items-center justify-center gap-3">
             <Image 
-              src="/images/logo.png" 
+              src="https://somaaiuploads.s3.us-east-1.amazonaws.com/logomarca/logobusiness.png" 
               alt="SomaAI Business Logo" 
               width={50} 
               height={50}
+              unoptimized
               priority
             />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-[#4C99C2] to-[#7CBD6A] bg-clip-text text-transparent">
@@ -145,11 +147,11 @@ export default function LoginPage() {
             <div className="mb-8 text-center">
               <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-[#4C99C2] to-[#7CBD6A] rounded-2xl mb-4 shadow-lg">
                 <Image 
-                  src="/images/logo.png" 
+                  src="https://somaaiuploads.s3.us-east-1.amazonaws.com/logomarca/logobusiness.png" 
                   alt="SomaAI Business Logo" 
                   width={50} 
                   height={50}
-                  className="brightness-0 invert"
+                  unoptimized
                   priority
                 />
               </div>

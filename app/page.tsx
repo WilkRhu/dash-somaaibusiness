@@ -15,10 +15,11 @@ export default function LandingPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center gap-3">
               <Image 
-                src="/images/logo.png" 
+                src="https://somaaiuploads.s3.us-east-1.amazonaws.com/logomarca/logobusiness.png" 
                 alt="SomaAI Business Logo" 
                 width={40} 
                 height={40}
+                unoptimized
               />
               <h1 className="text-2xl font-bold bg-gradient-to-r from-brand-blue to-brand-green bg-clip-text text-transparent">
                 SomaAI Business

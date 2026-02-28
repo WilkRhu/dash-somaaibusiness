@@ -87,7 +87,7 @@ export function useSales(filters?: SalesFilters) {
 
   useEffect(() => {
     fetchSales();
-  }, [currentEstablishment?.id]);
+  }, [currentEstablishment?.id, JSON.stringify(filters)]);
 
   return {
     sales,

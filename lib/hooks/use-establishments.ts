@@ -8,6 +8,7 @@ export function useEstablishments() {
   const fetchEstablishments = async () => {
     try {
       const data = await establishmentsApi.list();
+      console.log('📍 Estabelecimentos carregados:', data);
       setEstablishments(data);
       
       // Set first establishment as current if none selected
@@ -16,6 +17,8 @@ export function useEstablishments() {
         const establishment = savedId 
           ? data.find(e => e.id === savedId) || data[0]
           : data[0];
+        console.log('📍 Estabelecimento selecionado:', establishment);
+        console.log('📍 Role do usuário:', establishment.role);
         setCurrentEstablishment(establishment);
       }
     } catch (err) {
