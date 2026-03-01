@@ -63,6 +63,7 @@ export interface CreateSaleItemDto {
   unitPrice: number;
   quantity: number;
   discount?: number;
+  applyOffer?: boolean;  // Aplicar oferta ativa automaticamente
 }
 
 export interface CreateSaleDto {

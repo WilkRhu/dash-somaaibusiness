@@ -7,6 +7,7 @@ import { useSales } from '@/lib/hooks/use-sales';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { inventoryApi } from '@/lib/api/inventory';
+import { offersApi } from '@/lib/api/offers';
 import CheckoutModal from '@/components/sales/checkout-modal';
 import SalePreviewModal from '@/components/sales/sale-preview-modal';
 import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
@@ -34,11 +35,39 @@ export default function POSPage() {
   const [showSelectWeightProductModal, setShowSelectWeightProductModal] = useState(false);
   const [selectedProductForWeight, setSelectedProductForWeight] = useState<InventoryItem | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [activeOffers, setActiveOffers] = useState<Map<string, any>>(new Map());
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
   const { items: products, refetch: refetchInventory } = useInventory();
   const { createSale, isLoading } = useSales();
   const { setFullscreenMode } = useUIStore();
   const { currentEstablishment } = useEstablishmentStore();
+
+  // Carregar ofertas ativas para os produtos
+  useEffect(() => {
+    const loadActiveOffers = async () => {
+      if (!currentEstablishment?.id || !products.length) return;
+      
+      const offersMap = new Map();
+      
+      // Verifica ofertas para cada produto
+      await Promise.all(
+        products.map(async (product: InventoryItem) => {
+          try {
+            const offerCheck = await offersApi.checkActiveOffer(currentEstablishment.id, product.id);
+            if (offerCheck.hasOffer && offerCheck.offer) {
+              offersMap.set(product.id, offerCheck.offer);
+            }
+          } catch (error) {
+            // Ignora erros silenciosamente
+          }
+        })
+      );
+      
+      setActiveOffers(offersMap);
+    };
+    
+    loadActiveOffers();
+  }, [products, currentEstablishment]);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -105,15 +134,19 @@ export default function POSPage() {
 
     const product = products.find((p: InventoryItem) => p.barcode === barcode);
     if (product) {
+      // Verificar se há oferta ativa para este produto
+      const offer = activeOffers.get(product.id);
+      const salePrice = offer ? Number(offer.offerPrice) : Number(product.salePrice ?? 0);
+      
       addItem({
         itemId: product.id,
         name: product.name,
         quantity: 1,
-        unitPrice: product.salePrice,
+        unitPrice: salePrice,
         discount: 0,
       });
       setBarcode('');
-      showToast('Produto adicionado', 'success');
+      showToast(offer ? `Produto adicionado com oferta! ${Number(offer.discountPercentage || 0).toFixed(0)}% OFF` : 'Produto adicionado', 'success');
     } else {
       showToast('Produto não encontrado', 'error');
     }
@@ -121,13 +154,44 @@ export default function POSPage() {
 
   const handleCheckout = async (paymentMethod: PaymentMethod, _cashRegisterId?: number, notes?: string) => {
     try {
+      // Verifica ofertas ativas para cada item
+      const itemsWithOffers = await Promise.all(
+        items.map(async (item) => {
+          try {
+            if (!currentEstablishment?.id) {
+              return {
+                itemId: item.itemId,
+                unitPrice: item.unitPrice,
+                quantity: item.quantity,
+                discount: item.discount,
+                applyOffer: false,
+              };
+            }
+
+            const offerCheck = await offersApi.checkActiveOffer(currentEstablishment.id, item.itemId);
+            
+            return {
+              itemId: item.itemId,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              discount: item.discount,
+              applyOffer: offerCheck.hasOffer, // Aplica oferta se houver uma ativa
+            };
+          } catch (error) {
+            // Se houver erro ao verificar oferta, continua sem aplicar
+            return {
+              itemId: item.itemId,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              discount: item.discount,
+              applyOffer: false,
+            };
+          }
+        })
+      );
+
       await createSale({
-        items: items.map(item => ({
-          itemId: item.itemId,
-          unitPrice: item.unitPrice,
-          quantity: item.quantity,
-          discount: item.discount,
-        })),
+        items: itemsWithOffers,
         paymentMethod,
         discount,
         notes,
@@ -184,8 +248,10 @@ export default function POSPage() {
   };
 
   const handleAddProductToCart = (product: InventoryItem) => {
-    // Adicionar produto normalmente (quantidade 1)
-    const salePrice = Number(product.salePrice ?? 0);
+    // Verificar se há oferta ativa para este produto
+    const offer = activeOffers.get(product.id);
+    const salePrice = offer ? Number(offer.offerPrice) : Number(product.salePrice ?? 0);
+    
     addItem({
       itemId: product.id,
       name: product.name,
@@ -193,13 +259,16 @@ export default function POSPage() {
       unitPrice: salePrice,
       discount: 0,
     });
-    showToast('Produto adicionado', 'success');
+    showToast(offer ? `Produto adicionado com oferta! ${Number(offer.discountPercentage || 0).toFixed(0)}% OFF` : 'Produto adicionado', 'success');
   };
 
   const handleAddWeightProduct = (weight: number) => {
     if (!selectedProductForWeight) return;
     
-    const salePrice = Number(selectedProductForWeight.salePrice ?? 0);
+    // Verificar se há oferta ativa para este produto
+    const offer = activeOffers.get(selectedProductForWeight.id);
+    const salePrice = offer ? Number(offer.offerPrice) : Number(selectedProductForWeight.salePrice ?? 0);
+    
     addItem({
       itemId: selectedProductForWeight.id,
       name: `${selectedProductForWeight.name} (${weight}${selectedProductForWeight.unit})`,
@@ -207,7 +276,7 @@ export default function POSPage() {
       unitPrice: salePrice,
       discount: 0,
     });
-    showToast('Produto adicionado', 'success');
+    showToast(offer ? `Produto adicionado com oferta! ${Number(offer.discountPercentage || 0).toFixed(0)}% OFF` : 'Produto adicionado', 'success');
     setSelectedProductForWeight(null);
   };
 
@@ -327,18 +396,29 @@ export default function POSPage() {
                 const formattedPrice = `R$ ${salePrice.toFixed(2)}`;
                 // Prioriza o array de imagens, depois a imagem única
                 const imageUrl = (product.images && product.images.length > 0) ? product.images[0] : product.image;
+                const hasOffer = activeOffers.has(product.id);
+                const offer = activeOffers.get(product.id);
                 
                 return (
                   <button
                     key={product.id}
                     onClick={() => handleAddProductToCart(product)}
                     disabled={quantity === 0}
-                    className={`p-2 border-2 rounded-md transition-all text-left overflow-hidden h-[85px] ${
+                    className={`p-2 border-2 rounded-md transition-all text-left overflow-hidden h-[85px] relative ${
                       quantity === 0 
                         ? 'border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed'
+                        : hasOffer
+                        ? 'border-orange-400 hover:border-orange-500 hover:shadow-md bg-orange-50'
                         : 'border-gray-200 hover:border-brand-blue hover:shadow-md'
                     }`}
                   >
+                    {/* Badge de Oferta */}
+                    {hasOffer && offer && (
+                      <div className="absolute top-1 right-1 bg-orange-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm z-10">
+                        {Number(offer.discountPercentage || 0).toFixed(0)}% OFF
+                      </div>
+                    )}
+                    
                     <div className="flex gap-2 h-[52px]">
                       {/* Imagem do produto */}
                       <div className="w-12 h-12 flex-shrink-0 bg-gray-100 rounded overflow-hidden border border-gray-200">
@@ -378,9 +458,20 @@ export default function POSPage() {
                           )}
                         </div>
                         <div className="flex items-baseline gap-1">
-                          <div className="text-brand-blue font-bold text-xs leading-tight">
-                            {formattedPrice}
-                          </div>
+                          {hasOffer && offer ? (
+                            <>
+                              <div className="text-gray-400 line-through text-[9px] leading-tight">
+                                R$ {Number(offer.originalPrice || 0).toFixed(2)}
+                              </div>
+                              <div className="text-orange-600 font-bold text-xs leading-tight">
+                                R$ {Number(offer.offerPrice || 0).toFixed(2)}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-brand-blue font-bold text-xs leading-tight">
+                              {formattedPrice}
+                            </div>
+                          )}
                           {product.unit && (
                             <div className="text-[8px] text-gray-500 leading-tight">
                               /{product.unit}
@@ -429,11 +520,26 @@ export default function POSPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {items.map((item, index) => (
-                      <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="py-2 px-3">
-                          <div className="font-medium text-gray-900 text-sm">{item.name}</div>
-                        </td>
+                    {items.map((item, index) => {
+                      // Verificar se este item tem oferta ativa
+                      const itemOffer = activeOffers.get(item.itemId);
+                      const hasOfferApplied = itemOffer && Number(item.unitPrice) === Number(itemOffer.offerPrice);
+                      
+                      return (
+                        <tr key={item.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                          <td className="py-2 px-3">
+                            <div className="flex items-center gap-2">
+                              <div className="font-medium text-gray-900 text-sm">{item.name}</div>
+                              {hasOfferApplied && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-bold bg-orange-100 text-orange-700">
+                                  <svg className="w-2.5 h-2.5 mr-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                  </svg>
+                                  OFERTA
+                                </span>
+                              )}
+                            </div>
+                          </td>
                         <td className="py-2 px-2">
                           <div className="flex items-center justify-center gap-1">
                             <button
@@ -481,7 +587,8 @@ export default function POSPage() {
                           </button>
                         </td>
                       </tr>
-                    ))}
+                    );
+                    })}
                   </tbody>
                 </table>
               </div>
