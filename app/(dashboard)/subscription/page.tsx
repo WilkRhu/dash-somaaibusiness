@@ -3,12 +3,17 @@
 import { useState, useEffect } from 'react';
 import { subscriptionApi, SubscriptionStatus, PlanInfo } from '@/lib/api/subscription';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { PaymentMethodModal } from '@/components/subscription/payment-method-modal';
+import { CheckoutModal } from '@/components/subscription/checkout-modal';
 
 export default function SubscriptionPage() {
   const { user } = useAuthStore();
   const [status, setStatus] = useState<SubscriptionStatus | null>(null);
   const [plans, setPlans] = useState<PlanInfo[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<PlanInfo | null>(null);
+  const [showPaymentMethod, setShowPaymentMethod] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -161,12 +166,22 @@ export default function SubscriptionPage() {
                 >
                   Falar com Vendas
                 </button>
-              ) : (
+              ) : plan.price === 0 ? (
                 <button
-                  onClick={() => alert('Integração com pagamento em desenvolvimento')}
+                  onClick={() => alert('Plano gratuito já ativo')}
                   className="w-full py-3 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
                 >
-                  {plan.price === 0 ? 'Usar Grátis' : 'Assinar Agora'}
+                  Usar Grátis
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    setSelectedPlan(plan);
+                    setShowPaymentMethod(true);
+                  }}
+                  className="w-full py-3 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+                >
+                  Assinar Agora
                 </button>
               )}
             </div>
@@ -219,6 +234,42 @@ export default function SubscriptionPage() {
           </table>
         </div>
       </div>
+
+      {/* Modal de Seleção de Método de Pagamento */}
+      {selectedPlan && showPaymentMethod && (
+        <PaymentMethodModal
+          isOpen={true}
+          onClose={() => {
+            setSelectedPlan(null);
+            setShowPaymentMethod(false);
+          }}
+          planName={selectedPlan.name}
+          amount={selectedPlan.price || 0}
+          onSelectPix={() => {
+            setShowPaymentMethod(false);
+            setPaymentMethod('pix');
+          }}
+          onSelectCard={() => {
+            setShowPaymentMethod(false);
+            setPaymentMethod('card');
+          }}
+        />
+      )}
+
+      {/* Modal de Checkout */}
+      {selectedPlan && paymentMethod && (
+        <CheckoutModal
+          isOpen={true}
+          onClose={() => {
+            setSelectedPlan(null);
+            setPaymentMethod(null);
+          }}
+          planId={selectedPlan.id}
+          planName={selectedPlan.name}
+          amount={selectedPlan.price || 0}
+          paymentMethod={paymentMethod}
+        />
+      )}
     </div>
   );
 }
