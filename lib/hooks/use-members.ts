@@ -96,6 +96,27 @@ export function useMembers() {
     }
   }, [currentEstablishment?.id, updateMember, setLoading, setError]);
 
+  const editMember = useCallback(async (
+    userId: string,
+    data: { name: string; email: string; phone?: string; roles: string[]; isActive: boolean }
+  ) => {
+    if (!currentEstablishment?.id) throw new Error('Nenhum estabelecimento selecionado');
+
+    try {
+      setLoading(true);
+      setError(null);
+      const updatedMember = await membersApi.updateMember(currentEstablishment.id, userId, data);
+      updateMember(userId, updatedMember);
+      return updatedMember;
+    } catch (err: any) {
+      const message = err.response?.data?.message || 'Erro ao atualizar funcionário';
+      setError(message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  }, [currentEstablishment?.id, updateMember, setLoading, setError]);
+
   return {
     members,
     loading,
@@ -105,5 +126,6 @@ export function useMembers() {
     createMember,
     deleteMember,
     changeMemberRole,
+    editMember,
   };
 }

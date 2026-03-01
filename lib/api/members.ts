@@ -53,4 +53,16 @@ export const membersApi = {
     );
     return response.data.data;
   },
+
+  async updateMember(
+    establishmentId: string,
+    userId: string,
+    data: { name: string; email: string; phone?: string; roles: string[]; isActive: boolean }
+  ): Promise<Member> {
+    const response = await apiClient.patch<{ data: Member }>(
+      `/business/establishments/${establishmentId}/members/${userId}`,
+      data
+    );
+    return response.data.data;
+  },
 };

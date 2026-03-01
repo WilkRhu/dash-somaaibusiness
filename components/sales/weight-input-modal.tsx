@@ -48,15 +48,9 @@ export default function WeightInputModal({
     const value = parseFloat(weight);
     if (isNaN(value) || value <= 0) return 0;
     
-    // Converter para kg/l se necessário
-    let normalizedWeight = value;
-    if (unit === 'g') {
-      normalizedWeight = value / 1000; // gramas para kg
-    } else if (unit === 'ml') {
-      normalizedWeight = value / 1000; // ml para litros
-    }
-    
-    return pricePerUnit * normalizedWeight;
+    // O preço está na unidade cadastrada (kg, g, l, ml)
+    // Calcula o total direto na unidade informada
+    return pricePerUnit * value;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -69,15 +63,9 @@ export default function WeightInputModal({
       return;
     }
 
-    // Converter para unidade base (kg ou l)
-    let normalizedWeight = value;
-    if (unit === 'g') {
-      normalizedWeight = value / 1000;
-    } else if (unit === 'ml') {
-      normalizedWeight = value / 1000;
-    }
-
-    onConfirm(normalizedWeight);
+    // O backend espera sempre na unidade cadastrada (g, kg, ml, l)
+    // Não precisa converter, envia direto
+    onConfirm(value);
     onClose();
   };
 

@@ -1,25 +1,12 @@
 import { create } from 'zustand';
-
-interface Customer {
-  id: string;
-  name: string;
-  email?: string;
-  phone?: string;
-  cpf?: string;
-  address?: string;
-  city?: string;
-  state?: string;
-  zipCode?: string;
-  loyaltyPoints: number;
-  totalPurchases: number;
-  createdAt: string;
-}
+import type { Customer } from '../types/customer';
 
 interface CustomersStore {
   customers: Customer[];
   selectedCustomer: Customer | null;
   isLoading: boolean;
   error: string | null;
+  searchTerm: string;
   
   setCustomers: (customers: Customer[]) => void;
   addCustomer: (customer: Customer) => void;
@@ -28,6 +15,7 @@ interface CustomersStore {
   setSelectedCustomer: (customer: Customer | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
+  setSearchTerm: (term: string) => void;
   clearError: () => void;
 }
 
@@ -36,6 +24,7 @@ export const useCustomersStore = create<CustomersStore>((set) => ({
   selectedCustomer: null,
   isLoading: false,
   error: null,
+  searchTerm: '',
   
   setCustomers: (customers) => set({ customers }),
   
@@ -58,6 +47,8 @@ export const useCustomersStore = create<CustomersStore>((set) => ({
   setLoading: (loading) => set({ isLoading: loading }),
   
   setError: (error) => set({ error }),
+  
+  setSearchTerm: (term) => set({ searchTerm: term }),
   
   clearError: () => set({ error: null }),
 }));

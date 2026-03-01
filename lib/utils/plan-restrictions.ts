@@ -29,7 +29,7 @@ export const ROUTE_RESTRICTIONS: RouteRestriction[] = [
   },
   {
     path: '/suppliers',
-    minPlan: SubscriptionPlan.PREMIUM,
+    minPlan: SubscriptionPlan.TRIAL,
     label: 'Gestão de Fornecedores',
     description: 'Gerencie seus fornecedores e controle de compras',
   },
@@ -81,7 +81,7 @@ export const isFeatureAvailable = (
     reports: SubscriptionPlan.TRIAL,
     offers: SubscriptionPlan.TRIAL,
     customers: SubscriptionPlan.TRIAL,
-    suppliers: SubscriptionPlan.PREMIUM,
+    suppliers: SubscriptionPlan.TRIAL,
     advanced_inventory: SubscriptionPlan.TRIAL,
   };
 

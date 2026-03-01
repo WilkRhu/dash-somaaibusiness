@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useMembers } from '@/lib/hooks/use-members';
 import { ROLE_LABELS, type MemberRole } from '@/lib/types/member';
 import { showToast } from '@/components/ui/toast';
+import { maskPhone, unmask } from '@/lib/utils/format';
 
 interface AddMemberFormProps {
   onSuccess?: () => void;
@@ -30,9 +31,9 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
       await createEmployee({
         name: name.trim(),
         email: email.trim(),
-        phone: phone.trim() || undefined,
+        phone: unmask(phone) || undefined,
         password: password.trim() || undefined,
-        role,
+        roles: [role], // Envia como array
       });
       showToast('Funcionário criado com sucesso!', 'success');
       setName('');
@@ -88,10 +89,11 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
         <input
           type="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
-          placeholder="11999999999"
+          onChange={(e) => setPhone(maskPhone(e.target.value))}
+          placeholder="(11) 99999-9999"
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           disabled={loading}
+          maxLength={15}
         />
       </div>
 

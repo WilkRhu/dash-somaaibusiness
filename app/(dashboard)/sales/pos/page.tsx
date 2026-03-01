@@ -5,12 +5,15 @@ import { useCartStore } from '@/lib/stores/cart-store';
 import { useInventory } from '@/lib/hooks/use-inventory';
 import { useSales } from '@/lib/hooks/use-sales';
 import { useUIStore } from '@/lib/stores/ui-store';
+import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { inventoryApi } from '@/lib/api/inventory';
 import CheckoutModal from '@/components/sales/checkout-modal';
 import SalePreviewModal from '@/components/sales/sale-preview-modal';
 import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
 import DiscountModal from '@/components/sales/discount-modal';
 import WeightInputModal from '@/components/sales/weight-input-modal';
 import SelectWeightProductModal from '@/components/sales/select-weight-product-modal';
+import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { PaymentMethod } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
@@ -30,10 +33,12 @@ export default function POSPage() {
   const [showWeightModal, setShowWeightModal] = useState(false);
   const [showSelectWeightProductModal, setShowSelectWeightProductModal] = useState(false);
   const [selectedProductForWeight, setSelectedProductForWeight] = useState<InventoryItem | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
   const { items: products, refetch: refetchInventory } = useInventory();
   const { createSale, isLoading } = useSales();
   const { setFullscreenMode } = useUIStore();
+  const { currentEstablishment } = useEstablishmentStore();
 
   // Atalhos de teclado
   useEffect(() => {
@@ -114,7 +119,7 @@ export default function POSPage() {
     }
   };
 
-  const handleCheckout = async (paymentMethod: PaymentMethod, cashRegisterId?: number, notes?: string) => {
+  const handleCheckout = async (paymentMethod: PaymentMethod, _cashRegisterId?: number, notes?: string) => {
     try {
       await createSale({
         items: items.map(item => ({
@@ -124,13 +129,14 @@ export default function POSPage() {
           discount: item.discount,
         })),
         paymentMethod,
-        cashRegisterId,
         discount,
         notes,
+        customerId: selectedCustomer?.id, // Adiciona o cliente se selecionado
       });
       
       showToast('Venda realizada com sucesso!', 'success');
       clear();
+      setSelectedCustomer(null); // Limpa o cliente selecionado
       setIsCheckoutOpen(false);
       
       // Atualiza o estoque dos produtos após a venda
@@ -140,14 +146,41 @@ export default function POSPage() {
     }
   };
 
-  const handleAddCustomItem = (customItem: { name: string; unitPrice: number; quantity: number }) => {
-    addItem({
-      itemId: `custom-${Date.now()}`, // ID temporário para item avulso
-      name: customItem.name,
-      quantity: customItem.quantity,
-      unitPrice: customItem.unitPrice,
-      discount: 0,
-    });
+  const handleAddCustomItem = async (customItem: { name: string; unitPrice: number; quantity: number }) => {
+    try {
+      if (!currentEstablishment?.id) {
+        showToast('Nenhum estabelecimento selecionado', 'error');
+        return;
+      }
+
+      // Cria um produto temporário no inventário
+      const tempProduct = await inventoryApi.add(currentEstablishment.id, {
+        name: `[AVULSO] ${customItem.name}`,
+        category: 'Avulso',
+        quantity: customItem.quantity,
+        salePrice: customItem.unitPrice,
+        costPrice: 0,
+        minQuantity: 0,
+        unit: 'un',
+      });
+
+      // Adiciona o produto ao carrinho
+      addItem({
+        itemId: tempProduct.data.id,
+        name: customItem.name,
+        quantity: customItem.quantity,
+        unitPrice: customItem.unitPrice,
+        discount: 0,
+      });
+
+      setShowCustomItemModal(false);
+      showToast('Item avulso adicionado', 'success');
+      
+      // Atualiza a lista de produtos
+      refetchInventory();
+    } catch (error: any) {
+      showToast(error.message || 'Erro ao adicionar item avulso', 'error');
+    }
   };
 
   const handleAddProductToCart = (product: InventoryItem) => {
@@ -216,6 +249,12 @@ export default function POSPage() {
           {/* Busca de Produtos */}
           <div className="bg-white rounded-lg shadow p-4">
             <form onSubmit={handleBarcodeSubmit} className="space-y-3">
+              {/* Busca de Cliente */}
+              <QuickCustomerSearch
+                selectedCustomer={selectedCustomer}
+                onCustomerSelect={setSelectedCustomer}
+              />
+              
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Código de Barras
@@ -266,7 +305,7 @@ export default function POSPage() {
                     type="button"
                     onClick={() => setShowCustomItemModal(true)}
                     className="h-[42px] px-4 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold whitespace-nowrap flex items-center gap-2"
-                    title="Adicionar item avulso (não cadastrado)"
+                    title="Adicionar item avulso (será criado no inventário)"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />

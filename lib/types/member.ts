@@ -8,7 +8,7 @@ export type MemberRole =
 export interface Member {
   id: string;
   userId: string;
-  role: MemberRole;
+  roles: MemberRole[]; // Array de roles
   isActive: boolean;
   createdAt: string;
   user: {
@@ -27,12 +27,12 @@ export interface CreateEmployeeRequest {
   name: string;
   email: string;
   phone?: string;
-  role: MemberRole;
+  roles: MemberRole[]; // Array de roles
   password?: string;
 }
 
 export interface UpdateMemberRoleRequest {
-  role: MemberRole;
+  roles: MemberRole[]; // Array de roles
 }
 
 export const ROLE_LABELS: Record<MemberRole, string> = {
