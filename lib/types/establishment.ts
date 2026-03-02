@@ -24,8 +24,22 @@ export interface Establishment {
   description?: string;
   cashRegistersCount?: number;
   isActive?: boolean;
+  loyaltyEnabled?: boolean;
+  loyaltyPointsPerReal?: number;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface LoyaltySettings {
+  loyaltyEnabled: boolean;
+  loyaltyPointsPerReal: number;
+  description?: string;
+  example?: string;
+}
+
+export interface UpdateLoyaltySettingsDto {
+  loyaltyEnabled?: boolean;
+  loyaltyPointsPerReal?: number;
 }
 
 export interface EstablishmentMember {

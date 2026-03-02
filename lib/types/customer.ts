@@ -5,6 +5,7 @@ export interface Customer {
   phone: string;
   cpf?: string;
   birthDate?: string;
+  avatar?: string;
   loyaltyPoints: number;
   totalSpent: number;
   purchaseCount: number;
@@ -21,6 +22,7 @@ export interface CreateCustomerDto {
   phone: string;
   cpf?: string;
   birthDate?: string;
+  avatar?: string;
 }
 
 export interface UpdateCustomerDto {
@@ -29,6 +31,7 @@ export interface UpdateCustomerDto {
   phone?: string;
   cpf?: string;
   birthDate?: string;
+  avatar?: string;
 }
 
 export interface CustomerPurchase {

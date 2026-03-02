@@ -2,11 +2,13 @@
 
 import { StatsCard } from '@/components/dashboard/stats-card';
 import { useDashboardStats } from '@/lib/hooks/use-dashboard-stats';
+import { useWeeklySales } from '@/lib/hooks/use-weekly-sales';
 import { formatCurrency } from '@/lib/utils/format';
 import Link from 'next/link';
 
 export default function DashboardHomePage() {
   const { stats, isLoading, error } = useDashboardStats();
+  const { report: weeklyReport, isLoading: loadingWeekly } = useWeeklySales();
 
   if (isLoading) {
     return (
@@ -24,18 +26,20 @@ export default function DashboardHomePage() {
     );
   }
 
-  // Dados mockados para o gráfico (será implementado depois)
-  const salesData = [
-    { day: 'Seg', value: 1200 },
-    { day: 'Ter', value: 1900 },
-    { day: 'Qua', value: 1500 },
-    { day: 'Qui', value: 2100 },
-    { day: 'Sex', value: 2800 },
-    { day: 'Sáb', value: 3200 },
-    { day: 'Dom', value: 2400 },
-  ];
+  // Preparar dados do gráfico semanal
+  const getDayLabel = (dateStr: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+    return days[date.getDay()];
+  };
 
-  const maxValue = Math.max(...salesData.map(d => d.value));
+  const salesData = weeklyReport?.byDay.map(day => ({
+    day: getDayLabel(day.date),
+    value: day.total,
+    date: day.date,
+  })) || [];
+
+  const maxValue = salesData.length > 0 ? Math.max(...salesData.map(d => d.value)) : 1;
 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
@@ -147,33 +151,48 @@ export default function DashboardHomePage() {
         <div className="lg:col-span-2 bg-white rounded-lg shadow-sm border border-gray-200 p-6 relative">
           <div className="flex items-center justify-between mb-6">
             <h2 className="text-lg font-bold text-brand-navy">Vendas da Semana</h2>
-            <select className="px-3 py-1 border border-gray-300 rounded-lg text-sm">
-              <option>Últimos 7 dias</option>
-              <option>Últimos 30 dias</option>
-              <option>Este mês</option>
-            </select>
+            <div className="text-sm text-gray-500">Últimos 7 dias</div>
           </div>
           
+          {/* Loading State */}
+          {loadingWeekly && (
+            <div className="flex items-center justify-center h-64">
+              <div className="text-brand-navy">Carregando vendas...</div>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loadingWeekly && salesData.length === 0 && (
+            <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+              <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+              <p className="text-sm">Nenhuma venda registrada nos últimos 7 dias</p>
+            </div>
+          )}
+          
           {/* Gráfico */}
-          <div className={`flex items-end justify-between h-64 gap-4 ${
-            stats && (stats.userPlan === 'FREE') ? 'blur-sm' : ''
-          }`}>
-            {salesData.map((data, index) => (
-              <div key={index} className="flex-1 flex flex-col items-center gap-2">
-                <div className="relative w-full bg-gray-100 rounded-t-lg overflow-hidden" style={{ height: '200px' }}>
-                  <div
-                    className="absolute bottom-0 w-full bg-gradient-to-t from-brand-blue to-brand-green rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer group"
-                    style={{ height: `${(data.value / maxValue) * 100}%` }}
-                  >
-                    <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-brand-navy text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                      R$ {data.value.toLocaleString('pt-BR')}
+          {!loadingWeekly && salesData.length > 0 && (
+            <div className={`flex items-end justify-between h-64 gap-4 ${
+              stats && (stats.userPlan === 'FREE') ? 'blur-sm' : ''
+            }`}>
+              {salesData.map((data, index) => (
+                <div key={index} className="flex-1 flex flex-col items-center gap-2">
+                  <div className="relative w-full bg-gray-100 rounded-t-lg overflow-hidden" style={{ height: '200px' }}>
+                    <div
+                      className="absolute bottom-0 w-full bg-gradient-to-t from-brand-blue to-brand-green rounded-t-lg transition-all duration-500 hover:opacity-80 cursor-pointer group"
+                      style={{ height: `${(data.value / maxValue) * 100}%` }}
+                    >
+                      <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-brand-navy text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        {formatCurrency(data.value)}
+                      </div>
                     </div>
                   </div>
+                  <span className="text-sm font-medium text-gray-600">{data.day}</span>
                 </div>
-                <span className="text-sm font-medium text-gray-600">{data.day}</span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
 
           {/* Overlay Premium para plano FREE */}
           {stats && (stats.userPlan === 'FREE') && (

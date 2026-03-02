@@ -50,7 +50,7 @@ export function CustomersTable({
       <table className="w-full">
         <thead>
           <tr className="border-b border-gray-200">
-            <th className="text-left py-3 px-4 font-medium text-gray-700">Nome</th>
+            <th className="text-left py-3 px-4 font-medium text-gray-700">Cliente</th>
             <th className="text-left py-3 px-4 font-medium text-gray-700">Telefone</th>
             <th className="text-left py-3 px-4 font-medium text-gray-700">Email</th>
             <th className="text-right py-3 px-4 font-medium text-gray-700">Pontos</th>
@@ -69,9 +69,22 @@ export function CustomersTable({
               <td className="py-3 px-4">
                 <button
                   onClick={() => onViewDetails(customer)}
-                  className="font-medium text-brand-blue hover:underline text-left"
+                  className="flex items-center gap-3 text-left hover:opacity-80 transition-opacity"
                 >
-                  {customer.name}
+                  {customer.avatar ? (
+                    <img
+                      src={customer.avatar}
+                      alt={customer.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-blue to-brand-green flex items-center justify-center text-white font-semibold">
+                      {customer.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="font-medium text-brand-blue hover:underline">
+                    {customer.name}
+                  </span>
                 </button>
               </td>
               <td className="py-3 px-4 text-gray-600">{formatPhone(customer.phone)}</td>

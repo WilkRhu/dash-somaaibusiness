@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Customer, UpdateCustomerDto } from '@/lib/types/customer';
 import { maskCPF, maskPhone, unmask } from '@/lib/utils/format';
+import { CustomerImageUpload } from './customer-image-upload';
 
 interface EditCustomerFormProps {
   customer: Customer;
@@ -17,6 +18,7 @@ export function EditCustomerForm({ customer, onSubmit, onCancel }: EditCustomerF
     email: customer.email || '',
     cpf: customer.cpf ? maskCPF(customer.cpf) : '',
     birthDate: customer.birthDate || '',
+    avatar: customer.avatar || '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,6 +45,7 @@ export function EditCustomerForm({ customer, onSubmit, onCancel }: EditCustomerF
       if (formData.email !== customer.email) data.email = formData.email || undefined;
       if (unmask(formData.cpf) !== customer.cpf) data.cpf = unmask(formData.cpf) || undefined;
       if (formData.birthDate !== customer.birthDate) data.birthDate = formData.birthDate || undefined;
+      if (formData.avatar !== customer.avatar) data.avatar = formData.avatar || undefined;
 
       await onSubmit(data);
     } finally {
@@ -52,6 +55,12 @@ export function EditCustomerForm({ customer, onSubmit, onCancel }: EditCustomerF
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Upload de Imagem */}
+      <CustomerImageUpload
+        currentImage={formData.avatar}
+        onImageChange={(base64) => setFormData((prev) => ({ ...prev, avatar: base64 }))}
+      />
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Nome *

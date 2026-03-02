@@ -90,9 +90,22 @@ export function CustomerDetailsModal({
       <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold text-brand-navy">{customer.name}</h2>
-              <p className="text-gray-600 mt-1">{formatPhone(customer.phone)}</p>
+            <div className="flex items-center gap-4">
+              {customer.avatar ? (
+                <img
+                  src={customer.avatar}
+                  alt={customer.name}
+                  className="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
+                />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-brand-blue to-brand-green flex items-center justify-center text-white font-bold text-2xl">
+                  {customer.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div>
+                <h2 className="text-2xl font-bold text-brand-navy">{customer.name}</h2>
+                <p className="text-gray-600 mt-1">{formatPhone(customer.phone)}</p>
+              </div>
             </div>
             <button
               onClick={onClose}

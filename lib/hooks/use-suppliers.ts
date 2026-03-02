@@ -237,12 +237,16 @@ export function useSuppliers() {
   const filteredSuppliers = useMemo(() => {
     if (!suppliers || suppliers.length === 0) return [];
     
-    return suppliers.filter((supplier) =>
-      supplier.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (supplier.cnpj && supplier.cnpj.includes(searchTerm)) ||
-      (supplier.cpf && supplier.cpf.includes(searchTerm)) ||
-      supplier.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return suppliers.filter((supplier) => {
+      if (!supplier) return false;
+      
+      const nameMatch = supplier.name?.toLowerCase().includes(searchTerm.toLowerCase());
+      const cnpjMatch = supplier.cnpj && supplier.cnpj.includes(searchTerm);
+      const cpfMatch = supplier.cpf && supplier.cpf.includes(searchTerm);
+      const emailMatch = supplier.email?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      return nameMatch || cnpjMatch || cpfMatch || emailMatch;
+    });
   }, [suppliers, searchTerm]);
 
   return {

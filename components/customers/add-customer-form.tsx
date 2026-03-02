@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { CreateCustomerDto } from '@/lib/types/customer';
 import { maskCPF, maskPhone, unmask } from '@/lib/utils/format';
+import { CustomerImageUpload } from './customer-image-upload';
 
 interface AddCustomerFormProps {
   onSubmit: (data: CreateCustomerDto) => Promise<void>;
@@ -16,6 +17,7 @@ export function AddCustomerForm({ onSubmit, onCancel }: AddCustomerFormProps) {
     email: '',
     cpf: '',
     birthDate: '',
+    avatar: '',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -43,6 +45,7 @@ export function AddCustomerForm({ onSubmit, onCancel }: AddCustomerFormProps) {
       if (formData.email) data.email = formData.email;
       if (formData.cpf) data.cpf = unmask(formData.cpf);
       if (formData.birthDate) data.birthDate = formData.birthDate;
+      if (formData.avatar) data.avatar = formData.avatar;
 
       await onSubmit(data);
     } finally {
@@ -52,6 +55,12 @@ export function AddCustomerForm({ onSubmit, onCancel }: AddCustomerFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Upload de Imagem */}
+      <CustomerImageUpload
+        currentImage={formData.avatar}
+        onImageChange={(base64) => setFormData((prev) => ({ ...prev, avatar: base64 }))}
+      />
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Nome *

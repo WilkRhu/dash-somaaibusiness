@@ -27,6 +27,16 @@ function normalizePlan(planType?: string): SubscriptionPlan {
   }
 }
 
+interface BusinessPlan {
+  id: string;
+  planType: string; // 'free', 'trial', 'basic', 'premium', 'enterprise'
+  planExpiresAt: string | null;
+  isOnTrial: boolean;
+  trialEndsAt: string | null;
+  scansUsed: number;
+  scansResetAt: string | null;
+}
+
 interface User {
   id: string;
   name: string;
@@ -36,8 +46,9 @@ interface User {
   subscriptionPlan?: SubscriptionPlan;
   trialEndsAt?: string | null;
   trialDaysRemaining?: number;
-  planType?: string; // Campo do backend
+  planType?: string; // Campo do backend (deprecated)
   planExpiresAt?: string;
+  business_plan?: BusinessPlan; // Nova estrutura do backend
 }
 
 interface AuthStore {
@@ -71,10 +82,20 @@ export const useAuthStore = create<AuthStore>()(
           console.log('🔑 Token recebido:', response.token);
           console.log('👤 User recebido:', response.user);
           
+          // Extrair planType do business_plan se disponível
+          const user = response.user as any;
+          const planType = user.business_plan?.planType || user.planType;
+          const isOnTrial = user.business_plan?.isOnTrial || false;
+          const trialEndsAt = user.business_plan?.trialEndsAt || user.trialEndsAt;
+          
+          console.log('📊 Plano extraído:', { planType, isOnTrial, trialEndsAt });
+          
           // Normalizar o plano
           const normalizedUser = {
             ...response.user,
-            subscriptionPlan: normalizePlan(response.user.planType || (response.user as any).planType),
+            subscriptionPlan: normalizePlan(planType),
+            trialEndsAt,
+            business_plan: user.business_plan,
           };
           
           console.log('✅ User normalizado:', normalizedUser);
@@ -108,10 +129,18 @@ export const useAuthStore = create<AuthStore>()(
             userType: 'business' 
           });
           
+          // Extrair planType do business_plan se disponível
+          const user = response.user as any;
+          const planType = user.business_plan?.planType || user.planType;
+          const isOnTrial = user.business_plan?.isOnTrial || false;
+          const trialEndsAt = user.business_plan?.trialEndsAt || user.trialEndsAt;
+          
           // Normalizar o plano
           const normalizedUser = {
             ...response.user,
-            subscriptionPlan: normalizePlan(response.user.planType || (response.user as any).planType),
+            subscriptionPlan: normalizePlan(planType),
+            trialEndsAt,
+            business_plan: user.business_plan,
           };
           
           localStorage.setItem('token', response.token);
@@ -149,10 +178,17 @@ export const useAuthStore = create<AuthStore>()(
           const userData = await authApi.me();
           console.log('👤 Dados do usuário carregados:', userData);
           
+          // Extrair planType do business_plan se disponível
+          const planType = userData.business_plan?.planType || userData.planType;
+          const isOnTrial = userData.business_plan?.isOnTrial || false;
+          const trialEndsAt = userData.business_plan?.trialEndsAt || userData.trialEndsAt;
+          
           // Normalizar o plano
           const normalizedUser = {
             ...userData,
-            subscriptionPlan: normalizePlan(userData.planType),
+            subscriptionPlan: normalizePlan(planType),
+            trialEndsAt,
+            business_plan: userData.business_plan,
           };
           
           console.log('✅ User normalizado no loadUser:', normalizedUser);
