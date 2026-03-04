@@ -32,4 +32,11 @@ export const salesApi = {
     );
     return data;
   },
+
+  confirmPayment: async (establishmentId: string, id: string): Promise<Sale> => {
+    const { data } = await apiClient.post<Sale>(
+      `/business/establishments/${establishmentId}/sales/${id}/confirm-payment`
+    );
+    return data;
+  },
 };

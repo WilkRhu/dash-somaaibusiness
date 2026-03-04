@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useSales } from '@/lib/hooks/use-sales';
 import { SaleStatus, PaymentMethod } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
+import { salesApi } from '@/lib/api/sales';
+import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import Link from 'next/link';
 
 const statusLabels = {
@@ -23,12 +25,14 @@ const paymentLabels = {
 export default function SalesPage() {
   const [statusFilter, setStatusFilter] = useState<SaleStatus | 'all'>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState('');
   
   const { sales, isLoading, cancelSale, refetch } = useSales(
     statusFilter !== 'all' ? { status: statusFilter } : undefined
   );
+  const { currentEstablishment } = useEstablishmentStore();
 
   const handleCancelSale = async () => {
     if (!selectedSaleId || !cancelReason.trim()) {
@@ -45,6 +49,20 @@ export default function SalesPage() {
       refetch();
     } catch (error: any) {
       showToast(error.message || 'Erro ao cancelar venda', 'error');
+    }
+  };
+
+  const handleConfirmPayment = async () => {
+    if (!selectedSaleId || !currentEstablishment) return;
+
+    try {
+      await salesApi.confirmPayment(currentEstablishment.id, selectedSaleId);
+      showToast('Pagamento confirmado com sucesso', 'success');
+      setShowConfirmPaymentModal(false);
+      setSelectedSaleId(null);
+      refetch();
+    } catch (error: any) {
+      showToast(error.message || 'Erro ao confirmar pagamento', 'error');
     }
   };
 
@@ -129,6 +147,17 @@ export default function SalesPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 text-center">
+                      {sale.status === SaleStatus.PENDING && (
+                        <button
+                          onClick={() => {
+                            setSelectedSaleId(sale.id);
+                            setShowConfirmPaymentModal(true);
+                          }}
+                          className="text-green-600 hover:text-green-800 font-medium"
+                        >
+                          Confirmar Pagamento
+                        </button>
+                      )}
                       {sale.status === SaleStatus.COMPLETED && (
                         <button
                           onClick={() => {
@@ -191,6 +220,43 @@ export default function SalesPage() {
                 className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-semibold"
               >
                 Confirmar Cancelamento
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showConfirmPaymentModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-brand-navy">Confirmar Pagamento</h2>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-700 mb-4">
+                Tem certeza que deseja confirmar o pagamento desta venda?
+              </p>
+              <p className="text-sm text-gray-500">
+                O status será alterado de "Pendente" para "Concluída".
+              </p>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex gap-3">
+              <button
+                onClick={() => {
+                  setShowConfirmPaymentModal(false);
+                  setSelectedSaleId(null);
+                }}
+                className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleConfirmPayment}
+                className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
+              >
+                Confirmar
               </button>
             </div>
           </div>

@@ -16,7 +16,7 @@ import WeightInputModal from '@/components/sales/weight-input-modal';
 import SelectWeightProductModal from '@/components/sales/select-weight-product-modal';
 import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
-import { PaymentMethod } from '@/lib/types/sale';
+import { PaymentMethod, SaleStatus } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
 import { InventoryItem } from '@/lib/types/inventory';
 
@@ -39,6 +39,7 @@ export default function POSPage() {
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
   const { items: products, refetch: refetchInventory } = useInventory();
   const { createSale, isLoading } = useSales();
+  const { sales, refetch: refetchSales } = useSales({ limit: 5, status: SaleStatus.COMPLETED });
   const { setFullscreenMode } = useUIStore();
   const { currentEstablishment } = useEstablishmentStore();
 
@@ -205,6 +206,8 @@ export default function POSPage() {
       
       // Atualiza o estoque dos produtos após a venda
       refetchInventory();
+      // Atualiza a lista de vendas recentes
+      refetchSales();
     } catch (error: any) {
       showToast(error.message || 'Erro ao finalizar venda', 'error');
     }
@@ -664,6 +667,78 @@ export default function POSPage() {
                 </svg>
                 Desconto (F4)
               </button>
+            </div>
+          </div>
+
+          {/* Últimas Vendas */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Últimas 5 Vendas Concluídas
+            </h3>
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              {sales && sales.filter(sale => sale.items && sale.items.length > 0).length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-600">Nº</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-600">Data/Hora</th>
+                        <th className="px-2 py-2 text-left text-[10px] font-semibold text-gray-600">Pagamento</th>
+                        <th className="px-2 py-2 text-center text-[10px] font-semibold text-gray-600">Itens</th>
+                        <th className="px-2 py-2 text-right text-[10px] font-semibold text-gray-600">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {sales.filter(sale => sale.items && sale.items.length > 0).slice(0, 5).map((sale) => {
+                        const paymentLabels: Record<PaymentMethod, string> = {
+                          [PaymentMethod.CASH]: 'Dinheiro',
+                          [PaymentMethod.PIX]: 'PIX',
+                          [PaymentMethod.DEBIT_CARD]: 'Débito',
+                          [PaymentMethod.CREDIT_CARD]: 'Crédito',
+                          [PaymentMethod.BANK_TRANSFER]: 'Transferência',
+                        };
+                        
+                        return (
+                          <tr key={sale.id} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-2 py-2 font-medium text-gray-900">
+                              #{sale.saleNumber}
+                            </td>
+                            <td className="px-2 py-2 text-gray-600">
+                              {new Date(sale.createdAt).toLocaleString('pt-BR', {
+                                day: '2-digit',
+                                month: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </td>
+                            <td className="px-2 py-2">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-brand-blue/10 text-brand-blue">
+                                {paymentLabels[sale.paymentMethod as PaymentMethod] || sale.paymentMethod}
+                              </span>
+                            </td>
+                            <td className="px-2 py-2 text-center text-gray-600">
+                              {sale.items.length}
+                            </td>
+                            <td className="px-2 py-2 text-right font-semibold text-gray-900">
+                              R$ {Number(sale.total).toFixed(2)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-gray-400 text-xs">
+                  <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Nenhuma venda concluída ainda
+                </div>
+              )}
             </div>
           </div>
         </div>
