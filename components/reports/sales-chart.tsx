@@ -44,7 +44,7 @@ export function SalesChart({ data }: SalesChartProps) {
               borderRadius: '8px',
               padding: '12px'
             }}
-            formatter={(value: number | undefined, name: string) => {
+            formatter={(value: number | undefined, name: string | undefined) => {
               if (!value) return ['', ''];
               if (name === 'receita' || name === 'ticket') {
                 return [formatCurrency(value), name === 'receita' ? 'Receita' : 'Ticket Médio'];

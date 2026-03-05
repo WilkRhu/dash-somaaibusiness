@@ -100,8 +100,12 @@ export const useAuthStore = create<AuthStore>()(
           
           console.log('✅ User normalizado:', normalizedUser);
           
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('refreshToken', response.refreshToken);
+          if (response.token) {
+            localStorage.setItem('token', response.token);
+          }
+          if (response.refreshToken) {
+            localStorage.setItem('refreshToken', response.refreshToken);
+          }
           console.log('💾 Token salvo no localStorage');
           
           set({
@@ -143,8 +147,12 @@ export const useAuthStore = create<AuthStore>()(
             business_plan: user.business_plan,
           };
           
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('refreshToken', response.refreshToken);
+          if (response.token) {
+            localStorage.setItem('token', response.token);
+          }
+          if (response.refreshToken) {
+            localStorage.setItem('refreshToken', response.refreshToken);
+          }
           
           set({
             user: normalizedUser,

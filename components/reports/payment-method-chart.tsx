@@ -42,7 +42,7 @@ export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
             cx="50%"
             cy="50%"
             labelLine={false}
-            label={({ name, percentage }) => `${name}: ${percentage.toFixed(1)}%`}
+            label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(1)}%`}
             outerRadius={100}
             fill="#8884d8"
             dataKey="value"
@@ -58,9 +58,9 @@ export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
               borderRadius: '8px',
               padding: '12px'
             }}
-            formatter={(value: number, name: string, props: any) => [
-              `${formatCurrency(value)} (${props.payload.count} vendas)`,
-              name
+            formatter={(value: number | undefined, name: string | undefined, props: any) => [
+              `${formatCurrency(value || 0)} (${props.payload.count} vendas)`,
+              name || ''
             ]}
           />
           <Legend 

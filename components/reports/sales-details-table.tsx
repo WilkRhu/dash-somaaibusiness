@@ -10,7 +10,7 @@ interface SalesDetailsTableProps {
   filters: {
     startDate: string;
     endDate: string;
-    status: string;
+    status: 'completed' | 'cancelled' | 'pending' | '';
     paymentMethod?: string;
   };
 }
@@ -47,6 +47,7 @@ export function SalesDetailsTable({ filters }: SalesDetailsTableProps) {
       try {
         const response = await reportsApi.getSalesDetails(currentEstablishment.id, {
           ...filters,
+          status: filters.status || undefined,
           page,
           limit: 20,
         });
@@ -115,7 +116,7 @@ export function SalesDetailsTable({ filters }: SalesDetailsTableProps) {
                     {new Date(sale.createdAt).toLocaleString('pt-BR')}
                   </td>
                   <td className="py-3 px-4 text-brand-navy text-sm">
-                    {sale.customer?.name || '-'}
+                    {sale.customerId || '-'}
                   </td>
                   <td className="py-3 px-4 text-brand-navy text-sm">
                     {PAYMENT_LABELS[sale.paymentMethod] || sale.paymentMethod}
@@ -208,7 +209,7 @@ export function SalesDetailsTable({ filters }: SalesDetailsTableProps) {
                 <div>
                   <div className="text-sm text-brand-navy/70">Cliente</div>
                   <div className="font-medium text-brand-navy">
-                    {selectedSale.customer?.name || 'Não informado'}
+                    {selectedSale.customerId || 'Não informado'}
                   </div>
                 </div>
                 <div>

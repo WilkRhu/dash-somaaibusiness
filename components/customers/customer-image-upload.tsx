@@ -19,13 +19,13 @@ export function CustomerImageUpload({ currentImage, onImageChange }: CustomerIma
 
     // Validar tipo de arquivo
     if (!file.type.startsWith('image/')) {
-      showToast({ type: 'error', message: 'Por favor, selecione uma imagem válida' });
+      showToast('Por favor, selecione uma imagem válida', 'error');
       return;
     }
 
     // Validar tamanho (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      showToast({ type: 'error', message: 'A imagem deve ter no máximo 5MB' });
+      showToast('A imagem deve ter no máximo 5MB', 'error');
       return;
     }
 
@@ -41,12 +41,12 @@ export function CustomerImageUpload({ currentImage, onImageChange }: CustomerIma
         setIsLoading(false);
       };
       reader.onerror = () => {
-        showToast({ type: 'error', message: 'Erro ao processar imagem' });
+        showToast('Erro ao processar imagem', 'error');
         setIsLoading(false);
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      showToast({ type: 'error', message: 'Erro ao processar imagem' });
+      showToast('Erro ao processar imagem', 'error');
       setIsLoading(false);
     }
   };

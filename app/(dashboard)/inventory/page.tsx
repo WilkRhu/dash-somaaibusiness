@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useInventory } from '@/lib/hooks/use-inventory';
 import { useUIStore } from '@/lib/stores/ui-store';
-import { InventoryItem, InventoryFilters } from '@/lib/types/inventory';
+import { InventoryItem, InventoryFilters, AddProductDto } from '@/lib/types/inventory';
 import { ProductCard } from '@/components/inventory/product-card';
 import { AddProductForm } from '@/components/inventory/add-product-form';
 import { EditProductForm } from '@/components/inventory/edit-product-form';

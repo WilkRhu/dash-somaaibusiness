@@ -12,9 +12,9 @@ interface OfferCardProps {
 }
 
 export function OfferCard({ offer, onEdit, onViewAnalytics, onToggleActive }: OfferCardProps) {
-  const isExpired = new Date(offer.endDate) < new Date();
+  const isExpired = offer.endDate ? new Date(offer.endDate) < new Date() : false;
   const isUpcoming = new Date(offer.startDate) > new Date();
-  const daysRemaining = Math.ceil((new Date(offer.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+  const daysRemaining = offer.endDate ? Math.ceil((new Date(offer.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)) : null;
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
@@ -86,10 +86,12 @@ export function OfferCard({ offer, onEdit, onViewAnalytics, onToggleActive }: Of
               <span className="text-red-600 font-medium">Expirada</span>
             ) : isUpcoming ? (
               <span className="text-blue-600 font-medium">Inicia em {new Date(offer.startDate).toLocaleDateString('pt-BR')}</span>
-            ) : (
+            ) : daysRemaining !== null ? (
               <span>
                 {daysRemaining > 0 ? `${daysRemaining} dias restantes` : 'Último dia'}
               </span>
+            ) : (
+              <span>Sem data de término</span>
             )}
           </span>
         </div>

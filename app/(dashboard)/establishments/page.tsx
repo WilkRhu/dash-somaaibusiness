@@ -513,9 +513,9 @@ export default function EstablishmentsPage() {
         </div>
       )}
 
-      {showDeleteConfirm && (
-        <>
-          {console.log('🎨 Renderizando modal de confirmação')}
+      {showDeleteConfirm && selectedEstablishment && (() => {
+        const establishment = selectedEstablishment as Establishment;
+        return (
           <div 
             className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999]"
             onClick={(e) => {
@@ -528,7 +528,7 @@ export default function EstablishmentsPage() {
             <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-2xl" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl font-bold text-brand-navy mb-4">Confirmar Desativação</h3>
               <p className="text-gray-600 mb-6">
-                Tem certeza que deseja desativar o estabelecimento "{selectedEstablishment?.name}"? 
+                Tem certeza que deseja desativar o estabelecimento "{establishment.name}"? 
                 Esta ação pode ser revertida posteriormente.
               </p>
               <div className="flex gap-3">
@@ -555,8 +555,8 @@ export default function EstablishmentsPage() {
               </div>
             </div>
           </div>
-        </>
-      )}
+        );
+      })()}
     </div>
   );
 }
