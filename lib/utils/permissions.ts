@@ -9,37 +9,37 @@ export const PERMISSIONS = {
   VIEW_DASHBOARD: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // Estabelecimentos
-  MANAGE_ESTABLISHMENTS: [BusinessRole.OWNER],
+  MANAGE_ESTABLISHMENTS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // Estoque
-  MANAGE_INVENTORY: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK],
-  VIEW_INVENTORY: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK, BusinessRole.SALES],
+  MANAGE_INVENTORY: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK, BusinessRole.SALES, BusinessRole.MARKETING],
+  VIEW_INVENTORY: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK, BusinessRole.SALES, BusinessRole.MARKETING],
   
   // Vendas
-  MAKE_SALES: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES],
-  VIEW_SALES: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES],
+  MAKE_SALES: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
+  VIEW_SALES: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // PDV
-  ACCESS_POS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES],
+  ACCESS_POS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // Ofertas
-  MANAGE_OFFERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.MARKETING],
+  MANAGE_OFFERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.MARKETING, BusinessRole.SALES, BusinessRole.STOCK],
   
   // Clientes
-  MANAGE_CUSTOMERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES],
+  MANAGE_CUSTOMERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // Fornecedores
-  MANAGE_SUPPLIERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK],
+  MANAGE_SUPPLIERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK, BusinessRole.SALES, BusinessRole.MARKETING],
   
   // Relatórios
-  VIEW_REPORTS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.MARKETING],
-  VIEW_FULL_REPORTS: [BusinessRole.OWNER, BusinessRole.ADMIN],
+  VIEW_REPORTS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.MARKETING, BusinessRole.SALES, BusinessRole.STOCK],
+  VIEW_FULL_REPORTS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.MARKETING, BusinessRole.SALES, BusinessRole.STOCK],
   
   // Funcionários
-  MANAGE_MEMBERS: [BusinessRole.OWNER, BusinessRole.ADMIN],
+  MANAGE_MEMBERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
   
   // Assinatura
-  MANAGE_SUBSCRIPTION: [BusinessRole.OWNER],
+  MANAGE_SUBSCRIPTION: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
 };
 
 // Helper para verificar múltiplas permissões

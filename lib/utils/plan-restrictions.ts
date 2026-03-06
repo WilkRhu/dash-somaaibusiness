@@ -7,33 +7,8 @@ export interface RouteRestriction {
   description: string;
 }
 
-// Rotas restritas por plano
-export const ROUTE_RESTRICTIONS: RouteRestriction[] = [
-  {
-    path: '/reports',
-    minPlan: SubscriptionPlan.TRIAL,
-    label: 'Relatórios Avançados',
-    description: 'Acesse relatórios detalhados de vendas, produtos e desempenho',
-  },
-  {
-    path: '/offers',
-    minPlan: SubscriptionPlan.TRIAL,
-    label: 'Sistema de Ofertas',
-    description: 'Crie e gerencie ofertas e promoções para seus produtos',
-  },
-  {
-    path: '/customers',
-    minPlan: SubscriptionPlan.TRIAL,
-    label: 'Gestão de Clientes',
-    description: 'Cadastre e gerencie seus clientes com histórico de compras',
-  },
-  {
-    path: '/suppliers',
-    minPlan: SubscriptionPlan.TRIAL,
-    label: 'Gestão de Fornecedores',
-    description: 'Gerencie seus fornecedores e controle de compras',
-  },
-];
+// Rotas restritas por plano - TODAS LIBERADAS
+export const ROUTE_RESTRICTIONS: RouteRestriction[] = [];
 
 // Verificar se o usuário pode acessar uma rota
 export const canAccessRoute = (
