@@ -26,3 +26,4 @@ frontend:
 env:
   variables:
     NEXT_PUBLIC_API_URL: https://somaaibackend-zlehmg.fly.dev
+    NEXTAUTH_URL: https://somaaibackend-zlehmg.fly.dev
