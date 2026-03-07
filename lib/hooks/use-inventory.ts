@@ -2,12 +2,38 @@ import { useEffect, useState } from 'react';
 import { useInventoryStore } from '@/lib/stores/inventory-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { inventoryApi } from '@/lib/api/inventory';
+import { offlineDB } from '@/lib/offline-db';
+import { syncProducts } from '@/lib/offline-sync';
 import { AddProductDto, UpdateStockDto, InventoryFilters } from '@/lib/types/inventory';
 
 export function useInventory(filters?: InventoryFilters) {
   const { items, isLoading, error, setItems, addItem, updateItem, removeItem, setLoading, setError } = useInventoryStore();
   const { currentEstablishment } = useEstablishmentStore();
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Detectar status de conexão
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = async () => {
+      setIsOnline(true);
+      if (currentEstablishment?.id) {
+        await syncProducts(currentEstablishment.id);
+        fetchInventory();
+      }
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [currentEstablishment?.id]);
 
   const fetchInventory = async () => {
     if (!currentEstablishment) return;
@@ -15,8 +41,28 @@ export function useInventory(filters?: InventoryFilters) {
     try {
       setLoading(true);
       setError(null);
+
+      if (!isOnline) {
+        // Offline: carregar do cache
+        const cachedProducts = await offlineDB.getProducts();
+        setItems(cachedProducts);
+        setPagination({
+          total: cachedProducts.length,
+          page: 1,
+          limit: cachedProducts.length,
+          totalPages: 1,
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Online: carregar da API e salvar no cache
       const response = await inventoryApi.list(currentEstablishment.id, filters);
       setItems(response.data);
+      
+      // Salvar no cache para uso offline
+      await offlineDB.saveProducts(response.data);
+      
       setPagination({
         total: response.total || 0,
         page: response.page || 1,
@@ -24,7 +70,19 @@ export function useInventory(filters?: InventoryFilters) {
         totalPages: response.totalPages || 0,
       });
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Erro ao carregar estoque');
+      // Se der erro de rede, tentar carregar do cache
+      if (!navigator.onLine) {
+        const cachedProducts = await offlineDB.getProducts();
+        setItems(cachedProducts);
+        setPagination({
+          total: cachedProducts.length,
+          page: 1,
+          limit: cachedProducts.length,
+          totalPages: 1,
+        });
+      } else {
+        setError(err.response?.data?.message || 'Erro ao carregar estoque');
+      }
     } finally {
       setLoading(false);
     }

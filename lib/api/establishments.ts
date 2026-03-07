@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { Establishment, CreateEstablishmentDto } from '@/lib/types/establishment';
+import { Establishment, CreateEstablishmentDto, LoyaltySettings, UpdateLoyaltySettingsDto } from '@/lib/types/establishment';
 
 export const establishmentsApi = {
   list: async () => {
@@ -61,5 +61,20 @@ export const establishmentsApi = {
       { role }
     );
     return data;
+  },
+
+  getLoyaltySettings: async (establishmentId: string) => {
+    const response = await apiClient.get<{ success: boolean; data: LoyaltySettings }>(
+      `/business/establishments/${establishmentId}/loyalty-settings`
+    );
+    return response.data.data;
+  },
+
+  updateLoyaltySettings: async (establishmentId: string, dto: UpdateLoyaltySettingsDto) => {
+    const response = await apiClient.patch<{ success: boolean; data: Establishment; message: string }>(
+      `/business/establishments/${establishmentId}/loyalty-settings`,
+      dto
+    );
+    return response.data;
   },
 };

@@ -12,38 +12,79 @@ export enum SaleStatus {
   PENDING = 'pending',
 }
 
+export interface SaleItem {
+  id: string;
+  saleId: string;
+  itemId: string;
+  productName: string;
+  unitPrice: number;
+  quantity: number;
+  discount: number;
+  subtotal: number;
+  createdAt: string;
+}
+
+export interface Seller {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface Establishment {
+  id: string;
+  name: string;
+  cnpj: string;
+  address?: string;
+  phone?: string;
+}
+
 export interface Sale {
   id: string;
   establishmentId: string;
   saleNumber: string;
-  customerId?: string;
-  sellerId: string;
+  items: SaleItem[];
   subtotal: number;
   discount: number;
   total: number;
   paymentMethod: PaymentMethod;
   status: SaleStatus;
-  notes?: string;
-  items: SaleItem[];
+  customerId: string | null;
+  sellerId: string;
+  notes: string | null;
+  cancellationReason: string | null;
   createdAt: string;
+  updatedAt: string;
+  seller?: Seller;
+  establishment?: Establishment;
 }
 
-export interface SaleItem {
-  id: string;
-  inventoryItemId: string;
-  productName: string;
-  quantity: number;
+export interface CreateSaleItemDto {
+  itemId: string;
   unitPrice: number;
-  subtotal: number;
+  quantity: number;
+  discount?: number;
+  applyOffer?: boolean;  // Aplicar oferta ativa automaticamente
 }
 
 export interface CreateSaleDto {
-  customerId?: string;
-  items: {
-    inventoryItemId: string;
-    quantity: number;
-  }[];
-  discount?: number;
+  items: CreateSaleItemDto[];
   paymentMethod: PaymentMethod;
+  customerId?: string;
+  discount?: number;
   notes?: string;
+}
+
+export interface SalesFilters {
+  startDate?: string;
+  endDate?: string;
+  status?: SaleStatus;
+  page?: number;
+  limit?: number;
+}
+
+export interface SalesListResponse {
+  data: Sale[];
+  total: number;
+  page: number;
+  limit: number;
 }

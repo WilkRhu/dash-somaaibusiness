@@ -6,4 +6,5 @@ export { useInventoryStore } from './inventory-store';
 export { useSalesStore } from './sales-store';
 export { useOffersStore } from './offers-store';
 export { useCustomersStore } from './customers-store';
+export { useMembersStore } from './members-store';
 export { useUIStore } from './ui-store';

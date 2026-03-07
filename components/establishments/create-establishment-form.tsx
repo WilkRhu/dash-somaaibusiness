@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { maskCNPJ, maskPhone, maskCEP, unmask } from '@/lib/utils/format';
@@ -8,6 +8,9 @@ import { validateCNPJ } from '@/lib/utils/validation';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { establishmentsApi } from '@/lib/api/establishments';
+import { SubscriptionPlan, PLAN_LIMITS } from '@/lib/types/subscription';
+import { canCreateEstablishment } from '@/lib/utils/subscription';
+import { LimitReachedModal } from '@/components/subscription/limit-reached-modal';
 
 interface EstablishmentFormData {
   name: string;
@@ -24,17 +27,21 @@ interface EstablishmentFormData {
   latitude?: number;
   longitude?: number;
   description?: string;
+  cashRegistersCount?: number;
   logo?: string;
 }
 
 export function CreateEstablishmentForm() {
   const router = useRouter();
   const { addToast } = useUIStore();
-  const { token } = useAuthStore();
+  const { token, user } = useAuthStore();
   const [loading, setLoading] = useState(false);
   const [loadingCEP, setLoadingCEP] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [logoBase64, setLogoBase64] = useState<string | null>(null);
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [establishmentsCount, setEstablishmentsCount] = useState(0);
+  const [loadingLocation, setLoadingLocation] = useState(false);
   
   const [formData, setFormData] = useState<EstablishmentFormData>({
     name: '',
@@ -49,6 +56,9 @@ export function CreateEstablishmentForm() {
     state: '',
     zipCode: '',
     description: '',
+    cashRegistersCount: 1,
+    latitude: undefined,
+    longitude: undefined,
   });
 
   const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,8 +94,72 @@ export function CreateEstablishmentForm() {
     reader.readAsDataURL(file);
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      addToast({
+        type: 'error',
+        message: 'Geolocalização não é suportada pelo seu navegador',
+      });
+      return;
+    }
+
+    setLoadingLocation(true);
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setFormData({
+          ...formData,
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+        setLoadingLocation(false);
+        addToast({
+          type: 'success',
+          message: 'Localização obtida com sucesso!',
+          duration: 3000,
+        });
+      },
+      (error) => {
+        setLoadingLocation(false);
+        let errorMessage = 'Erro ao obter localização.';
+        
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage = 'Permissão de localização negada. Habilite nas configurações do navegador.';
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage = 'Localização indisponível no momento.';
+            break;
+          case error.TIMEOUT:
+            errorMessage = 'Tempo esgotado ao buscar localização.';
+            break;
+        }
+        
+        addToast({
+          type: 'error',
+          message: errorMessage,
+        });
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    );
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validar limite do plano
+    const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+    const limitCheck = canCreateEstablishment(establishmentsCount, userPlan);
+    
+    if (!limitCheck.allowed) {
+      setShowLimitModal(true);
+      return;
+    }
+    
     setLoading(true);
 
     // Validar CNPJ
@@ -114,6 +188,8 @@ export function CreateEstablishmentForm() {
         state: formData.state,
         zipCode: formData.zipCode, // Envia COM máscara
         description: formData.description,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         ...(logoBase64 && { logo: logoBase64 }),
       };
 
@@ -207,8 +283,34 @@ export function CreateEstablishmentForm() {
     }
   };
 
+  // Buscar contagem de estabelecimentos ao montar o componente
+  useEffect(() => {
+    const fetchEstablishmentsCount = async () => {
+      try {
+        const establishments = await establishmentsApi.list();
+        setEstablishmentsCount(establishments.length);
+      } catch (error) {
+        console.error('Erro ao buscar estabelecimentos:', error);
+      }
+    };
+    fetchEstablishmentsCount();
+  }, []);
+
+  const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+  const planLimits = PLAN_LIMITS[userPlan];
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <>
+      <LimitReachedModal
+        isOpen={showLimitModal}
+        onClose={() => setShowLimitModal(false)}
+        currentPlan={userPlan}
+        limitType="establishments"
+        currentLimit={planLimits.establishments || 0}
+        onUpgrade={() => router.push('/subscription')}
+      />
+      
+      <form onSubmit={handleSubmit} className="space-y-6">
       {/* Logo Upload */}
       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
         <h3 className="text-lg font-bold text-brand-navy mb-4">Logo do Estabelecimento</h3>
@@ -350,6 +452,25 @@ export function CreateEstablishmentForm() {
               placeholder="contato@estabelecimento.com"
             />
           </div>
+
+          <div>
+            <label className="block text-sm font-medium text-brand-navy mb-2">
+              Quantidade de Caixas Registradoras
+            </label>
+            <input
+              type="number"
+              name="cashRegistersCount"
+              value={formData.cashRegistersCount || 1}
+              onChange={handleChange}
+              min="1"
+              max="99"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
+              placeholder="1"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Número de caixas disponíveis para vendas
+            </p>
+          </div>
         </div>
 
         <div className="mt-4">
@@ -364,6 +485,75 @@ export function CreateEstablishmentForm() {
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
             placeholder="Descreva seu estabelecimento..."
           />
+        </div>
+
+        <div className="mt-6">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-medium text-brand-navy">
+              Localização (GPS) *
+            </label>
+            <button
+              type="button"
+              onClick={handleGetLocation}
+              disabled={loadingLocation}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium disabled:opacity-50"
+            >
+              {loadingLocation ? (
+                <>
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Obtendo...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Obter Localização Atual
+                </>
+              )}
+            </button>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Latitude *</label>
+              <input
+                type="number"
+                step="any"
+                required
+                value={formData.latitude || ''}
+                onChange={(e) => setFormData({ ...formData, latitude: parseFloat(e.target.value) || undefined })}
+                placeholder="-23.550520"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-600 mb-1">Longitude *</label>
+              <input
+                type="number"
+                step="any"
+                required
+                value={formData.longitude || ''}
+                onChange={(e) => setFormData({ ...formData, longitude: parseFloat(e.target.value) || undefined })}
+                placeholder="-46.633308"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue text-sm"
+              />
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-500 mt-2 flex items-start gap-2">
+            <svg className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span>
+              A localização GPS é obrigatória para funcionalidades de delivery e cálculo de distâncias. 
+              Clique no botão para capturar automaticamente ou insira manualmente as coordenadas.
+            </span>
+          </p>
         </div>
       </div>
 
@@ -532,5 +722,6 @@ export function CreateEstablishmentForm() {
         </button>
       </div>
     </form>
+    </>
   );
 }

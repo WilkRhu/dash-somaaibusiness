@@ -4,14 +4,11 @@ import { useEstablishments } from './use-establishments';
 
 export function useEstablishmentInit() {
   const { currentEstablishment, setCurrentEstablishment } = useEstablishmentStore();
-  const { establishments, isLoading } = useEstablishments();
+  const { establishments } = useEstablishments();
 
   useEffect(() => {
     // Se já tem um estabelecimento atual, não faz nada
     if (currentEstablishment) return;
-
-    // Se ainda está carregando, aguarda
-    if (isLoading) return;
 
     // Se não tem estabelecimentos, não faz nada
     if (establishments.length === 0) return;
@@ -29,7 +26,7 @@ export function useEstablishmentInit() {
 
     // Se não encontrou, usa o primeiro estabelecimento
     setCurrentEstablishment(establishments[0]);
-  }, [currentEstablishment, establishments, isLoading, setCurrentEstablishment]);
+  }, [currentEstablishment, establishments, setCurrentEstablishment]);
 
-  return { currentEstablishment, establishments, isLoading };
+  return { currentEstablishment, establishments };
 }

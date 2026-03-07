@@ -1,8 +1,9 @@
 'use client';
 
+import Link from 'next/link';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 
 interface HeaderProps {
@@ -13,6 +14,24 @@ export function Header({ onMenuClick }: HeaderProps) {
   const { user, logout } = useAuthStore();
   const { currentEstablishment } = useEstablishmentStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setUserMenuOpen(false);
+      }
+    };
+
+    if (userMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [userMenuOpen]);
 
   return (
     <header className="bg-white border-b border-gray-200 px-6 py-4 shadow-sm">
@@ -78,7 +97,7 @@ export function Header({ onMenuClick }: HeaderProps) {
           </button>
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -123,8 +142,9 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </p>
                 </div>
 
-                <a
+                <Link
                   href="/profile"
+                  onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,10 +156,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                     />
                   </svg>
                   Meu Perfil
-                </a>
+                </Link>
 
-                <a
+                <Link
                   href="/settings"
+                  onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -157,10 +178,11 @@ export function Header({ onMenuClick }: HeaderProps) {
                     />
                   </svg>
                   Configurações
-                </a>
+                </Link>
 
-                <a
+                <Link
                   href="/help"
+                  onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -172,7 +194,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                     />
                   </svg>
                   Ajuda
-                </a>
+                </Link>
 
                 <div className="border-t border-gray-200 mt-2 pt-2">
                   <button

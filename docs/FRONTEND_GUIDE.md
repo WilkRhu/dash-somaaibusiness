@@ -764,7 +764,7 @@ export const canAccess = (userRole: BusinessRole, requiredRoles: BusinessRole[])
 };
 
 export const PERMISSIONS = {
-  MANAGE_ESTABLISHMENT: [BusinessRole.OWNER, BusinessRole.ADMIN],
+  MANAGE_ESTABLISHMENT: [BusinessRole.OWNER],
   MANAGE_INVENTORY: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.STOCK],
   MAKE_SALES: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES],
   MANAGE_OFFERS: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.MARKETING],

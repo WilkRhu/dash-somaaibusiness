@@ -3,8 +3,17 @@
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Header } from '@/components/dashboard/header';
 import { ToastContainer } from '@/components/ui/toast';
+import { OfflineBanner } from '@/components/ui/offline-banner';
+import { TrialWelcomeModal } from '@/components/subscription/trial-welcome-modal';
+import { TrialBanner } from '@/components/subscription/trial-banner';
+import { UpgradeRequiredModal } from '@/components/subscription/upgrade-required-modal';
 import { useEstablishmentInit } from '@/lib/hooks/use-establishment-init';
+import { useTrialModal } from '@/lib/hooks/use-trial-modal';
+import { useRouteProtection } from '@/lib/hooks/use-route-protection';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { useUIStore } from '@/lib/stores/ui-store';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function DashboardLayout({
   children,
@@ -12,12 +21,39 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { isFullscreenMode } = useUIStore();
+  const { user } = useAuthStore();
+  const router = useRouter();
   
   // Inicializa o estabelecimento automaticamente
   useEstablishmentInit();
 
+  // Hook do modal de trial
+  const { showModal, closeModal, daysRemaining, isOnTrial } = useTrialModal();
+
+  // Hook de proteção de rotas
+  const { 
+    showUpgradeModal, 
+    closeModal: closeUpgradeModal, 
+    restriction,
+    userPlan 
+  } = useRouteProtection();
+
+  // Se estiver em modo fullscreen, renderiza apenas o conteúdo
+  if (isFullscreenMode) {
+    return (
+      <div className="h-screen overflow-hidden bg-gray-50">
+        <main className="h-full overflow-y-auto">
+          {children}
+        </main>
+        <ToastContainer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      <OfflineBanner />
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
@@ -29,11 +65,35 @@ export default function DashboardLayout({
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Banner de Trial */}
+        {isOnTrial && daysRemaining > 0 && (
+          <TrialBanner daysRemaining={daysRemaining} />
+        )}
+        
         <Header onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
         <main className="flex-1 overflow-y-auto p-4 lg:p-6">
           {children}
         </main>
       </div>
+
+      {/* Modal de Trial */}
+      <TrialWelcomeModal
+        isOpen={showModal}
+        onClose={closeModal}
+        daysRemaining={daysRemaining}
+      />
+
+      {/* Modal de Upgrade Necessário */}
+      {restriction && (
+        <UpgradeRequiredModal
+          isOpen={showUpgradeModal}
+          onClose={closeUpgradeModal}
+          featureName={restriction.label}
+          featureDescription={restriction.description}
+          requiredPlan={restriction.minPlan}
+          currentPlan={userPlan}
+        />
+      )}
 
       {/* Toast Container */}
       <ToastContainer />

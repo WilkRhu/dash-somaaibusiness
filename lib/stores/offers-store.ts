@@ -1,30 +1,15 @@
 import { create } from 'zustand';
-
-interface Offer {
-  id: string;
-  establishmentId: string;
-  title: string;
-  description?: string;
-  discountType: 'percentage' | 'fixed';
-  discountValue: number;
-  startDate: string;
-  endDate: string;
-  isActive: boolean;
-  inventoryItemIds?: string[];
-  createdAt: string;
-}
+import { Offer } from '@/lib/types/offers';
 
 interface OffersStore {
   offers: Offer[];
-  selectedOffer: Offer | null;
   isLoading: boolean;
   error: string | null;
   
   setOffers: (offers: Offer[]) => void;
   addOffer: (offer: Offer) => void;
-  updateOffer: (id: string, updates: Partial<Offer>) => void;
+  updateOffer: (id: string, offer: Offer) => void;
   removeOffer: (id: string) => void;
-  setSelectedOffer: (offer: Offer | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
@@ -32,27 +17,22 @@ interface OffersStore {
 
 export const useOffersStore = create<OffersStore>((set) => ({
   offers: [],
-  selectedOffer: null,
   isLoading: false,
   error: null,
-  
+
   setOffers: (offers) => set({ offers }),
   
   addOffer: (offer) => set((state) => ({
-    offers: [...state.offers, offer]
+    offers: [offer, ...state.offers],
   })),
   
-  updateOffer: (id, updates) => set((state) => ({
-    offers: state.offers.map((offer) =>
-      offer.id === id ? { ...offer, ...updates } : offer
-    )
+  updateOffer: (id, offer) => set((state) => ({
+    offers: state.offers.map((o) => (o.id === id ? offer : o)),
   })),
   
   removeOffer: (id) => set((state) => ({
-    offers: state.offers.filter((offer) => offer.id !== id)
+    offers: state.offers.filter((o) => o.id !== id),
   })),
-  
-  setSelectedOffer: (offer) => set({ selectedOffer: offer }),
   
   setLoading: (loading) => set({ isLoading: loading }),
   

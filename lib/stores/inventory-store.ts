@@ -30,9 +30,25 @@ export const useInventoryStore = create<InventoryStore>((set) => ({
   })),
   
   updateItem: (id, updates) => set((state) => ({
-    items: state.items.map((item) =>
-      item.id === id ? { ...item, ...updates } : item
-    )
+    items: state.items.map((item) => {
+      if (item.id === id) {
+        // Preservar arrays vazios e campos importantes que não vieram no update
+        const merged = { ...item, ...updates };
+        
+        // Se images não veio no update, manter o valor anterior
+        if (updates.images === undefined && item.images !== undefined) {
+          merged.images = item.images;
+        }
+        
+        // Se image não veio no update, manter o valor anterior
+        if (updates.image === undefined && item.image !== undefined) {
+          merged.image = item.image;
+        }
+        
+        return merged;
+      }
+      return item;
+    })
   })),
   
   removeItem: (id) => set((state) => ({
