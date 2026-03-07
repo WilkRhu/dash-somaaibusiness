@@ -102,9 +102,20 @@ export function Header({ onMenuClick }: HeaderProps) {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#4C99C2] to-[#7CBD6A] flex items-center justify-center text-white font-semibold">
-                {(user?.name || 'U').charAt(0).toUpperCase()}
-              </div>
+              {user?.avatar ? (
+                <Image
+                  src={user.avatar}
+                  alt={user.name || 'Avatar'}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#4C99C2] to-[#7CBD6A] flex items-center justify-center text-white font-semibold">
+                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="hidden md:block text-left">
                 <p className="text-sm font-semibold text-[#142D4A]">
                   {user?.name || 'Usuário'}
