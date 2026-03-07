@@ -8,6 +8,9 @@ import { useUIStore } from '@/lib/stores/ui-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offersApi } from '@/lib/api/offers';
+import { offlineDB, PendingSale } from '@/lib/offline-db';
+import { PaymentMethod } from '@/lib/types/sale';
+import { syncPendingSales } from '@/lib/offline-sync';
 import CheckoutModal from '@/components/sales/checkout-modal';
 import SalePreviewModal from '@/components/sales/sale-preview-modal';
 import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
@@ -42,6 +45,48 @@ export default function POSPage() {
   const { sales, refetch: refetchSales } = useSales({ limit: 5, status: SaleStatus.COMPLETED });
   const { setFullscreenMode } = useUIStore();
   const { currentEstablishment } = useEstablishmentStore();
+  const [isOnline, setIsOnline] = useState(true);
+  const [pendingSyncCount, setPendingSyncCount] = useState(0);
+  const [isClient, setIsClient] = useState(false);
+
+  // Detectar status de conexão (apenas no cliente)
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window === 'undefined') return;
+
+    setIsOnline(navigator.onLine);
+
+    const handleOnline = async () => {
+      setIsOnline(true);
+      const result = await syncPendingSales();
+      if (result.success > 0) {
+        showToast(`${result.success} venda(s) sincronizada(s)!`, 'success');
+        refetchSales();
+      }
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  // Contar vendas pendentes de sync
+  const [pendingSales, setPendingSales] = useState<PendingSale[]>([]);
+  
+  const loadPendingSales = async () => {
+    const sales = await offlineDB.getPendingSales();
+    setPendingSales(sales.filter(s => !s.synced));
+    setPendingSyncCount(sales.filter(s => !s.synced).length);
+  };
+
+  useEffect(() => {
+    loadPendingSales();
+  }, [items.length]);
 
   // Carregar ofertas ativas para os produtos
   useEffect(() => {
@@ -133,6 +178,12 @@ export default function POSPage() {
     e.preventDefault();
     if (!barcode.trim()) return;
 
+    if (!isOnline) {
+      showToast('Adicione itens apenas com conexão', 'warning');
+      setBarcode('');
+      return;
+    }
+
     const product = products.find((p: InventoryItem) => p.barcode === barcode);
     if (product) {
       // Verificar se há oferta ativa para este produto
@@ -176,10 +227,9 @@ export default function POSPage() {
               unitPrice: item.unitPrice,
               quantity: item.quantity,
               discount: item.discount,
-              applyOffer: offerCheck.hasOffer, // Aplica oferta se houver uma ativa
+              applyOffer: offerCheck.hasOffer,
             };
-          } catch (error) {
-            // Se houver erro ao verificar oferta, continua sem aplicar
+          } catch {
             return {
               itemId: item.itemId,
               unitPrice: item.unitPrice,
@@ -191,30 +241,90 @@ export default function POSPage() {
         })
       );
 
+      if (!isOnline) {
+        // Salvar venda offline
+        const pendingSale: PendingSale = {
+          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          items: itemsWithOffers.map(item => ({
+            productId: item.itemId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            total: item.unitPrice * item.quantity - item.discount,
+          })),
+          customerId: selectedCustomer?.id,
+          paymentMethod,
+          total,
+          establishmentId: currentEstablishment.id,
+          createdAt: new Date().toISOString(),
+          synced: false,
+        };
+
+        await offlineDB.addPendingSale(pendingSale);
+        setPendingSyncCount(prev => prev + 1);
+        
+        showToast('Venda salva offline! Será sincronizada quando online.', 'warning');
+        clear();
+        setSelectedCustomer(null);
+        setIsCheckoutOpen(false);
+        return;
+      }
+
+      // Online - enviar normalmente
       await createSale({
         items: itemsWithOffers,
         paymentMethod,
         discount,
         notes,
-        customerId: selectedCustomer?.id, // Adiciona o cliente se selecionado
+        customerId: selectedCustomer?.id,
       });
       
       showToast('Venda realizada com sucesso!', 'success');
       clear();
-      setSelectedCustomer(null); // Limpa o cliente selecionado
+      setSelectedCustomer(null);
       setIsCheckoutOpen(false);
       
-      // Atualiza o estoque dos produtos após a venda
       refetchInventory();
-      // Atualiza a lista de vendas recentes
       refetchSales();
     } catch (error: any) {
+      // Se der erro de rede, salvar offline
+      if (!navigator.onLine) {
+        const pendingSale: PendingSale = {
+          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          items: items.map(item => ({
+            productId: item.itemId,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            total: item.subtotal,
+          })),
+          customerId: selectedCustomer?.id,
+          paymentMethod,
+          total,
+          establishmentId: currentEstablishment?.id || '',
+          createdAt: new Date().toISOString(),
+          synced: false,
+        };
+
+        await offlineDB.addPendingSale(pendingSale);
+        setPendingSyncCount(prev => prev + 1);
+        
+        showToast('Erro de conexão! Venda salva offline.', 'warning');
+        clear();
+        setSelectedCustomer(null);
+        setIsCheckoutOpen(false);
+        return;
+      }
+      
       showToast(error.message || 'Erro ao finalizar venda', 'error');
     }
   };
 
   const handleAddCustomItem = async (customItem: { name: string; unitPrice: number; quantity: number }) => {
     try {
+      if (!isOnline) {
+        showToast('Adicione itens apenas com conexão', 'warning');
+        return;
+      }
+
       if (!currentEstablishment?.id) {
         showToast('Nenhum estabelecimento selecionado', 'error');
         return;
@@ -291,8 +401,23 @@ export default function POSPage() {
   return (
     <>
       <div className={`flex gap-4 ${isFullscreen ? 'h-screen p-6 bg-gray-100' : 'h-[calc(100vh-8rem)]'}`}>
+        {/* Indicador de status offline */}
+        {isClient && !isOnline && (
+          <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+            </svg>
+            <span>Offline</span>
+            {pendingSyncCount > 0 && (
+              <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
+                {pendingSyncCount} pendente{pendingSyncCount > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Indicador de Caixa Livre - Aparece apenas quando não há itens */}
-        {items.length === 0 && (
+        {isClient && items.length === 0 && isOnline && (
           <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
             <div className="w-3 h-3 bg-white rounded-full"></div>
             <span>Caixa Livre</span>
@@ -669,6 +794,51 @@ export default function POSPage() {
               </button>
             </div>
           </div>
+
+          {/* Vendas Offline Pendentes */}
+          {pendingSales.length > 0 && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg shadow p-4">
+              <h3 className="text-sm font-semibold text-orange-800 mb-3 flex items-center gap-2">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                Vendas Offline Pendentes ({pendingSales.length})
+              </h3>
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {pendingSales.map((sale) => (
+                  <div key={sale.id} className="bg-white rounded p-2 flex justify-between items-center text-sm">
+                    <div>
+                      <span className="font-medium text-gray-900">
+                        {new Date(sale.createdAt).toLocaleString('pt-BR', {
+                          day: '2-digit',
+                          month: '2-digit',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
+                      <span className="text-gray-500 ml-2">({sale.items.length} itens)</span>
+                    </div>
+                    <span className="font-semibold text-orange-600">
+                      R$ {sale.total.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={async () => {
+                  const result = await syncPendingSales();
+                  if (result.success > 0) {
+                    showToast(`${result.success} venda(s) sincronizada(s)!`, 'success');
+                    refetchSales();
+                    loadPendingSales();
+                  }
+                }}
+                className="mt-3 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-semibold text-sm"
+              >
+                Sincronizar Agora
+              </button>
+            </div>
+          )}
 
           {/* Últimas Vendas */}
           <div className="bg-white rounded-lg shadow p-4">

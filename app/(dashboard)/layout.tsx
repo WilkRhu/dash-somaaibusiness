@@ -3,6 +3,7 @@
 import { Sidebar } from '@/components/dashboard/sidebar';
 import { Header } from '@/components/dashboard/header';
 import { ToastContainer } from '@/components/ui/toast';
+import { OfflineBanner } from '@/components/ui/offline-banner';
 import { TrialWelcomeModal } from '@/components/subscription/trial-welcome-modal';
 import { TrialBanner } from '@/components/subscription/trial-banner';
 import { UpgradeRequiredModal } from '@/components/subscription/upgrade-required-modal';
@@ -52,6 +53,7 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-50">
+      <OfflineBanner />
       {/* Overlay for mobile */}
       {sidebarOpen && (
         <div
