@@ -22,7 +22,7 @@ function GoogleLoginContent({
   const router = useRouter();
 
   const login = useGoogleLogin({
-    onSuccess: async (credentialResponse) => {
+    onSuccess: async (credentialResponse: any) => {
       try {
         console.log('🔐 Google login iniciado...');
         const { data } = await apiClient.post('/auth/google/login', {

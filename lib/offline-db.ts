@@ -3,11 +3,23 @@ const DB_VERSION = 1;
 
 export interface Product {
   id: string;
+  establishmentId: string;
+  barcode?: string | null;
   name: string;
-  price: number;
-  imageUrl?: string;
-  category?: string;
-  stock?: number;
+  category?: string | null;
+  brand?: string | null;
+  costPrice: number;
+  salePrice: number;
+  quantity: number;
+  minQuantity: number;
+  unit: string;
+  expirationDate?: string | null;
+  image?: string | null;
+  images?: string[];
+  description?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface PendingSale {

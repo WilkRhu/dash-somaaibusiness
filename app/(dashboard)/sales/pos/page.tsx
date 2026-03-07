@@ -9,7 +9,6 @@ import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offersApi } from '@/lib/api/offers';
 import { offlineDB, PendingSale } from '@/lib/offline-db';
-import { PaymentMethod } from '@/lib/types/sale';
 import { syncPendingSales } from '@/lib/offline-sync';
 import CheckoutModal from '@/components/sales/checkout-modal';
 import SalePreviewModal from '@/components/sales/sale-preview-modal';
@@ -254,7 +253,7 @@ export default function POSPage() {
           customerId: selectedCustomer?.id,
           paymentMethod,
           total,
-          establishmentId: currentEstablishment.id,
+          establishmentId: currentEstablishment?.id || '',
           createdAt: new Date().toISOString(),
           synced: false,
         };
