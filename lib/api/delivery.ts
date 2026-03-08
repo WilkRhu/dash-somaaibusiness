@@ -1,6 +1,9 @@
 import apiClient from './client';
 import { DeliveryOrder, DeliveryZone, CreateDeliveryOrderDto } from '../types/delivery';
 
+// Re-export types for convenience
+export type { DeliveryOrder, DeliveryZone, CreateDeliveryOrderDto };
+
 class DeliveryService {
   private getBasePath(establishmentId: string) {
     return `/business/establishments/${establishmentId}/delivery`;

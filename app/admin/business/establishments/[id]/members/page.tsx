@@ -35,20 +35,20 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
 
   const getRoleLabel = (role: string) => {
     const labels: Record<string, string> = {
-      owner: 'Proprietário',
-      admin: 'Administrador',
-      manager: 'Gerente',
-      employee: 'Funcionário',
+      business_owner: 'Proprietário',
+      business_admin: 'Administrador',
+      business_manager: 'Gerente',
+      business_employee: 'Funcionário',
     };
     return labels[role] || role;
   };
 
   const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
-      owner: 'bg-purple-100 text-purple-800',
-      admin: 'bg-red-100 text-red-800',
-      manager: 'bg-blue-100 text-blue-800',
-      employee: 'bg-gray-100 text-gray-800',
+      business_owner: 'bg-purple-100 text-purple-800',
+      business_admin: 'bg-red-100 text-red-800',
+      business_manager: 'bg-blue-100 text-blue-800',
+      business_employee: 'bg-gray-100 text-gray-800',
     };
     return colors[role] || 'bg-gray-100 text-gray-800';
   };
@@ -61,15 +61,15 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
     return isActive ? 'Ativo' : 'Inativo';
   };
 
-  const roles = [...new Set(members.map(m => m.roles?.[0] || 'employee'))];
+  const roles = [...new Set(members.map(m => m.roles?.[0] || 'business_employee'))];
 
   const filteredMembers = members.filter(member => {
-    const memberRole = member.roles?.[0] || 'employee';
+    const memberRole = member.roles?.[0] || 'business_employee';
     if (roleFilter && memberRole !== roleFilter) return false;
     if (search) {
       const searchLower = search.toLowerCase();
-      const name = member.user?.name || member.name || '';
-      const email = member.user?.email || member.email || '';
+      const name = member.user?.name || '';
+      const email = member.user?.email || '';
       if (!name.toLowerCase().includes(searchLower) && !email.toLowerCase().includes(searchLower)) {
         return false;
       }
@@ -78,8 +78,8 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
   });
 
   const activeMembers = members.filter(m => m.isActive).length;
-  const ownerCount = members.filter(m => m.roles?.[0] === 'owner').length;
-  const adminCount = members.filter(m => m.roles?.[0] === 'admin').length;
+  const ownerCount = members.filter(m => m.roles?.[0] === 'business_owner').length;
+  const adminCount = members.filter(m => m.roles?.[0] === 'business_admin').length;
 
   return (
     <div className="p-6">
@@ -135,9 +135,10 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
           className="px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Todos os cargos</option>
-          {roles.map(role => (
-            <option key={role} value={role}>{getRoleLabel(role)}</option>
-          ))}
+          <option value="business_owner">Proprietário</option>
+          <option value="business_admin">Administrador</option>
+          <option value="business_manager">Gerente</option>
+          <option value="business_employee">Funcionário</option>
         </select>
       </div>
 
@@ -170,14 +171,14 @@ export default function MembersPage({ params }: { params: Promise<{ id: string }
               {filteredMembers.map((member) => (
                 <tr key={member.id} className="border-t border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4 font-medium text-gray-900">
-                    {member.user?.name || member.name || 'N/A'}
+                    {member.user?.name || 'N/A'}
                   </td>
                   <td className="py-3 px-4 text-gray-600">
-                    {member.user?.email || member.email || 'N/A'}
+                    {member.user?.email || 'N/A'}
                   </td>
                   <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${getRoleColor(member.roles?.[0] || 'employee')}`}>
-                      {getRoleLabel(member.roles?.[0] || 'employee')}
+                    <span className={`px-2 py-1 rounded-full text-sm font-medium ${getRoleColor(member.roles?.[0] || 'business_employee')}`}>
+                      {getRoleLabel(member.roles?.[0] || 'business_employee')}
                     </span>
                   </td>
                   <td className="py-3 px-4">

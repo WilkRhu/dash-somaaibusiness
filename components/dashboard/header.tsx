@@ -154,7 +154,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </div>
 
                 <Link
-                  href="/profile"
+                  href="/admin/profile"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >
@@ -170,7 +170,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </Link>
 
                 <Link
-                  href="/settings"
+                  href="/admin/settings"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >

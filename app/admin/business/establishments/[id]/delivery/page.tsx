@@ -33,10 +33,13 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
   const getStatusLabel = (status: string) => {
     const labels: Record<string, string> = {
       pending: 'Pendente',
-      picked_up: 'Retirado',
-      in_transit: 'Em trânsito',
+      confirmed: 'Confirmado',
+      preparing: 'Preparando',
+      ready_for_delivery: 'Pronto para entrega',
+      out_for_delivery: 'Em trânsito',
       delivered: 'Entregue',
       cancelled: 'Cancelado',
+      failed: 'Falhou',
     };
     return labels[status] || status;
   };
@@ -44,10 +47,13 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
       pending: 'bg-yellow-100 text-yellow-800',
-      picked_up: 'bg-blue-100 text-blue-800',
-      in_transit: 'bg-purple-100 text-purple-800',
+      confirmed: 'bg-blue-100 text-blue-800',
+      preparing: 'bg-orange-100 text-orange-800',
+      ready_for_delivery: 'bg-indigo-100 text-indigo-800',
+      out_for_delivery: 'bg-purple-100 text-purple-800',
       delivered: 'bg-green-100 text-green-800',
       cancelled: 'bg-red-100 text-red-800',
+      failed: 'bg-red-100 text-red-800',
     };
     return colors[status] || 'bg-gray-100 text-gray-800';
   };
@@ -90,7 +96,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
         <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
           <p className="text-sm text-purple-600">Em Trânsito</p>
           <p className="text-2xl font-bold text-purple-900">
-            {deliveries.filter(d => d.status === 'in_transit').length}
+            {deliveries.filter(d => d.status === 'out_for_delivery').length}
           </p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg border border-green-200">

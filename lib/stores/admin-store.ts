@@ -15,8 +15,8 @@ interface Ticket {
   ticketId: string;
   subject: string;
   description: string;
-  status: 'open' | 'pending' | 'resolved' | 'closed';
-  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: string;
+  priority: string;
   userId: string;
   userName?: string;
   assignedTo?: string;

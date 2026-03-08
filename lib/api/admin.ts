@@ -65,7 +65,7 @@ export const adminApi = {
     userData: Partial<{ name: string; email: string; role: string; isActive: boolean }>
   ): Promise<void> => {
     const token = getToken();
-    await apiClient.patch(`/admin/users/${userId}`, userData, {
+    await apiClient.put(`/admin/users/${userId}`, userData, {
       headers: { Authorization: `Bearer ${token}` },
     });
   },

@@ -12,7 +12,7 @@ interface ApiResponse<T> {
 }
 
 export const offersApi = {
-  list: async (establishmentId: string, filters?: OfferFilters) => {
+  list: async (establishmentId: string, filters?: OfferFilters): Promise<ApiResponse<Offer[]>> => {
     const response = await apiClient.get<Offer[] | ApiResponse<Offer[]>>(
       `/business/establishments/${establishmentId}/offers`,
       { params: filters }

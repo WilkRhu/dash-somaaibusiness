@@ -70,7 +70,7 @@ export default function InventoryPage({ params }: { params: Promise<{ id: string
     }).format(value);
   };
 
-  const getCategoryLabel = (category: string | null) => {
+  const getCategoryLabel = (category: string | null | undefined) => {
     if (!category) return '-';
     return category.charAt(0).toUpperCase() + category.slice(1);
   };

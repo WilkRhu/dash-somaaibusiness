@@ -75,7 +75,6 @@ function GoogleLoginContent({
       onSuccess={handleSuccess}
       onError={handleError}
       useOneTap
-      disabled={isLoading}
     />
   );
 }

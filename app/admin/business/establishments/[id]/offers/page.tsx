@@ -20,7 +20,7 @@ export default function AdminEstablishmentOffersPage({
     try {
       setIsLoading(true);
       const response = await offersApi.list(establishmentId, filters);
-      const offersData = Array.isArray(response.data) ? response.data : response.data?.data || [];
+      const offersData = response.data || [];
       setOffers(offersData);
       setError(null);
     } catch (err: any) {
