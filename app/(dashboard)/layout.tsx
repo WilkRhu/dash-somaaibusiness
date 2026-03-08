@@ -10,6 +10,7 @@ import { UpgradeRequiredModal } from '@/components/subscription/upgrade-required
 import { useEstablishmentInit } from '@/lib/hooks/use-establishment-init';
 import { useTrialModal } from '@/lib/hooks/use-trial-modal';
 import { useRouteProtection } from '@/lib/hooks/use-route-protection';
+import { useAdminProtection } from '@/lib/hooks/use-admin-protection';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useState } from 'react';
@@ -38,6 +39,9 @@ export default function DashboardLayout({
     restriction,
     userPlan 
   } = useRouteProtection();
+
+  // Proteger rotas do super_admin
+  useAdminProtection();
 
   // Se estiver em modo fullscreen, renderiza apenas o conteúdo
   if (isFullscreenMode) {

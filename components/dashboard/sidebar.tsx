@@ -190,11 +190,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
   }, []);
   
+  // super_admin vê tudo, independente das permissões do estabelecimento
+  const userGlobalRole = user?.role;
+  const isSuperAdmin = userGlobalRole === 'super_admin';
+  
   // Filtrar itens do menu baseado nas permissões do usuário
   const userRole = currentEstablishment?.role;
   const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
   
   const visibleMenuItems = menuItems.filter(item => {
+    // super_admin vê todos os itens
+    if (isSuperAdmin) return true;
+    
     // Se não tem role definido, mostra todos os itens (owner ou ainda carregando)
     if (!userRole) return true;
     return canAccess(userRole, item.requiredPermissions);

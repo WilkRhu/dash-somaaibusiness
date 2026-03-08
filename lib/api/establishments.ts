@@ -2,13 +2,13 @@ import apiClient from './client';
 import { Establishment, CreateEstablishmentDto, LoyaltySettings, UpdateLoyaltySettingsDto } from '@/lib/types/establishment';
 
 export const establishmentsApi = {
-  list: async () => {
-    const response = await apiClient.get<{ success: boolean; data: Establishment[] }>('/business/establishments');
+  list: async (): Promise<Establishment[]> => {
+    const response = await apiClient.get('/business/establishments');
     return response.data.data;
   },
 
-  getById: async (id: string) => {
-    const response = await apiClient.get<{ success: boolean; data: Establishment }>(`/business/establishments/${id}`);
+  getById: async (id: string): Promise<Establishment> => {
+    const response = await apiClient.get(`/business/establishments/${id}`);
     return response.data.data;
   },
 
