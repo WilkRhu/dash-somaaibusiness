@@ -31,7 +31,8 @@ function ScannerContent() {
 
   // Conectar ao WebSocket
   useEffect(() => {
-    const socket = io('http://localhost:3000/scanner', {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const socket = io(`${apiUrl}/scanner`, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
     });
