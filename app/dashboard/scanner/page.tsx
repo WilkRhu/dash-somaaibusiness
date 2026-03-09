@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface ScannedProduct {
   normalizedName: string;
@@ -31,10 +32,19 @@ function ScannerContent() {
 
   // Conectar ao WebSocket
   useEffect(() => {
+    const { user } = useAuthStore.getState();
+    const userId = user?.id || 'anonymous';
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    console.log(`[WS] Conectando como dashboard, User ID: ${userId}`);
+    
     const socket = io(`${apiUrl}/scanner`, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 5,
+      query: {
+        type: 'dashboard',
+        userId,
+      },
     });
 
     socket.on('connect', () => {
