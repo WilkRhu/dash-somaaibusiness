@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { profileApi, UserProfile } from '@/lib/api/profile';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useUIStore } from '@/lib/stores/ui-store';
-import { maskPhone } from '@/lib/utils/format';
+import { maskPhoneInternational } from '@/lib/utils/format';
 
 export default function ProfilePage() {
   const { user, setUser } = useAuthStore();
@@ -273,9 +273,9 @@ export default function ProfilePage() {
               <input
                 type="tel"
                 value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: maskPhone(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, phone: maskPhoneInternational(e.target.value) })}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                placeholder="(00) 00000-0000"
+                placeholder="+55 11 99999-9999"
               />
             </div>
 

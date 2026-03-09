@@ -239,4 +239,92 @@ export const adminApi = {
       { headers: { Authorization: `Bearer ${token}` } }
     );
   },
+
+  // Notifications
+  getNotifications: async (): Promise<Array<{
+    id: string;
+    title: string;
+    message: string;
+    type: 'info' | 'success' | 'warning' | 'error';
+    read: boolean;
+    createdAt: string;
+  }>> => {
+    const token = getToken();
+    const { data } = await apiClient.get('/admin/notifications', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  },
+
+  markNotificationAsRead: async (id: string): Promise<void> => {
+    const token = getToken();
+    await apiClient.patch(`/admin/notifications/${id}/read`, undefined, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  deleteNotification: async (id: string): Promise<void> => {
+    const token = getToken();
+    await apiClient.delete(`/admin/notifications/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  },
+
+  // Notification Deliveries
+  getNotificationDeliveries: async (filters?: {
+    userId?: string;
+    establishmentId?: string;
+    campaignId?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<{
+    deliveries: Array<{
+      id: string;
+      userId: string;
+      userName?: string;
+      establishmentId?: string;
+      establishmentName?: string;
+      campaignId?: string;
+      campaignTitle?: string;
+      title: string;
+      message: string;
+      status: 'sent' | 'failed' | 'pending';
+      sentAt?: string;
+      readAt?: string;
+      error?: string;
+    }>;
+    page: number;
+    totalPages: number;
+    total: number;
+  }> => {
+    const token = getToken();
+    const params = new URLSearchParams();
+    if (filters?.userId) params.append('userId', filters.userId);
+    if (filters?.establishmentId) params.append('establishmentId', filters.establishmentId);
+    if (filters?.campaignId) params.append('campaignId', filters.campaignId);
+    if (filters?.status) params.append('status', filters.status);
+    if (filters?.page) params.append('page', String(filters.page));
+    if (filters?.limit) params.append('limit', String(filters.limit));
+
+    const { data } = await apiClient.get(`/admin/notifications/deliveries?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  },
+
+  getNotificationDeliveriesSummary: async (): Promise<{
+    total: number;
+    sent: number;
+    failed: number;
+    pending: number;
+    byUser: Array<{ userId: string; userName: string; total: number; sent: number; failed: number }>;
+    byEstablishment: Array<{ establishmentId: string; establishmentName: string; total: number; sent: number; failed: number }>;
+  }> => {
+    const token = getToken();
+    const { data } = await apiClient.get('/admin/notifications/deliveries/summary', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return data;
+  },
 };

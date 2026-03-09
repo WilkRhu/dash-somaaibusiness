@@ -31,6 +31,7 @@ export default function SystemPage() {
   };
 
   const formatUptime = (seconds: number) => {
+    if (!seconds || isNaN(seconds)) return 'N/A';
     const days = Math.floor(seconds / 86400);
     const hours = Math.floor((seconds % 86400) / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -38,6 +39,7 @@ export default function SystemPage() {
   };
 
   const formatBytes = (bytes: number) => {
+    if (!bytes || isNaN(bytes)) return '0 GB';
     const gb = bytes / (1024 * 1024 * 1024);
     return `${gb.toFixed(2)} GB`;
   };
@@ -111,7 +113,7 @@ export default function SystemPage() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-500">CPU</p>
-                    <p className="text-xl font-bold text-gray-800">{systemInfo.cpu?.toFixed(1) ?? 'N/A'}%</p>
+                    <p className="text-xl font-bold text-gray-800">{systemInfo.cpu != null && !isNaN(systemInfo.cpu) ? `${systemInfo.cpu.toFixed(1)}%` : 'N/A'}</p>
                   </div>
                 </div>
               </div>
@@ -141,16 +143,16 @@ export default function SystemPage() {
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Usado</span>
-                    <span className="font-medium">{formatBytes(systemInfo.disk.used)}</span>
+                    <span className="font-medium">{formatBytes(systemInfo.disk?.used)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-500">Total</span>
-                    <span className="font-medium">{formatBytes(systemInfo.disk.total)}</span>
+                    <span className="font-medium">{formatBytes(systemInfo.disk?.total)}</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div
                       className="bg-green-500 h-2 rounded-full"
-                      style={{ width: `${systemInfo.disk.total ? (systemInfo.disk.used / systemInfo.disk.total) * 100 : 0}%` }}
+                      style={{ width: `${systemInfo.disk?.total ? (systemInfo.disk.used / systemInfo.disk.total) * 100 : 0}%` }}
                     ></div>
                   </div>
                 </div>

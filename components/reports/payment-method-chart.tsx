@@ -58,9 +58,9 @@ export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
               borderRadius: '8px',
               padding: '12px'
             }}
-            formatter={(value: number | undefined, name: string | undefined, props: any) => [
-              `${formatCurrency(value || 0)} (${props.payload.count} vendas)`,
-              name || ''
+            formatter={(value, name, props) => [
+              `${formatCurrency(value as number || 0)} (${props.payload.count} vendas)`,
+              name as string || ''
             ]}
           />
           <Legend 

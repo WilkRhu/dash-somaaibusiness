@@ -24,6 +24,7 @@
     "react-hook-form": "^7.71.2",
     "react-qr-barcode-scanner": "^2.1.23",
     "recharts": "^3.7.0",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"

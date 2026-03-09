@@ -25,15 +25,6 @@ const somaAiMenu = [
     ),
   },
   {
-    label: 'Compras',
-    href: '/admin/purchases',
-    icon: (
-      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-      </svg>
-    ),
-  },
-  {
     label: 'Relatórios',
     href: '/admin/reports',
     icon: (
@@ -104,8 +95,8 @@ function MenuSection({ title, icon, items, isExpanded, onToggle, pathname, onClo
               onClick={onClose}
               className={`flex items-center gap-3 px-4 py-2 ml-4 rounded-lg transition-colors text-sm ${
                 pathname === item.href || pathname.startsWith(item.href + '/')
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-50'
+                  ? 'bg-blue-500/10 text-blue-600'
+                  : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
               {item.icon}
@@ -143,7 +134,7 @@ export function AdminNavigation() {
       {/* Overlay mobile */}
       {isMobileMenuOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
+          className="lg:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}

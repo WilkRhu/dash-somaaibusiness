@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useInventory } from '@/lib/hooks/use-inventory';
 import { useSales } from '@/lib/hooks/use-sales';
@@ -10,6 +10,7 @@ import { inventoryApi } from '@/lib/api/inventory';
 import { offersApi } from '@/lib/api/offers';
 import { offlineDB, PendingSale } from '@/lib/offline-db';
 import { syncPendingSales } from '@/lib/offline-sync';
+import { io, Socket } from 'socket.io-client';
 import CheckoutModal from '@/components/sales/checkout-modal';
 import SalePreviewModal from '@/components/sales/sale-preview-modal';
 import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
@@ -47,6 +48,56 @@ export default function POSPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const [isAppConnected, setIsAppConnected] = useState(false);
+  const [lastAppScan, setLastAppScan] = useState<any>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  // WebSocket para receber scans do app mobile
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const socket = io('http://localhost:3000/scanner', {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
+    });
+
+    socket.on('connect', () => {
+      setIsAppConnected(true);
+      console.log('PDV connected to scanner WebSocket');
+    });
+
+    socket.on('disconnect', () => {
+      setIsAppConnected(false);
+    });
+
+    socket.on('scan-result', (result: any) => {
+      setLastAppScan(result);
+      
+      // Adicionar produto ao carrinho automaticamente
+      if (result.product && isOnline) {
+        const product = products.find((p: InventoryItem) => p.barcode === result.barcode);
+        if (product) {
+          const offer = activeOffers.get(product.id);
+          const salePrice = offer ? Number(offer.offerPrice) : Number(product.salePrice ?? 0);
+          
+          addItem({
+            itemId: product.id,
+            name: product.name,
+            quantity: 1,
+            unitPrice: salePrice,
+            discount: 0,
+          });
+          showToast(`App: ${product.name} adicionado`, 'success');
+        }
+      }
+    });
+
+    socketRef.current = socket;
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [products, activeOffers, isOnline]);
 
   // Detectar status de conexão (apenas no cliente)
   useEffect(() => {
@@ -420,6 +471,19 @@ export default function POSPage() {
           <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
             <div className="w-3 h-3 bg-white rounded-full"></div>
             <span>Caixa Livre</span>
+          </div>
+        )}
+
+        {/* Indicador de conexão com App Mobile */}
+        {isClient && (
+          <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-lg font-semibold">
+            <div className={`w-3 h-3 rounded-full ${isAppConnected ? 'bg-white animate-pulse' : 'bg-red-300'}`}></div>
+            <span>{isAppConnected ? 'App Conectado' : 'App Desconectado'}</span>
+            {lastAppScan && lastAppScan.product && (
+              <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
+                {lastAppScan.product.originalName?.substring(0, 15)}...
+              </span>
+            )}
           </div>
         )}
 

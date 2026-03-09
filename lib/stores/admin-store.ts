@@ -51,6 +51,40 @@ interface SystemInfo {
   };
 }
 
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  read: boolean;
+  createdAt: string;
+}
+
+interface NotificationDelivery {
+  id: string;
+  userId: string;
+  userName?: string;
+  establishmentId?: string;
+  establishmentName?: string;
+  campaignId?: string;
+  campaignTitle?: string;
+  title: string;
+  message: string;
+  status: 'sent' | 'failed' | 'pending';
+  sentAt?: string;
+  readAt?: string;
+  error?: string;
+}
+
+interface NotificationDeliveriesSummary {
+  total: number;
+  sent: number;
+  failed: number;
+  pending: number;
+  byUser: Array<{ userId: string; userName: string; total: number; sent: number; failed: number }>;
+  byEstablishment: Array<{ establishmentId: string; establishmentName: string; total: number; sent: number; failed: number }>;
+}
+
 interface AdminStats {
   totalUsers: number;
   totalTickets: number;
@@ -101,6 +135,20 @@ interface AdminStore {
   clearLogs: (daysToKeep?: number) => Promise<void>;
   createBackup: () => Promise<void>;
   restartService: (serviceName: string) => Promise<void>;
+
+  // Notifications
+  notifications: Notification[];
+  isLoadingNotifications: boolean;
+  fetchNotifications: () => Promise<void>;
+  markNotificationAsRead: (id: string) => Promise<void>;
+  deleteNotification: (id: string) => Promise<void>;
+
+  // Notification Deliveries
+  notificationDeliveries: NotificationDelivery[];
+  notificationDeliveriesSummary: NotificationDeliveriesSummary | null;
+  isLoadingDeliveries: boolean;
+  fetchNotificationDeliveries: (filters?: { userId?: string; establishmentId?: string; campaignId?: string; status?: string; page?: number; limit?: number }) => Promise<void>;
+  fetchNotificationDeliveriesSummary: () => Promise<void>;
 
   // Reports
   reports: Array<{ id: string; type: string; createdAt: string; status: string }>;
@@ -297,6 +345,74 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       const message = error instanceof Error ? error.message : 'Erro ao reiniciar serviço';
       set({ error: message });
       throw error;
+    }
+  },
+
+  // Notifications
+  notifications: [],
+  isLoadingNotifications: false,
+  fetchNotifications: async () => {
+    set({ isLoadingNotifications: true, error: null });
+    try {
+      const data = await adminApi.getNotifications();
+      set({ notifications: data, isLoadingNotifications: false });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar notificações';
+      set({ error: message, isLoadingNotifications: false });
+    }
+  },
+  markNotificationAsRead: async (id) => {
+    set({ error: null });
+    try {
+      await adminApi.markNotificationAsRead(id);
+      set((state) => ({
+        notifications: state.notifications.map((n) =>
+          n.id === id ? { ...n, read: true } : n
+        ),
+      }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao marcar notificação';
+      set({ error: message });
+      throw error;
+    }
+  },
+  deleteNotification: async (id) => {
+    set({ error: null });
+    try {
+      await adminApi.deleteNotification(id);
+      set((state) => ({
+        notifications: state.notifications.filter((n) => n.id !== id),
+      }));
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao excluir notificação';
+      set({ error: message });
+      throw error;
+    }
+  },
+
+  // Notification Deliveries
+  notificationDeliveries: [],
+  notificationDeliveriesSummary: null,
+  isLoadingDeliveries: false,
+  fetchNotificationDeliveries: async (filters) => {
+    set({ isLoadingDeliveries: true, error: null });
+    try {
+      const data = await adminApi.getNotificationDeliveries(filters);
+      set({ 
+        notificationDeliveries: data.deliveries,
+        isLoadingDeliveries: false 
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Erro ao carregar entregas';
+      set({ error: message, isLoadingDeliveries: false });
+    }
+  },
+  fetchNotificationDeliveriesSummary: async () => {
+    try {
+      const data = await adminApi.getNotificationDeliveriesSummary();
+      set({ notificationDeliveriesSummary: data });
+    } catch (error) {
+      console.error('Erro ao carregar resumo de entregas:', error);
     }
   },
 
