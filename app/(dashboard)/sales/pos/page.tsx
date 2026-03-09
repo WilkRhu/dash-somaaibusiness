@@ -329,13 +329,26 @@ export default function POSPage() {
       }
 
       // Online - enviar normalmente
-      await createSale({
+      const saleResult = await createSale({
         items: itemsWithOffers,
         paymentMethod,
         discount,
         notes,
         customerId: selectedCustomer?.id,
       });
+      
+      // Emitir evento de venda concluída para o WebSocket
+      if (socketRef.current?.connected && saleResult?.id) {
+        socketRef.current.emit('sale-completed', {
+          saleId: saleResult.id,
+          total,
+          items: items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.unitPrice,
+          })),
+        });
+      }
       
       showToast('Venda realizada com sucesso!', 'success');
       clear();
