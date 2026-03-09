@@ -6,6 +6,7 @@ import { useInventory } from '@/lib/hooks/use-inventory';
 import { useSales } from '@/lib/hooks/use-sales';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offersApi } from '@/lib/api/offers';
 import { offlineDB, PendingSale } from '@/lib/offline-db';
@@ -56,10 +57,17 @@ export default function POSPage() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
+    const { user } = useAuthStore.getState();
+    const userId = user?.id || 'anonymous';
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
     const socket = io(`${apiUrl}/scanner`, {
       transports: ['websocket', 'polling'],
       reconnectionAttempts: 3,
+      query: {
+        type: 'pdv',
+        userId,
+      },
     });
 
     socket.on('connect', () => {
