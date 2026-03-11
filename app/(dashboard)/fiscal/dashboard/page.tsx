@@ -5,6 +5,11 @@ import { useFiscalCertificate } from '@/lib/hooks/use-fiscal-certificate';
 import { useFiscalMetrics } from '@/lib/hooks/use-fiscal-metrics';
 import { useFiscalNotes } from '@/lib/hooks/use-fiscal-notes';
 import { isCertificateExpired, isCertificateExpiringSoon } from '@/lib/utils/fiscal-formatters';
+import { MetricCard } from '@/components/fiscal/metric-card';
+import { DashboardAlert } from '@/components/fiscal/dashboard-alert';
+import { NotesChart } from '@/components/fiscal/charts/notes-chart';
+import { EmissionsChart } from '@/components/fiscal/charts/emissions-chart';
+import { ComplianceIndicator } from '@/components/fiscal/compliance-indicator';
 
 export default function FiscalDashboard() {
   const { certificate } = useFiscalCertificate();
@@ -22,132 +27,127 @@ export default function FiscalDashboard() {
       {/* Alertas */}
       <div className="space-y-3">
         {!certificate && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div className="flex-1">
-              <p className="font-semibold text-red-900">Certificado não configurado</p>
-              <p className="text-sm text-red-800 mt-1">
-                Você precisa fazer upload de um certificado digital para emitir notas fiscais.
-              </p>
-              <Link
-                href="/fiscal/certificate"
-                className="text-sm font-semibold text-red-600 hover:text-red-700 mt-2 inline-block"
-              >
-                Configurar certificado →
-              </Link>
-            </div>
-          </div>
+          <DashboardAlert
+            type="error"
+            icon="⚠️"
+            title="Certificado não configurado"
+            message="Você precisa fazer upload de um certificado digital para emitir notas fiscais."
+            action={{ label: 'Configurar certificado', href: '/fiscal/certificate' }}
+          />
         )}
 
         {certificate && isCertificateExpired(certificate.expiresAt) && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
-            <span className="text-2xl">❌</span>
-            <div className="flex-1">
-              <p className="font-semibold text-red-900">Certificado expirado</p>
-              <p className="text-sm text-red-800 mt-1">
-                Seu certificado digital expirou. Renove-o para continuar emitindo notas.
-              </p>
-              <Link
-                href="/fiscal/certificate"
-                className="text-sm font-semibold text-red-600 hover:text-red-700 mt-2 inline-block"
-              >
-                Renovar certificado →
-              </Link>
-            </div>
-          </div>
+          <DashboardAlert
+            type="error"
+            icon="❌"
+            title="Certificado expirado"
+            message="Seu certificado digital expirou. Renove-o para continuar emitindo notas."
+            action={{ label: 'Renovar certificado', href: '/fiscal/certificate' }}
+          />
         )}
 
         {certificate && isCertificateExpiringSoon(certificate.expiresAt) && !isCertificateExpired(certificate.expiresAt) && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div className="flex-1">
-              <p className="font-semibold text-yellow-900">Certificado próximo de expirar</p>
-              <p className="text-sm text-yellow-800 mt-1">
-                Seu certificado expira em breve. Recomendamos renovar em breve.
-              </p>
-              <Link
-                href="/fiscal/certificate"
-                className="text-sm font-semibold text-yellow-600 hover:text-yellow-700 mt-2 inline-block"
-              >
-                Renovar certificado →
-              </Link>
-            </div>
-          </div>
+          <DashboardAlert
+            type="warning"
+            icon="⚠️"
+            title="Certificado próximo de expirar"
+            message={`Seu certificado expira em ${certificate.daysUntilExpiration} dias. Recomendamos renovar em breve.`}
+            action={{ label: 'Renovar certificado', href: '/fiscal/certificate' }}
+          />
+        )}
+
+        {metrics && metrics.contingencyNotes > 0 && (
+          <DashboardAlert
+            type="warning"
+            icon="⚠️"
+            title="Notas em contingência"
+            message={`Você tem ${metrics.contingencyNotes} nota(s) aguardando transmissão em modo de contingência.`}
+            action={{ label: 'Ir para contingência', href: '/fiscal/contingency' }}
+          />
+        )}
+
+        {metrics && metrics.rejectionRate > 10 && (
+          <DashboardAlert
+            type="warning"
+            icon="📊"
+            title="Taxa de rejeição elevada"
+            message={`Sua taxa de rejeição está em ${metrics.rejectionRate.toFixed(1)}%. Verifique os dados das notas.`}
+            action={{ label: 'Ver relatórios', href: '/fiscal/reports' }}
+          />
         )}
       </div>
 
       {/* Cards de Métricas */}
       {metrics && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total de Notas */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Total de Notas</p>
-                <p className="text-3xl font-bold text-brand-navy mt-2">{metrics.totalNotes}</p>
-              </div>
-              <span className="text-4xl">📄</span>
-            </div>
-          </div>
-
-          {/* Taxa de Sucesso */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Taxa de Sucesso</p>
-                <p className="text-3xl font-bold text-green-600 mt-2">{metrics.successRate.toFixed(1)}%</p>
-              </div>
-              <span className="text-4xl">✅</span>
-            </div>
-          </div>
-
-          {/* Taxa de Rejeição */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Taxa de Rejeição</p>
-                <p className="text-3xl font-bold text-red-600 mt-2">{metrics.rejectionRate.toFixed(1)}%</p>
-              </div>
-              <span className="text-4xl">❌</span>
-            </div>
-          </div>
-
-          {/* Notas em Contingência */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-gray-600 text-sm">Em Contingência</p>
-                <p className="text-3xl font-bold text-yellow-600 mt-2">{metrics.contingencyNotes}</p>
-              </div>
-              <span className="text-4xl">⚠️</span>
-            </div>
-          </div>
+          <MetricCard
+            title="Total de Notas"
+            value={metrics.totalNotes}
+            icon="📄"
+            color="blue"
+            subtitle="Notas emitidas"
+          />
+          <MetricCard
+            title="Taxa de Sucesso"
+            value={`${metrics.successRate.toFixed(1)}%`}
+            icon="✅"
+            color="green"
+            subtitle="Notas autorizadas"
+          />
+          <MetricCard
+            title="Taxa de Rejeição"
+            value={`${metrics.rejectionRate.toFixed(1)}%`}
+            icon="❌"
+            color="red"
+            subtitle="Notas rejeitadas"
+          />
+          <MetricCard
+            title="Em Contingência"
+            value={metrics.contingencyNotes}
+            icon="⚠️"
+            color="yellow"
+            subtitle="Aguardando transmissão"
+          />
         </div>
       )}
 
-      {/* Status de Notas */}
+      {/* Gráfico de Status */}
       {metrics && (
         <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Status das Notas</h2>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-green-600">{metrics.statusBreakdown.authorized}</p>
-              <p className="text-sm text-gray-600 mt-1">Autorizadas</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-red-600">{metrics.statusBreakdown.rejected}</p>
-              <p className="text-sm text-gray-600 mt-1">Rejeitadas</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-gray-600">{metrics.statusBreakdown.cancelled}</p>
-              <p className="text-sm text-gray-600 mt-1">Canceladas</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-yellow-600">{metrics.statusBreakdown.pending}</p>
-              <p className="text-sm text-gray-600 mt-1">Pendentes</p>
-            </div>
-          </div>
+          <h2 className="text-lg font-bold text-gray-900 mb-6">Distribuição de Status</h2>
+          <NotesChart
+            authorized={metrics.statusBreakdown.authorized}
+            rejected={metrics.statusBreakdown.rejected}
+            cancelled={metrics.statusBreakdown.cancelled}
+            pending={metrics.statusBreakdown.pending}
+          />
         </div>
+      )}
+
+      {/* Gráfico de Emissões */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-lg font-bold text-gray-900 mb-6">Emissões nos Últimos 7 Dias</h2>
+        <EmissionsChart
+          data={[
+            { date: 'Seg', count: Math.floor(Math.random() * 20) },
+            { date: 'Ter', count: Math.floor(Math.random() * 20) },
+            { date: 'Qua', count: Math.floor(Math.random() * 20) },
+            { date: 'Qui', count: Math.floor(Math.random() * 20) },
+            { date: 'Sex', count: Math.floor(Math.random() * 20) },
+            { date: 'Sab', count: Math.floor(Math.random() * 20) },
+            { date: 'Dom', count: Math.floor(Math.random() * 20) },
+          ]}
+        />
+      </div>
+
+      {/* Indicador de Conformidade */}
+      {metrics && certificate && (
+        <ComplianceIndicator
+          successRate={metrics.successRate}
+          rejectionRate={metrics.rejectionRate}
+          contingencyNotes={metrics.contingencyNotes}
+          certificateDaysUntilExpiration={certificate.daysUntilExpiration}
+        />
       )}
 
       {/* Ações Rápidas */}

@@ -7,6 +7,8 @@ const fiscalMenuItems = [
   { href: '/fiscal/dashboard', label: 'Dashboard', icon: '📊' },
   { href: '/fiscal/certificate', label: 'Certificado', icon: '📋' },
   { href: '/fiscal/notes', label: 'Notas Fiscais', icon: '📄' },
+  { href: '/fiscal/disablement', label: 'Inutilizar Números', icon: '🚫' },
+  { href: '/fiscal/contingency', label: 'Contingência', icon: '⚠️' },
   { href: '/fiscal/reports', label: 'Relatórios', icon: '📈' },
 ];
 
