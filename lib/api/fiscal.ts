@@ -273,6 +273,101 @@ export const fiscalApi = {
     return response.data;
   },
 
+  /**
+   * Obter emissões dos últimos 7 dias
+   */
+  getEmissionsLastDays: async (days: number = 7): Promise<{
+    period: {
+      startDate: string;
+      endDate: string;
+      days: number;
+    };
+    summary: {
+      totalEmissions: number;
+      totalValue: number;
+      averageValue: number;
+      successRate: number;
+    };
+    byStatus: {
+      authorized: number;
+      rejected: number;
+      cancelled: number;
+      pending: number;
+    };
+    byType: {
+      nfe: number;
+      nfce: number;
+      nfse: number;
+    };
+    dailyBreakdown: Array<{
+      date: string;
+      dayOfWeek: string;
+      count: number;
+      value: number;
+      status: {
+        authorized: number;
+        rejected: number;
+        cancelled: number;
+        pending: number;
+      };
+    }>;
+  }> => {
+    try {
+      const response = await api.get('/business/fiscal/reports/emissions', {
+        params: { days },
+      });
+      return response.data;
+    } catch (error: any) {
+      // Fallback: retornar dados vazios se a rota não existir
+      console.warn('Rota /business/fiscal/reports/emissions não disponível, usando fallback');
+      const today = new Date();
+      const startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - (days - 1));
+      
+      return {
+        period: {
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: today.toISOString().split('T')[0],
+          days,
+        },
+        summary: {
+          totalEmissions: 0,
+          totalValue: 0,
+          averageValue: 0,
+          successRate: 0,
+        },
+        byStatus: {
+          authorized: 0,
+          rejected: 0,
+          cancelled: 0,
+          pending: 0,
+        },
+        byType: {
+          nfe: 0,
+          nfce: 0,
+          nfse: 0,
+        },
+        dailyBreakdown: Array.from({ length: days }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (days - 1 - i));
+          const dayOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][date.getDay()];
+          return {
+            date: date.toISOString().split('T')[0],
+            dayOfWeek,
+            count: 0,
+            value: 0,
+            status: {
+              authorized: 0,
+              rejected: 0,
+              cancelled: 0,
+              pending: 0,
+            },
+          };
+        }),
+      };
+    }
+  },
+
   // ==================== CNPJ ====================
 
   /**

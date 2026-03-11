@@ -8,7 +8,7 @@ interface CertificateUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess?: () => void;
-  onUpload: (file: File, password: string) => Promise<void>;
+  onUpload: (file: File, password: string) => Promise<any>;
   isLoading?: boolean;
 }
 

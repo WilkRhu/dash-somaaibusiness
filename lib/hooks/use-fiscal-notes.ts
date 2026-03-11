@@ -2,13 +2,14 @@
 
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { fiscalApi } from '@/lib/api/fiscal';
 import {
   FiscalNote,
   FiscalNoteFilters,
   FiscalNoteData,
   CorrectionData,
+  FiscalNoteStatus,
 } from '@/lib/types/fiscal';
 
 interface UseFiscalNotesOptions {
@@ -102,7 +103,7 @@ export function useFiscalNotes(options: UseFiscalNotesOptions = {}) {
           note.id === id
             ? {
                 ...note,
-                status: 'cancelled' as const,
+                status: FiscalNoteStatus.CANCELLED,
                 cancellationReason: reason,
                 cancelledAt: new Date(),
               }
@@ -222,7 +223,7 @@ export function useFiscalNotes(options: UseFiscalNotesOptions = {}) {
   }, [fetchNotes]);
 
   // Auto-fetch ao montar
-  React.useEffect(() => {
+  useEffect(() => {
     if (autoFetch) {
       fetchNotes();
     }

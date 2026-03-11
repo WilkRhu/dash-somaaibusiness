@@ -250,3 +250,34 @@ export function formatCertificateType(type: string): string {
   };
   return typeMap[type] || type;
 }
+
+
+/**
+ * Verifica se é possível fazer correção em uma nota
+ * @param noteStatus - Status da nota fiscal
+ * @returns true se é possível fazer correção
+ */
+export function canMakeCorrection(noteStatus: string): boolean {
+  // Só é possível fazer correção em notas autorizadas
+  return noteStatus === 'authorized';
+}
+
+/**
+ * Verifica se é possível cancelar uma nota
+ * @param noteStatus - Status da nota fiscal
+ * @returns true se é possível cancelar
+ */
+export function canCancelNote(noteStatus: string): boolean {
+  // Não é possível cancelar notas já canceladas ou rejeitadas
+  return noteStatus !== 'cancelled' && noteStatus !== 'rejected';
+}
+
+/**
+ * Verifica se é possível reenviar uma nota por email
+ * @param noteStatus - Status da nota fiscal
+ * @returns true se é possível reenviar
+ */
+export function canResendEmail(noteStatus: string): boolean {
+  // Só é possível reenviar notas autorizadas
+  return noteStatus === 'authorized';
+}

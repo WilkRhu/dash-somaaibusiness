@@ -77,7 +77,7 @@ export default function CorrectionPage() {
     );
   }
 
-  const canMakeNewCorrection = canMakeCorrection(note.createdAt) && corrections.length < 20;
+  const canMakeNewCorrection = canMakeCorrection(note.status) && corrections.length < 20;
 
   return (
     <div className="space-y-6">

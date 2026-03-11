@@ -33,7 +33,7 @@ interface FormData {
 
 export function EmitNoteForm({ onSubmit, isLoading = false }: EmitNoteFormProps) {
   const [formData, setFormData] = useState<FormData>({
-    type: 'nfce',
+    type: FiscalNoteType.NFCE,
     cpfCnpj: '',
     name: '',
     email: '',
@@ -195,7 +195,7 @@ export function EmitNoteForm({ onSubmit, isLoading = false }: EmitNoteFormProps)
       
       // Limpar formulário
       setFormData({
-        type: 'nfce',
+        type: FiscalNoteType.NFCE,
         cpfCnpj: '',
         name: '',
         email: '',

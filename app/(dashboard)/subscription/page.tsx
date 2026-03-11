@@ -112,14 +112,15 @@ export default function SubscriptionPage() {
                 Recomendado
               </div>
             )}
-            {status?.currentPlan === plan.id && (
+            {status?.currentPlan === plan.id ? (
               <div className="bg-green-500 text-white text-center py-2 text-sm font-semibold">
                 Plano Atual
               </div>
-            )}
+            ) : null}
 
             <div className="p-6">
               <h3 className="text-2xl font-bold text-brand-navy mb-2">{plan.name}</h3>
+              <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
               
               <div className="mb-6">
                 {plan.price === null ? (
@@ -131,7 +132,7 @@ export default function SubscriptionPage() {
                     <span className="text-3xl font-bold text-brand-navy">
                       R$ {plan.price.toFixed(2)}
                     </span>
-                    <span className="text-gray-600">/mês</span>
+                    <span className="text-gray-600">/{plan.interval === 'lifetime' ? 'vitalício' : 'mês'}</span>
                   </div>
                 )}
               </div>

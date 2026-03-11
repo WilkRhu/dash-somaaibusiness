@@ -1,56 +1,89 @@
-import apiClient from './client';
-
-export interface SubscriptionStatus {
-  currentPlan: 'FREE' | 'BASIC' | 'PREMIUM' | 'ENTERPRISE';
-  isOnTrial: boolean;
-  trialEndsAt: string | null;
-  trialDaysRemaining: number;
-  limits: {
-    establishments: number;
-    employees: number;
-    products: number;
-  };
-  usage: {
-    establishments: number;
-  };
-  canCreateEstablishment: boolean;
-}
+import { getAuthToken } from '@/lib/auth/get-token';
 
 export interface PlanInfo {
   id: string;
   name: string;
   price: number | null;
-  interval: 'lifetime' | 'monthly' | 'custom';
+  interval: string;
+  description: string;
+  recommended?: boolean;
+  contactSales?: boolean;
   features: string[];
   limits: {
     establishments: number;
     employees: number;
     products: number;
   };
-  recommended?: boolean;
-  contactSales?: boolean;
+}
+
+export interface SubscriptionStatus {
+  currentPlan: string;
+  isOnTrial: boolean;
+  trialDaysRemaining: number;
+  usage: {
+    establishments: number;
+    employees: number;
+    products: number;
+  };
+  limits: {
+    establishments: number;
+    employees: number;
+    products: number;
+  };
+}
+
+const API_BASE = '/api/business/subscription';
+
+async function fetchWithAuth(url: string, options: RequestInit = {}) {
+  const token = await getAuthToken();
+  
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  
+  // Se a resposta tem formato { success, data }, retorna apenas data
+  if (data.success && data.data) {
+    return data.data;
+  }
+  
+  return data;
 }
 
 export const subscriptionApi = {
-  // Ativar trial de 10 dias
-  activateTrial: async (): Promise<{ success: boolean; message: string }> => {
-    const response = await apiClient.post<{ success: boolean; message: string }>(
-      '/business/subscription/activate-trial'
-    );
-    return response.data;
+  async getPlans(): Promise<PlanInfo[]> {
+    return fetchWithAuth(`${API_BASE}/plans`);
   },
 
-  getStatus: async (): Promise<SubscriptionStatus> => {
-    const response = await apiClient.get<{ success: boolean; data: SubscriptionStatus }>(
-      '/business/subscription/status'
-    );
-    return response.data.data;
+  async getStatus(): Promise<SubscriptionStatus> {
+    return fetchWithAuth(`${API_BASE}/status`);
   },
 
-  getPlans: async (): Promise<PlanInfo[]> => {
-    const response = await apiClient.get<{ success: boolean; data: PlanInfo[] }>(
-      '/business/subscription/plans'
-    );
-    return response.data.data;
+  async createPayment(planId: string) {
+    return fetchWithAuth(`${API_BASE}/create-payment`, {
+      method: 'POST',
+      body: JSON.stringify({ planId }),
+    });
+  },
+
+  async activateTrial() {
+    return fetchWithAuth(`${API_BASE}/activate-trial`, {
+      method: 'POST',
+    });
   },
 };

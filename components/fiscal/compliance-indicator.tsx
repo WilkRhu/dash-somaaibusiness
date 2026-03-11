@@ -48,8 +48,8 @@ export function ComplianceIndicator({
   const status = getStatus();
 
   return (
-    <div className="bg-white rounded-lg shadow p-6">
-      <h2 className="text-lg font-bold text-gray-900 mb-6">Indicador de Conformidade</h2>
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+      <h2 className="text-lg font-bold text-brand-navy mb-6">Indicador de Conformidade</h2>
 
       <div className="space-y-6">
         {/* Score */}
@@ -84,24 +84,36 @@ export function ComplianceIndicator({
             {/* Issues */}
             <div className="mt-4 space-y-2 text-sm">
               {successRate < 95 && (
-                <p className="text-yellow-700">
-                  ⚠️ Taxa de sucesso abaixo de 95% ({successRate.toFixed(1)}%)
-                </p>
+                <div className="flex items-center gap-2 text-yellow-700">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Taxa de sucesso abaixo de 95% ({successRate.toFixed(1)}%)
+                </div>
               )}
               {rejectionRate > 5 && (
-                <p className="text-yellow-700">
-                  ⚠️ Taxa de rejeição acima de 5% ({rejectionRate.toFixed(1)}%)
-                </p>
+                <div className="flex items-center gap-2 text-yellow-700">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Taxa de rejeição acima de 5% ({rejectionRate.toFixed(1)}%)
+                </div>
               )}
               {contingencyNotes > 0 && (
-                <p className="text-yellow-700">
-                  ⚠️ {contingencyNotes} nota(s) em contingência
-                </p>
+                <div className="flex items-center gap-2 text-yellow-700">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {contingencyNotes} nota(s) em contingência
+                </div>
               )}
               {certificateDaysUntilExpiration < 30 && (
-                <p className="text-yellow-700">
-                  ⚠️ Certificado expira em {certificateDaysUntilExpiration} dias
-                </p>
+                <div className="flex items-center gap-2 text-yellow-700">
+                  <svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  Certificado expira em {certificateDaysUntilExpiration} dias
+                </div>
               )}
             </div>
           </div>
@@ -123,7 +135,7 @@ export function ComplianceIndicator({
           </div>
           <div>
             <p className="text-xs text-gray-600">Certificado</p>
-            <p className="text-lg font-bold text-blue-600 mt-1">{certificateDaysUntilExpiration}d</p>
+            <p className="text-lg font-bold text-brand-blue mt-1">{certificateDaysUntilExpiration}d</p>
           </div>
         </div>
       </div>

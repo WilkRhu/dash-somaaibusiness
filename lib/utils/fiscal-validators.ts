@@ -63,7 +63,7 @@ export function validateCNPJ(cnpj: string): boolean {
   let pos = size - 7;
 
   for (let i = size; i >= 1; i--) {
-    sum += numbers_array.charAt(size - i) * pos--;
+    sum += parseInt(numbers_array.charAt(size - i)) * pos--;
     if (pos < 2) pos = 9;
   }
 
@@ -78,7 +78,7 @@ export function validateCNPJ(cnpj: string): boolean {
   pos = size - 7;
 
   for (let i = size; i >= 1; i--) {
-    sum += numbers_array.charAt(size - i) * pos--;
+    sum += parseInt(numbers_array.charAt(size - i)) * pos--;
     if (pos < 2) pos = 9;
   }
 
@@ -302,7 +302,7 @@ export function validateCertificateFile(file: File): boolean {
   const maxSize = 5 * 1024 * 1024; // 5MB
 
   const extension = file.name.split('.').pop()?.toLowerCase();
-  const isValidExtension = extension && validExtensions.includes(extension);
+  const isValidExtension = !!extension && validExtensions.includes(extension);
   const isValidSize = file.size <= maxSize;
 
   return isValidExtension && isValidSize;
