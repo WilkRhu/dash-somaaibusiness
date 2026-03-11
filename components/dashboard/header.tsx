@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useState, useEffect, useRef } from 'react';
@@ -11,6 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const router = useRouter();
   const { user, logout } = useAuthStore();
   const { currentEstablishment } = useEstablishmentStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -84,7 +86,11 @@ export function Header({ onMenuClick }: HeaderProps) {
           )}
 
           {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+            onClick={() => router.push('/notifications')}
+            className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Notificações"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
