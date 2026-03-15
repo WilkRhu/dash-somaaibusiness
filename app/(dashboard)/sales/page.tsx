@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSales } from '@/lib/hooks/use-sales';
 import { SaleStatus, PaymentMethod } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
 import { salesApi } from '@/lib/api/sales';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import Link from 'next/link';
+import { MercadoPagoPaymentModal } from '@/components/sales/mercadopago-payment-modal';
 
 const statusLabels = {
   [SaleStatus.COMPLETED]: { label: 'Concluída', color: 'bg-green-100 text-green-800' },
@@ -26,7 +27,9 @@ export default function SalesPage() {
   const [statusFilter, setStatusFilter] = useState<SaleStatus | 'all'>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
+  const [showMercadoPagoModal, setShowMercadoPagoModal] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [selectedSale, setSelectedSale] = useState<any>(null);
   const [cancelReason, setCancelReason] = useState('');
   
   const { sales, isLoading, cancelSale, refetch } = useSales(
@@ -148,15 +151,27 @@ export default function SalesPage() {
                     </td>
                     <td className="py-3 px-4 text-center">
                       {sale.status === SaleStatus.PENDING && (
-                        <button
-                          onClick={() => {
-                            setSelectedSaleId(sale.id);
-                            setShowConfirmPaymentModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-800 font-medium"
-                        >
-                          Confirmar Pagamento
-                        </button>
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            onClick={() => {
+                              setSelectedSaleId(sale.id);
+                              setShowConfirmPaymentModal(true);
+                            }}
+                            className="text-green-600 hover:text-green-800 font-medium text-sm"
+                          >
+                            ✓ Confirmar
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSale(sale);
+                              setShowMercadoPagoModal(true);
+                            }}
+                            className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                            title="Gerar link de pagamento"
+                          >
+                            💳 Mercado Pago
+                          </button>
+                        </div>
                       )}
                       {sale.status === SaleStatus.COMPLETED && (
                         <button
@@ -261,6 +276,27 @@ export default function SalesPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Modal Mercado Pago */}
+      {selectedSale && (
+        <MercadoPagoPaymentModal
+          isOpen={showMercadoPagoModal}
+          onClose={() => {
+            setShowMercadoPagoModal(false);
+            setSelectedSale(null);
+          }}
+          saleId={selectedSale.id}
+          items={selectedSale.items?.map((item: any) => ({
+            id: item.itemId || item.id,
+            title: item.name,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+          })) || []}
+          totalAmount={Number(selectedSale.total || 0)}
+          customerEmail={selectedSale.customer?.email || 'customer@email.com'}
+          customerName={selectedSale.customer?.name || 'Cliente'}
+        />
       )}
     </div>
   );

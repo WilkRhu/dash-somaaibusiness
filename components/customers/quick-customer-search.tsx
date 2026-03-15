@@ -8,13 +8,15 @@ import { maskCPF, maskPhone, unmask } from '@/lib/utils/format';
 interface QuickCustomerSearchProps {
   onCustomerSelect: (customer: Customer | null) => void;
   selectedCustomer: Customer | null;
+  onCpfChange?: (cpf: string) => void;
 }
 
-export function QuickCustomerSearch({ onCustomerSelect, selectedCustomer }: QuickCustomerSearchProps) {
+export function QuickCustomerSearch({ onCustomerSelect, selectedCustomer, onCpfChange }: QuickCustomerSearchProps) {
   const { customers, isLoading } = useCustomers();
   const [searchValue, setSearchValue] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredCustomers, setFilteredCustomers] = useState<Customer[]>([]);
+  const [manualCpf, setManualCpf] = useState('');
 
   useEffect(() => {
     if (!searchValue.trim()) {
@@ -77,6 +79,15 @@ export function QuickCustomerSearch({ onCustomerSelect, selectedCustomer }: Quic
   const handleClearCustomer = () => {
     onCustomerSelect(null);
     setSearchValue('');
+    setManualCpf('');
+    onCpfChange?.('');
+  };
+
+  const handleManualCpfChange = (value: string) => {
+    const unmasked = unmask(value);
+    const masked = maskCPF(unmasked);
+    setManualCpf(masked);
+    onCpfChange?.(unmasked);
   };
 
   return (
@@ -166,6 +177,27 @@ export function QuickCustomerSearch({ onCustomerSelect, selectedCustomer }: Quic
           💡 Este cliente ganhará pontos de fidelidade nesta compra (1 ponto a cada R$ 10)
         </div>
       )}
+
+      {/* Campo de CPF/CNPJ Manual - Para emissão de nota */}
+      <div className="mt-3 pt-3 border-t border-gray-200">
+        <label className="block text-xs font-medium text-gray-600 mb-1">
+          CPF/CNPJ (para emissão de nota)
+        </label>
+        <input
+          type="text"
+          value={manualCpf}
+          onChange={(e) => handleManualCpfChange(e.target.value)}
+          placeholder="Digite o CPF ou CNPJ..."
+          maxLength={18}
+          disabled={!!selectedCustomer}
+          className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent text-sm disabled:opacity-50 disabled:bg-gray-50"
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          {selectedCustomer 
+            ? '✓ CPF será preenchido automaticamente do cliente'
+            : 'Preencha para emitir nota sem cliente cadastrado'}
+        </p>
+      </div>
     </div>
   );
 }

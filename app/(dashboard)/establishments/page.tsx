@@ -153,6 +153,16 @@ export default function EstablishmentsPage() {
               Editar
             </button>
             <button
+              onClick={() => window.location.href = '/establishments/mercadopago'}
+              className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:opacity-90 transition-opacity font-semibold flex items-center gap-2"
+              title="Configure a integração com Mercado Pago para receber pagamentos online"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h10m4 0a1 1 0 11-2 0 1 1 0 012 0zM7 15a1 1 0 11-2 0 1 1 0 012 0z" />
+              </svg>
+              Mercado Pago
+            </button>
+            <button
               onClick={() => {
                 console.log('🔴 Botão Desativar clicado');
                 console.log('📍 Estabelecimento selecionado:', selectedEstablishment);

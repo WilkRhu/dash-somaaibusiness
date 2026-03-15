@@ -1,0 +1,147 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║                    💳 COMO ACESSAR MERCADO PAGO 💳                            ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+
+🎯 CAMINHO MAIS RÁPIDO
+═══════════════════════════════════════════════════════════════════════════════
+
+    Menu Lateral → 🏪 Estabelecimentos → 💳 Mercado Pago
+
+
+📍 URL DIRETA
+═══════════════════════════════════════════════════════════════════════════════
+
+    /establishments/mercadopago
+
+
+🚀 PASSO A PASSO
+═══════════════════════════════════════════════════════════════════════════════
+
+    1. Abra o sistema (SomaAI Business)
+    
+    2. Procure o menu lateral (lado esquerdo)
+    
+    3. Clique em "🏪 Estabelecimentos"
+    
+    4. Clique em "💳 Mercado Pago"
+    
+    5. Pronto! Você está em /establishments/mercadopago
+
+
+📊 VISUALIZAÇÃO DO MENU
+═══════════════════════════════════════════════════════════════════════════════
+
+    ┌──────────────────────────────────────────┐
+    │  MENU LATERAL                            │
+    ├──────────────────────────────────────────┤
+    │  📊 Dashboard                            │
+    │  🏪 Estabelecimentos                     │
+    │  💳 Mercado Pago ◄─── CLIQUE AQUI        │
+    │  📦 Estoque                              │
+    │  💰 Vendas                               │
+    │  🛒 PDV                                  │
+    │  📄 Sistema Fiscal                       │
+    │  🎁 Ofertas                              │
+    │  👥 Clientes                             │
+    │  👨‍💼 Funcionários                          │
+    │  🏭 Fornecedores                         │
+    │  💸 Despesas                             │
+    │  🚚 Delivery                             │
+    │  📈 Relatórios                           │
+    │  💎 Planos                               │
+    └──────────────────────────────────────────┘
+
+
+🔗 ATALHOS
+═══════════════════════════════════════════════════════════════════════════════
+
+    Atalho 1: Digitando a URL
+    ─────────────────────────
+    1. Clique na barra de endereço
+    2. Digite: /establishments/mercadopago
+    3. Pressione Enter
+
+    Atalho 2: Atalho de Teclado
+    ──────────────────────────
+    1. Pressione Ctrl+L (ou Cmd+L no Mac)
+    2. Digite: /establishments/mercadopago
+    3. Pressione Enter
+
+
+📱 EM DISPOSITIVOS MÓVEIS
+═══════════════════════════════════════════════════════════════════════════════
+
+    Se o Menu Estiver Fechado:
+    ──────────────────────────
+    1. Clique no ícone ☰ (menu)
+    2. Procure por "💳 Mercado Pago"
+    3. Clique nele
+
+    Se o Menu Estiver Aberto:
+    ─────────────────────────
+    1. Procure por "💳 Mercado Pago"
+    2. Clique nele
+
+
+✅ VOCÊ CHEGOU!
+═══════════════════════════════════════════════════════════════════════════════
+
+    Quando você chegar, verá a página de configuração do Mercado Pago com:
+    
+    • Status da integração
+    • Formulário de conexão
+    • Ações (conectar, desconectar, atualizar)
+    • Informações de segurança
+
+
+🆘 PROBLEMAS?
+═══════════════════════════════════════════════════════════════════════════════
+
+    Não Vejo o Item no Menu:
+    ────────────────────────
+    • Atualize a página (F5)
+    • Limpe o cache do navegador
+    • Verifique suas permissões
+
+    Erro ao Acessar:
+    ───────────────
+    • Verifique se você está logado
+    • Tente acessar a URL diretamente
+    • Atualize a página
+
+    Página em Branco:
+    ────────────────
+    • Aguarde alguns segundos
+    • Atualize a página (F5)
+    • Limpe o cache
+
+
+🎓 PRÓXIMOS PASSOS
+═══════════════════════════════════════════════════════════════════════════════
+
+    1. Obtenha suas credenciais do Mercado Pago
+    2. Preencha o formulário com suas credenciais
+    3. Clique em "Conectar Mercado Pago"
+    4. Comece a usar em suas vendas
+
+
+📚 DOCUMENTAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+    • MERCADOPAGO_COMO_ACESSAR.md - Este arquivo em Markdown
+    • docs/ACESSO_RAPIDO.md - Acesso rápido
+    • docs/GUIA_VISUAL_ACESSO.md - Guia visual
+    • docs/COMO_ACESSAR_MERCADOPAGO.md - Guia completo
+    • docs/MERCADOPAGO_QUICK_START.md - Quick start
+    • docs/MERCADOPAGO_SETUP_GUIDE.md - Guia de configuração
+    • docs/MERCADOPAGO_COMPLETE_GUIDE.md - Guia completo
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                    Pronto! Agora você sabe como chegar! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════

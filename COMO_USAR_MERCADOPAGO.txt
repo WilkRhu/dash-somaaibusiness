@@ -1,0 +1,110 @@
+╔═══════════════════════════════════════════════════════════════════════════════╗
+║                                                                               ║
+║                    💳 COMO ACESSAR MERCADO PAGO 💳                            ║
+║                                                                               ║
+║                          VERSÃO FINAL - SEM SUBMENU                           ║
+║                                                                               ║
+╚═══════════════════════════════════════════════════════════════════════════════╝
+
+
+🎯 CAMINHO RÁPIDO
+═══════════════════════════════════════════════════════════════════════════════
+
+    Menu Lateral → Estabelecimentos → Selecione → Clique em "Mercado Pago"
+
+
+📍 LOCALIZAÇÃO DO BOTÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+    O botão está na página de detalhes de cada estabelecimento, junto com:
+    
+    • Fidelidade
+    • Editar
+    • Mercado Pago ◄─── NOVO BOTÃO
+    • Desativar
+
+
+🚀 PASSO A PASSO
+═══════════════════════════════════════════════════════════════════════════════
+
+    1. Abra o Menu Lateral
+       └─ Procure pelo menu no lado esquerdo
+
+    2. Clique em "Estabelecimentos"
+       └─ Você verá uma lista de estabelecimentos
+
+    3. Selecione um Estabelecimento
+       └─ Clique no que deseja configurar
+
+    4. Clique no Botão "Mercado Pago"
+       └─ Está junto com os outros botões de ação
+
+    5. Pronto!
+       └─ Você está na página de configuração
+
+
+🎨 VISUAL DOS BOTÕES
+═══════════════════════════════════════════════════════════════════════════════
+
+    ┌──────────────────────────────────────────────────────────────┐
+    │  Detalhes do Estabelecimento                                 │
+    ├──────────────────────────────────────────────────────────────┤
+    │                                                              │
+    │  [Fidelidade] [Editar] [Mercado Pago] [Desativar]           │
+    │                             ↑                                │
+    │                        CLIQUE AQUI                           │
+    │                                                              │
+    │  Informações do Estabelecimento...                           │
+    │                                                              │
+    └──────────────────────────────────────────────────────────────┘
+
+
+📊 ESTRUTURA DE NAVEGAÇÃO
+═══════════════════════════════════════════════════════════════════════════════
+
+    Menu Lateral
+        ↓
+    Estabelecimentos
+        ↓
+    Selecione um Estabelecimento
+        ↓
+    Clique em "Mercado Pago"
+        ↓
+    Página de Configuração do Mercado Pago
+
+
+📱 EM DISPOSITIVOS MÓVEIS
+═══════════════════════════════════════════════════════════════════════════════
+
+    1. Abra o menu (ícone ☰)
+    2. Clique em "Estabelecimentos"
+    3. Selecione um estabelecimento
+    4. Procure pelo botão "Mercado Pago"
+    5. Clique nele
+
+
+✅ CHECKLIST
+═══════════════════════════════════════════════════════════════════════════════
+
+    ☐ Abri o menu lateral
+    ☐ Cliquei em "Estabelecimentos"
+    ☐ Selecionei um estabelecimento
+    ☐ Vi o botão "Mercado Pago"
+    ☐ Cliquei no botão
+    ☐ Estou na página de configuração
+
+
+🎓 PRÓXIMOS PASSOS
+═══════════════════════════════════════════════════════════════════════════════
+
+    1. Obtenha credenciais do Mercado Pago
+    2. Preencha o formulário
+    3. Clique em "Conectar Mercado Pago"
+    4. Use em suas vendas
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+                    Pronto! Agora você sabe como chegar! 🎉
+
+═══════════════════════════════════════════════════════════════════════════════

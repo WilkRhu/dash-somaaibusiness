@@ -20,9 +20,11 @@ import WeightInputModal from '@/components/sales/weight-input-modal';
 import SelectWeightProductModal from '@/components/sales/select-weight-product-modal';
 import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { FiscalReceiptModal } from '@/components/sales/fiscal-receipt-modal';
 import { PaymentMethod, SaleStatus } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
 import { InventoryItem } from '@/lib/types/inventory';
+import apiClient from '@/lib/api/client';
 
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
@@ -39,6 +41,9 @@ export default function POSPage() {
   const [showSelectWeightProductModal, setShowSelectWeightProductModal] = useState(false);
   const [selectedProductForWeight, setSelectedProductForWeight] = useState<InventoryItem | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
+  const [selectedCustomerCpf, setSelectedCustomerCpf] = useState<string>('');
+  const [isFiscalReceiptOpen, setIsFiscalReceiptOpen] = useState(false);
+  const [lastFiscalReceipt, setLastFiscalReceipt] = useState<any>(null);
   const [activeOffers, setActiveOffers] = useState<Map<string, any>>(new Map());
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
   const { items: products, refetch: refetchInventory } = useInventory();
@@ -337,6 +342,54 @@ export default function POSPage() {
         customerId: selectedCustomer?.id,
       });
       
+      // Emitir nota fiscal automaticamente após a venda
+      if (saleResult?.id) {
+        try {
+          const cpfCnpj = selectedCustomer?.cpf || selectedCustomerCpf || '';
+          const customerName = selectedCustomer?.name || 'Consumidor Final';
+          
+          // Preparar dados para emissão de nota
+          const notePayload = {
+            saleId: saleResult.id,
+            series: '1', // Pode ser configurável
+            recipientCpfCnpj: cpfCnpj,
+            recipientName: customerName,
+            items: items.map(item => ({
+              description: item.name,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              ncm: '00000000', // Pode ser preenchido do produto
+              cfop: '5102', // Venda para consumidor final
+            })),
+            totalValue: total,
+          };
+          
+          // Chamar API para emitir nota
+          const noteResponse = await apiClient.post('/business/fiscal/notes/emit', notePayload);
+          
+          if (noteResponse.data?.success) {
+            // Armazenar dados da nota para exibir no modal
+            setLastFiscalReceipt({
+              accessKey: noteResponse.data.data?.accessKey,
+              danfeUrl: noteResponse.data.data?.danfeUrl,
+              consultUrl: noteResponse.data.data?.consultUrl,
+              issuedAt: noteResponse.data.data?.issuedAt,
+              total,
+              customerName,
+              customerCpf: cpfCnpj,
+              customerEmail: selectedCustomer?.email,
+              saleId: saleResult.id,
+            });
+            setIsFiscalReceiptOpen(true);
+            showToast('Nota fiscal emitida com sucesso!', 'success');
+          }
+        } catch (fiscalError: any) {
+          // Não bloqueia a venda se falhar a emissão de nota
+          console.error('Erro ao emitir nota fiscal:', fiscalError);
+          showToast('Venda realizada, mas houve erro ao emitir nota fiscal', 'warning');
+        }
+      }
+      
       // Emitir evento de venda concluída para o WebSocket
       if (socketRef.current?.connected && saleResult?.id) {
         socketRef.current.emit('sale-completed', {
@@ -535,6 +588,7 @@ export default function POSPage() {
               <QuickCustomerSearch
                 selectedCustomer={selectedCustomer}
                 onCustomerSelect={setSelectedCustomer}
+                onCpfChange={setSelectedCustomerCpf}
               />
               
               <div>
@@ -1018,6 +1072,23 @@ export default function POSPage() {
         onConfirm={handleCheckout}
         total={total}
         isLoading={isLoading}
+      />
+
+      <FiscalReceiptModal
+        isOpen={isFiscalReceiptOpen}
+        onClose={() => {
+          setIsFiscalReceiptOpen(false);
+          setLastFiscalReceipt(null);
+        }}
+        accessKey={lastFiscalReceipt?.accessKey}
+        danfeUrl={lastFiscalReceipt?.danfeUrl}
+        consultUrl={lastFiscalReceipt?.consultUrl}
+        issuedAt={lastFiscalReceipt?.issuedAt}
+        total={lastFiscalReceipt?.total || 0}
+        customerName={lastFiscalReceipt?.customerName}
+        customerCpf={lastFiscalReceipt?.customerCpf}
+        customerEmail={lastFiscalReceipt?.customerEmail}
+        saleId={lastFiscalReceipt?.saleId}
       />
 
       <AddCustomItemModal
