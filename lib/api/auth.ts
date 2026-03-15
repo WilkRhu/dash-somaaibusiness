@@ -21,10 +21,9 @@ export interface AuthResponse {
     role: string;
     isActive?: boolean;
   };
-  access_token: string;
-  token?: string;
+  token: string;
   refreshToken?: string;
-  refresh_token?: string;
+  access_token?: string;
 }
 
 export const authApi = {
@@ -42,12 +41,12 @@ export const authApi = {
     
     console.log('✅ Auth data extraído:', authData);
     
-    // Normalizar: access_token -> token
+    // Normalizar: access_token/accessToken -> token
     const normalizedData = {
       user: authData.user,
-      token: authData.access_token || authData.token,
+      token: authData.access_token || authData.accessToken || authData.token,
       refreshToken: authData.refresh_token || authData.refreshToken,
-      access_token: authData.access_token || authData.token,
+      access_token: authData.access_token || authData.accessToken || authData.token,
     };
     
     console.log('✅ Auth data normalizado:', normalizedData);
@@ -66,7 +65,7 @@ export const authApi = {
     console.log('📡 Login response completo:', response);
     console.log('📦 Login response.data:', response.data);
     
-    // A API retorna { success: true, data: { access_token, user } }
+    // A API pode retornar { success: true, data: { access_token, user } } ou diretamente { accessToken, user }
     let authData = response.data;
     
     if (response.data.data) {
@@ -75,12 +74,12 @@ export const authApi = {
     
     console.log('✅ Auth data extraído:', authData);
     
-    // Normalizar: access_token -> token
+    // Normalizar: access_token/accessToken -> token
     const normalizedData = {
       user: authData.user,
-      token: authData.access_token || authData.token,
+      token: authData.access_token || authData.accessToken || authData.token,
       refreshToken: authData.refresh_token || authData.refreshToken,
-      access_token: authData.access_token || authData.token,
+      access_token: authData.access_token || authData.accessToken || authData.token,
     };
     
     console.log('✅ Auth data normalizado:', normalizedData);
@@ -88,6 +87,7 @@ export const authApi = {
     // Se não tiver token, algo está errado
     if (!normalizedData.token) {
       console.error('❌ Token não encontrado na resposta!');
+      console.error('❌ authData completo:', authData);
       throw new Error('Token não retornado pela API');
     }
     

@@ -1,5 +1,5 @@
-import apiClient from './client';
 import { InventoryItem, AddProductDto, StockMovement, InventoryFilters, UpdateStockDto } from '@/lib/types/inventory';
+import { getApiBaseUrl } from '@/lib/config/api';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -13,105 +13,226 @@ interface ApiResponse<T> {
 
 export const inventoryApi = {
   list: async (establishmentId: string, filters?: InventoryFilters) => {
-    const response = await apiClient.get<ApiResponse<InventoryItem[]>>(
-      `/business/establishments/${establishmentId}/inventory`,
-      { params: filters }
+    const apiBaseUrl = getApiBaseUrl();
+    const params = new URLSearchParams();
+    if (filters?.search) params.append('search', filters.search);
+    if (filters?.category) params.append('category', filters.category);
+    if (filters?.sortBy) params.append('sortBy', filters.sortBy);
+    if (filters?.sortOrder) params.append('sortOrder', filters.sortOrder);
+
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory?${params.toString()}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem[]>>;
   },
 
   getById: async (establishmentId: string, id: string) => {
-    const response = await apiClient.get<ApiResponse<InventoryItem>>(
-      `/business/establishments/${establishmentId}/inventory/${id}`
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
   add: async (establishmentId: string, dto: AddProductDto) => {
-    const response = await apiClient.post<ApiResponse<InventoryItem>>(
-      `/business/establishments/${establishmentId}/inventory`,
-      dto
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dto),
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
   update: async (establishmentId: string, id: string, dto: Partial<AddProductDto>) => {
-    const response = await apiClient.patch<ApiResponse<InventoryItem>>(
-      `/business/establishments/${establishmentId}/inventory/${id}`,
-      dto
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dto),
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
   delete: async (establishmentId: string, id: string) => {
-    const response = await apiClient.delete<ApiResponse<void>>(
-      `/business/establishments/${establishmentId}/inventory/${id}`
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}`,
+      {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<void>>;
   },
 
   updateStock: async (establishmentId: string, id: string, dto: UpdateStockDto) => {
-    const response = await apiClient.post<ApiResponse<InventoryItem>>(
-      `/business/establishments/${establishmentId}/inventory/${id}/stock`,
-      dto
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}/stock`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(dto),
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
   getLowStock: async (establishmentId: string) => {
-    const response = await apiClient.get<ApiResponse<InventoryItem[]>>(
-      `/business/establishments/${establishmentId}/inventory/alerts/low-stock`
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/alerts?type=low-stock`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem[]>>;
   },
 
   getExpiring: async (establishmentId: string, daysAhead: number = 30) => {
-    const response = await apiClient.get<ApiResponse<InventoryItem[]>>(
-      `/business/establishments/${establishmentId}/inventory/alerts/expiring`,
-      { params: { daysAhead } }
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/alerts?type=expiring&daysAhead=${daysAhead}`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem[]>>;
   },
 
   getHistory: async (establishmentId: string, id: string) => {
-    const response = await apiClient.get<ApiResponse<StockMovement[]>>(
-      `/business/establishments/${establishmentId}/inventory/${id}/history`
+    const apiBaseUrl = getApiBaseUrl();
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}/history`,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<StockMovement[]>>;
   },
 
   uploadImages: async (establishmentId: string, itemId: string, images: File[]) => {
+    const apiBaseUrl = getApiBaseUrl();
     const formData = new FormData();
     images.forEach((image) => {
       formData.append('images', image);
     });
 
-    const response = await apiClient.post<ApiResponse<InventoryItem>>(
-      `/business/establishments/${establishmentId}/inventory/${itemId}/images`,
-      formData,
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${itemId}/images`,
       {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        method: 'POST',
+        body: formData,
       }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
   deleteImage: async (establishmentId: string, itemId: string, imageUrl: string) => {
+    const apiBaseUrl = getApiBaseUrl();
     console.log('🗑️ Deletando imagem:', {
       establishmentId,
       itemId,
       imageUrl,
-      url: `/business/establishments/${establishmentId}/inventory/${itemId}/images`
+      url: `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${itemId}/images`,
     });
-    
-    const response = await apiClient.delete<ApiResponse<void>>(
-      `/business/establishments/${establishmentId}/inventory/${itemId}/images`,
+
+    const response = await fetch(
+      `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${itemId}/images`,
       {
-        data: { imageUrl },
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ imageUrl }),
       }
     );
-    return response.data;
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json() as Promise<ApiResponse<void>>;
   },
 };

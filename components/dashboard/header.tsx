@@ -6,6 +6,7 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import { EstablishmentSelector } from './establishment-selector';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -75,6 +76,9 @@ export function Header({ onMenuClick }: HeaderProps) {
         
         {/* Right Side - Notifications & User Menu */}
         <div className="flex items-center gap-4 ml-6">
+          {/* Establishment Selector */}
+          <EstablishmentSelector />
+
           {/* Establishment Info */}
           {currentEstablishment && (
             <div className="hidden md:block text-right">

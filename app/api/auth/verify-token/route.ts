@@ -17,20 +17,17 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader.substring(7);
 
-    // TODO: Implementar validação do JWT token
-    // Por enquanto, retorna mock de validação
-    const mockUser = {
-      id: crypto.randomUUID(),
-      email: 'user@example.com',
-    };
-
-    return NextResponse.json(
-      {
-        valid: true,
-        user: mockUser,
+    // Faz proxy para o microserviço para validar o token
+    const response = await fetch(`${process.env.MICROSERVICE_URL}/api/auth/verify-token`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
-      { status: 200 }
-    );
+    });
+
+    const data = await response.json();
+    return NextResponse.json(data, { status: response.status });
   } catch (error) {
     return NextResponse.json(
       {
