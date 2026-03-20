@@ -4,15 +4,37 @@ export async function GET(request: NextRequest) {
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
     
-    // Pegar token do header Authorization enviado pelo cliente
+    // Log simples
+    console.log('\n🔍 GET /api/business/establishments/all');
+    console.log('Headers recebidos:');
+    
     const authHeader = request.headers.get('Authorization');
-    console.log('🔑 Auth header:', authHeader);
-    console.log('📍 Calling microservice:', `${apiUrl}/business/establishments/all`);
+    console.log('  Authorization:', authHeader ? '✅ SIM' : '❌ NÃO');
+    
+    if (authHeader) {
+      console.log('  Valor:', authHeader.substring(0, 50) + '...');
+    }
+    
+    // Listar todos os headers
+    const headersList: string[] = [];
+    request.headers.forEach((value, key) => {
+      headersList.push(`  ${key}: ${value.substring(0, 40)}...`);
+    });
+    console.log('Todos os headers:');
+    headersList.forEach(h => console.log(h));
+
+    if (!authHeader) {
+      console.log('❌ Authorization header não encontrado!');
+      return NextResponse.json(
+        { success: false, error: 'Missing authorization header' },
+        { status: 401 }
+      );
+    }
 
     const response = await fetch(`${apiUrl}/business/establishments/all`, {
       headers: {
         'Content-Type': 'application/json',
-        ...(authHeader && { Authorization: authHeader }),
+        'Authorization': authHeader,
       },
     });
 

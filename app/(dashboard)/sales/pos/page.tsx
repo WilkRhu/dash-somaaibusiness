@@ -154,30 +154,16 @@ export default function POSPage() {
 
   // Carregar ofertas ativas para os produtos
   useEffect(() => {
-    const loadActiveOffers = async () => {
-      if (!currentEstablishment?.id || !products.length) return;
-      
-      const offersMap = new Map();
-      
-      // Verifica ofertas para cada produto
-      await Promise.all(
-        products.map(async (product: InventoryItem) => {
-          try {
-            const offerCheck = await offersApi.checkActiveOffer(currentEstablishment.id, product.id);
-            if (offerCheck.hasOffer && offerCheck.offer) {
-              offersMap.set(product.id, offerCheck.offer);
-            }
-          } catch (error) {
-            // Ignora erros silenciosamente
-          }
-        })
-      );
-      
-      setActiveOffers(offersMap);
-    };
+    if (!products.length) return;
     
-    loadActiveOffers();
-  }, [products, currentEstablishment]);
+    const offersMap = new Map();
+    products.forEach((product: InventoryItem) => {
+      if ((product as any).activeOffer) {
+        offersMap.set(product.id, (product as any).activeOffer);
+      }
+    });
+    setActiveOffers(offersMap);
+  }, [products]);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -538,6 +524,19 @@ export default function POSPage() {
                 {pendingSyncCount} pendente{pendingSyncCount > 1 ? 's' : ''}
               </span>
             )}
+          </div>
+        )}
+
+        {isClient && (
+          <div className={`fixed top-6 ${isOnline ? 'left-6' : 'left-64'} z-50 flex items-center gap-2 px-4 py-2 rounded-lg shadow-lg font-semibold ${
+            isAppConnected 
+              ? 'bg-green-500 text-white' 
+              : 'bg-yellow-500 text-white animate-pulse'
+          }`}>
+            <svg className={`w-5 h-5 ${isAppConnected ? '' : 'animate-spin'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.111 16.251a5.002 5.002 0 016.778 0M5 12.25A8.001 8.001 0 0112.25 4M19 12.25A8.001 8.001 0 0112.25 20" />
+            </svg>
+            <span>{isAppConnected ? 'App Conectado' : 'App Desconectado'}</span>
           </div>
         )}
 

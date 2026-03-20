@@ -22,8 +22,23 @@ export function CreatePurchaseOrderModal({
   const [items, setItems] = useState<PurchaseOrderItem[]>([
     { productName: '', quantity: 1, unitPrice: 0, subtotal: 0 },
   ]);
+  const [unitPriceDisplay, setUnitPriceDisplay] = useState<string[]>(['']);
   const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
   const [notes, setNotes] = useState('');
+
+  const formatCurrency = (value: string): string => {
+    // Remove tudo que não é dígito
+    const digits = value.replace(/\D/g, '');
+    if (!digits) return '';
+    // Converte centavos para reais
+    const number = Number(digits) / 100;
+    return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const parseCurrency = (value: string): number => {
+    // "1.234,56" → 1234.56
+    return Number(value.replace(/\./g, '').replace(',', '.')) || 0;
+  };
 
   const handleItemChange = (index: number, field: keyof PurchaseOrderItem, value: string | number) => {
     const newItems = [...items];
@@ -39,11 +54,13 @@ export function CreatePurchaseOrderModal({
 
   const addItem = () => {
     setItems([...items, { productName: '', quantity: 1, unitPrice: 0, subtotal: 0 }]);
+    setUnitPriceDisplay([...unitPriceDisplay, '']);
   };
 
   const removeItem = (index: number) => {
     if (items.length > 1) {
       setItems(items.filter((_, i) => i !== index));
+      setUnitPriceDisplay(unitPriceDisplay.filter((_, i) => i !== index));
     }
   };
 
@@ -80,7 +97,7 @@ export function CreatePurchaseOrderModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
@@ -112,11 +129,30 @@ export function CreatePurchaseOrderModal({
                 </button>
               </div>
 
+              {/* Cabeçalho da tabela */}
+              <div className="grid grid-cols-12 gap-3 mb-1">
+                <div className="col-span-5">
+                  <span className="text-xs font-medium text-gray-500">Produto</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-xs font-medium text-gray-500">Quantidade</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-xs font-medium text-gray-500">Preço Unit.</span>
+                </div>
+                <div className="col-span-2">
+                  <span className="text-xs font-medium text-gray-500">Subtotal</span>
+                </div>
+                <div className="col-span-1" />
+              </div>
+
               <div className="space-y-3">
                 {items.map((item, index) => (
-                  <div key={index} className="grid grid-cols-12 gap-3 items-end">
+                  <div key={index} className="grid grid-cols-12 gap-3 items-center">
                     <div className="col-span-5">
+                      <label htmlFor={`productName-${index}`} className="sr-only">Produto {index + 1}</label>
                       <input
+                        id={`productName-${index}`}
                         type="text"
                         placeholder="Nome do produto"
                         value={item.productName}
@@ -126,7 +162,9 @@ export function CreatePurchaseOrderModal({
                       />
                     </div>
                     <div className="col-span-2">
+                      <label htmlFor={`quantity-${index}`} className="sr-only">Quantidade {index + 1}</label>
                       <input
+                        id={`quantity-${index}`}
                         type="number"
                         placeholder="Qtd"
                         min="1"
@@ -137,19 +175,31 @@ export function CreatePurchaseOrderModal({
                       />
                     </div>
                     <div className="col-span-2">
-                      <input
-                        type="number"
-                        placeholder="Preço"
-                        min="0"
-                        step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => handleItemChange(index, 'unitPrice', Number(e.target.value))}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                        required
-                      />
+                      <label htmlFor={`unitPrice-${index}`} className="sr-only">Preço unitário {index + 1}</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium pointer-events-none">R$</span>
+                        <input
+                          id={`unitPrice-${index}`}
+                          type="text"
+                          inputMode="numeric"
+                          placeholder="0,00"
+                          value={unitPriceDisplay[index] ?? ''}
+                          onChange={(e) => {
+                            const formatted = formatCurrency(e.target.value);
+                            const newDisplay = [...unitPriceDisplay];
+                            newDisplay[index] = formatted;
+                            setUnitPriceDisplay(newDisplay);
+                            handleItemChange(index, 'unitPrice', parseCurrency(formatted));
+                          }}
+                          className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                          required
+                        />
+                      </div>
                     </div>
                     <div className="col-span-2">
+                      <label htmlFor={`subtotal-${index}`} className="sr-only">Subtotal {index + 1}</label>
                       <input
+                        id={`subtotal-${index}`}
                         type="text"
                         value={`R$ ${item.subtotal.toFixed(2)}`}
                         disabled

@@ -58,7 +58,9 @@ export function useInventory(filters?: InventoryFilters) {
 
       // Online: carregar da API e salvar no cache
       const response = await inventoryApi.list(currentEstablishment.id, filters);
-      setItems(response.data);
+      const raw = (response as any).data ?? response;
+      const itemsArray = Array.isArray(raw) ? raw : [raw];
+      setItems(itemsArray.filter(Boolean));
       
       // Salvar no cache para uso offline
       await offlineDB.saveProducts(response.data);
@@ -94,8 +96,9 @@ export function useInventory(filters?: InventoryFilters) {
     try {
       setLoading(true);
       const response = await inventoryApi.add(currentEstablishment.id, dto);
-      addItem(response.data);
-      return response.data;
+      const created = (response as any).data ?? response;
+      addItem(created);
+      return created;
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Erro ao adicionar produto';
       setError(errorMsg);
@@ -111,8 +114,9 @@ export function useInventory(filters?: InventoryFilters) {
     try {
       setLoading(true);
       const response = await inventoryApi.update(currentEstablishment.id, id, dto);
-      updateItem(id, response.data);
-      return response.data;
+      const updated = (response as any).data ?? response;
+      updateItem(id, updated);
+      return updated;
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Erro ao atualizar produto';
       setError(errorMsg);
@@ -160,7 +164,8 @@ export function useInventory(filters?: InventoryFilters) {
     
     try {
       const response = await inventoryApi.getLowStock(currentEstablishment.id);
-      return response.data;
+      const result = response.data ?? response;
+      return Array.isArray(result) ? result : [result];
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao buscar produtos com estoque baixo');
       return [];
@@ -172,7 +177,8 @@ export function useInventory(filters?: InventoryFilters) {
     
     try {
       const response = await inventoryApi.getExpiring(currentEstablishment.id, daysAhead);
-      return response.data;
+      const result = response.data ?? response;
+      return Array.isArray(result) ? result : [result];
     } catch (err: any) {
       setError(err.response?.data?.message || 'Erro ao buscar produtos vencendo');
       return [];
@@ -185,8 +191,9 @@ export function useInventory(filters?: InventoryFilters) {
     try {
       setLoading(true);
       const response = await inventoryApi.uploadImages(currentEstablishment.id, itemId, images);
-      updateItem(itemId, response.data);
-      return response.data;
+      const updated = (response as any).data ?? response;
+      updateItem(itemId, updated);
+      return updated;
     } catch (err: any) {
       const errorMsg = err.response?.data?.message || 'Erro ao fazer upload das imagens';
       setError(errorMsg);

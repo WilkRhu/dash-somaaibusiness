@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useMembers } from '@/lib/hooks/use-members';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { ROLE_LABELS, ROLE_PERMISSIONS, type Member, type MemberRole } from '@/lib/types/member';
 import { showToast } from '@/components/ui/toast';
 import { ConfirmModal } from '@/components/ui/confirm-modal';
@@ -9,9 +10,12 @@ import { EditMemberForm } from './edit-member-form';
 
 export function MembersTable() {
   const { members, loading, deleteMember, changeMemberRole, editMember } = useMembers();
+  const { user } = useAuthStore();
   const [memberToDelete, setMemberToDelete] = useState<Member | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [editingMember, setEditingMember] = useState<Member | null>(null);
+
+  const visibleMembers = members.filter(m => m.userId !== user?.id);
 
   const handleRoleChange = async (member: Member, newRole: MemberRole) => {
     // Verifica se o role já existe
@@ -58,7 +62,7 @@ export function MembersTable() {
     );
   }
 
-  if (members.length === 0) {
+  if (members.length === 0 || visibleMembers.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         Nenhum funcionário cadastrado
@@ -90,7 +94,7 @@ export function MembersTable() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {members.map((member) => {
+            {visibleMembers.map((member) => {
               // Verificação de segurança
               if (!member.user) {
                 console.error('Member without user data:', member);

@@ -13,7 +13,7 @@ interface SalesChartProps {
 }
 
 export function SalesChart({ data }: SalesChartProps) {
-  const formattedData = data.map(item => ({
+  const formattedData = (data ?? []).map(item => ({
     date: new Date(item.date).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
     vendas: item.count,
     receita: item.total,

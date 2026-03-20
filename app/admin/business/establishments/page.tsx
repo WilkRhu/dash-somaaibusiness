@@ -39,18 +39,55 @@ export default function EstablishmentsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchEstablishments();
+    // Pequeno delay para garantir que o localStorage está disponível
+    const timer = setTimeout(() => {
+      fetchEstablishments();
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchEstablishments = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/business/establishments/all', {
+      console.log('🔑 Token no localStorage:', token);
+      console.log('🔑 Token length:', token?.length);
+      console.log('🔑 Token type:', typeof token);
+      
+      if (!token) {
+        console.warn('⚠️ Token não encontrado no localStorage');
+        setError('Não autenticado. Por favor, faça login novamente.');
+        setLoading(false);
+        return;
+      }
+      
+      const authHeader = `Bearer ${token}`;
+      console.log('📤 Auth header completo:', authHeader);
+      console.log('📤 Auth header length:', authHeader.length);
+      
+      // Teste 1: Usando objeto simples
+      console.log('🧪 Teste 1: Enviando com objeto simples');
+      const response1 = await fetch('/api/business/establishments/all', {
+        method: 'GET',
         headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
+          'Content-Type': 'application/json',
+          'Authorization': authHeader,
         },
       });
-      const data: ApiResponse = await response.json();
+      
+      console.log('📊 Response 1 status:', response1.status);
+      
+      if (!response1.ok) {
+        console.error('❌ Erro na resposta:', response1.status, response1.statusText);
+        const errorText = await response1.text();
+        console.error('Erro detalhado:', errorText);
+        setError(`Erro ao carregar estabelecimentos: ${response1.status}`);
+        setLoading(false);
+        return;
+      }
+      
+      const data: ApiResponse = await response1.json();
+      console.log('✅ Dados recebidos:', data);
       
       if (data.success) {
         setEstablishments(data.data);
@@ -58,6 +95,7 @@ export default function EstablishmentsPage() {
         setError('Erro ao carregar estabelecimentos');
       }
     } catch (err) {
+      console.error('❌ Erro na requisição:', err);
       setError('Erro ao conectar com o servidor');
     } finally {
       setLoading(false);

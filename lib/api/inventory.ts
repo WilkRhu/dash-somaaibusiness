@@ -11,6 +11,14 @@ interface ApiResponse<T> {
   totalPages?: number;
 }
 
+const getAuthHeaders = (): Record<string, string> => {
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
 export const inventoryApi = {
   list: async (establishmentId: string, filters?: InventoryFilters) => {
     const apiBaseUrl = getApiBaseUrl();
@@ -22,17 +30,10 @@ export const inventoryApi = {
 
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory?${params.toString()}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: getAuthHeaders() }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem[]>>;
   },
 
@@ -40,17 +41,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: getAuthHeaders() }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
@@ -58,19 +52,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dto),
-      }
+      { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(dto) }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
@@ -78,19 +63,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}`,
-      {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dto),
-      }
+      { method: 'PATCH', headers: getAuthHeaders(), body: JSON.stringify(dto) }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
@@ -98,18 +74,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { method: 'DELETE', headers: getAuthHeaders() }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<void>>;
   },
 
@@ -117,19 +85,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}/stock`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(dto),
-      }
+      { method: 'POST', headers: getAuthHeaders(), body: JSON.stringify(dto) }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
@@ -137,17 +96,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/alerts?type=low-stock`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: getAuthHeaders() }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem[]>>;
   },
 
@@ -155,17 +107,10 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/alerts?type=expiring&daysAhead=${daysAhead}`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: getAuthHeaders() }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem[]>>;
   },
 
@@ -173,66 +118,40 @@ export const inventoryApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${id}/history`,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }
+      { headers: getAuthHeaders() }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<StockMovement[]>>;
   },
 
   uploadImages: async (establishmentId: string, itemId: string, images: File[]) => {
     const apiBaseUrl = getApiBaseUrl();
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const formData = new FormData();
-    images.forEach((image) => {
-      formData.append('images', image);
-    });
+    images.forEach((image) => formData.append('images', image));
 
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${itemId}/images`,
       {
         method: 'POST',
+        headers: { ...(token && { Authorization: `Bearer ${token}` }) },
         body: formData,
       }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<InventoryItem>>;
   },
 
   deleteImage: async (establishmentId: string, itemId: string, imageUrl: string) => {
     const apiBaseUrl = getApiBaseUrl();
-    console.log('🗑️ Deletando imagem:', {
-      establishmentId,
-      itemId,
-      imageUrl,
-      url: `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${itemId}/images`,
-    });
-
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/inventory/${itemId}/images`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ imageUrl }),
-      }
+      { method: 'DELETE', headers: getAuthHeaders(), body: JSON.stringify({ imageUrl }) }
     );
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     return response.json() as Promise<ApiResponse<void>>;
   },
 };

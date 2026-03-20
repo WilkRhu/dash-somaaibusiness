@@ -27,8 +27,9 @@ export interface CreateEmployeeRequest {
   name: string;
   email: string;
   phone?: string;
-  roles: MemberRole[]; // Array de roles
+  roles: MemberRole[];
   password?: string;
+  avatar?: File;
 }
 
 export interface UpdateMemberRoleRequest {

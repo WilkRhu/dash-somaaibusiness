@@ -21,14 +21,18 @@ export enum PaymentMethod {
 
 export interface DeliveryZone {
   id: string;
+  establishmentId: string;
   name: string;
   neighborhoods: string[];
-  deliveryFee: number;
-  freeDeliveryMinimum: number | null;
+  deliveryFee: string | number;
+  freeDeliveryMinimum: string | number | null;
   estimatedTime: number;
-  radiusKm?: number;
-  centerLatitude?: number;
-  centerLongitude?: number;
+  radiusKm?: string | number;
+  centerLatitude?: string | number;
+  centerLongitude?: string | number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface DeliveryOrder {

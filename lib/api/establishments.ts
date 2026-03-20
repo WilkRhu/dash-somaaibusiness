@@ -1,13 +1,27 @@
 import { Establishment, CreateEstablishmentDto, LoyaltySettings, UpdateLoyaltySettingsDto } from '@/lib/types/establishment';
 import { getApiBaseUrl } from '@/lib/config/api';
 
+// Helper para obter headers com token
+const getAuthHeaders = () => {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+  }
+  
+  return headers;
+};
+
 export const establishmentsApi = {
   list: async (): Promise<Establishment[]> => {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/business/establishments/all`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -22,9 +36,7 @@ export const establishmentsApi = {
   getById: async (id: string): Promise<Establishment> => {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/business/establishments/${id}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -39,9 +51,7 @@ export const establishmentsApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/business/establishments`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(dto),
     });
 
@@ -56,9 +66,7 @@ export const establishmentsApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/business/establishments/${id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
       body: JSON.stringify(dto),
     });
 
@@ -73,9 +81,7 @@ export const establishmentsApi = {
     const apiBaseUrl = getApiBaseUrl();
     const response = await fetch(`${apiBaseUrl}/business/establishments/${id}`, {
       method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: getAuthHeaders(),
     });
 
     if (!response.ok) {
@@ -88,10 +94,19 @@ export const establishmentsApi = {
     const formData = new FormData();
     formData.append('logo', file);
 
+    const headers: Record<string, string> = {};
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/logo`,
       {
         method: 'POST',
+        headers,
         body: formData,
       }
     );
@@ -109,9 +124,7 @@ export const establishmentsApi = {
       `${apiBaseUrl}/business/establishments/${establishmentId}/members`,
       {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ userId, role }),
       }
     );
@@ -129,9 +142,7 @@ export const establishmentsApi = {
       `${apiBaseUrl}/business/establishments/${establishmentId}/members/${userId}`,
       {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       }
     );
 
@@ -146,9 +157,7 @@ export const establishmentsApi = {
       `${apiBaseUrl}/business/establishments/${establishmentId}/members/${userId}/role`,
       {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({ role }),
       }
     );
@@ -165,9 +174,7 @@ export const establishmentsApi = {
     const response = await fetch(
       `${apiBaseUrl}/business/establishments/${establishmentId}/loyalty-settings`,
       {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
       }
     );
 
@@ -185,9 +192,7 @@ export const establishmentsApi = {
       `${apiBaseUrl}/business/establishments/${establishmentId}/loyalty-settings`,
       {
         method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify(dto),
       }
     );

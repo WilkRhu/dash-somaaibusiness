@@ -51,7 +51,20 @@ export function SalesDetailsTable({ filters }: SalesDetailsTableProps) {
           page,
           limit: 20,
         });
-        setData(response);
+
+        // Normaliza resposta com ou sem wrapper de pagination
+        const normalized: SalesDetailsResponse = {
+          data: response.data ?? [],
+          summary: response.summary ?? { totalRevenue: 0, totalDiscount: 0, salesCount: 0 },
+          pagination: response.pagination ?? {
+            page: (response as any).page ?? page,
+            limit: (response as any).limit ?? 20,
+            total: (response as any).total ?? 0,
+            totalPages: Math.ceil(((response as any).total ?? 0) / 20),
+          },
+        };
+
+        setData(normalized);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Erro ao carregar detalhes');
       } finally {

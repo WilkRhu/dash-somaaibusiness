@@ -6,28 +6,39 @@ export type { Member, AddMemberRequest, CreateEmployeeRequest, UpdateMemberRoleR
 
 export const membersApi = {
   async getMembers(establishmentId: string): Promise<Member[]> {
-    const response = await apiClient.get<{ data: Member[] }>(
+    const response = await apiClient.get<any>(
       `/business/establishments/${establishmentId}/members`
     );
-    // Garantir que cada membro tenha dados do usuário
-    return response.data.data.map(member => ({
+    const list: Member[] = response.data?.data ?? response.data;
+    return list.map(member => ({
       ...member,
       user: member.user || { id: member.userId, name: 'N/A', email: 'N/A' }
     }));
   },
 
   async createEmployee(establishmentId: string, data: CreateEmployeeRequest): Promise<Member> {
-    const response = await apiClient.post<{ data: { user: any; member: Member } }>(
+    let payload: any = { ...data };
+
+    if (data.avatar) {
+      const base64 = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(data.avatar!);
+      });
+      payload.avatar = base64;
+    }
+
+    const response = await apiClient.post<any>(
       `/business/establishments/${establishmentId}/employees`,
-      data
+      payload
     );
-    const memberData = response.data.data.member;
-    const userData = response.data.data.user;
+    const raw = response.data;
+    const memberData = raw?.data?.member ?? raw;
+    const userData = raw?.data?.user ?? { id: raw.userId, name: data.name, email: data.email, avatar: raw.avatar };
     
-    // Garantir que o membro retornado tenha dados do usuário
     return {
       ...memberData,
-      user: userData || { id: memberData.userId, name: data.name, email: data.email }
+      user: userData,
     };
   },
 

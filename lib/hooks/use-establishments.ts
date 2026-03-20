@@ -11,10 +11,18 @@ export function useEstablishments() {
     try {
       // Chamar diretamente o microserviço
       const apiBaseUrl = getApiBaseUrl();
+      const token = localStorage.getItem('token');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      
       const response = await fetch(`${apiBaseUrl}/business/establishments/all`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
       });
 
       if (!response.ok) {

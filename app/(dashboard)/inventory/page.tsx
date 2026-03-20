@@ -57,7 +57,7 @@ export default function InventoryPage() {
     fetchAlerts();
     
     // Extrair categorias únicas dos produtos
-    const uniqueCategories = Array.from(new Set(items.map(item => item.category).filter(Boolean))) as string[];
+    const uniqueCategories = Array.from(new Set((items ?? []).filter(Boolean).map(item => item.category).filter(Boolean))) as string[];
     setCategories(uniqueCategories.sort());
   }, [items]);
 
@@ -226,7 +226,7 @@ export default function InventoryPage() {
                   Todas ({items.length})
                 </button>
                 {categories.slice(0, 6).map((category) => {
-                  const count = items.filter(item => item.category === category).length;
+                  const count = items.filter(item => item?.category === category).length;
                   return (
                     <button
                       key={category}
@@ -303,7 +303,7 @@ export default function InventoryPage() {
         <div className="text-center py-12">
           <p className="text-gray-500">Carregando produtos...</p>
         </div>
-      ) : items.length === 0 ? (
+      ) : (items ?? []).length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <p className="text-gray-500 mb-4">Nenhum produto cadastrado</p>
           <button 
@@ -315,7 +315,7 @@ export default function InventoryPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {items.map((product) => (
+          {(items ?? []).filter(Boolean).map((product) => (
             <ProductCard
               key={product.id}
               product={product}
@@ -343,7 +343,21 @@ export default function InventoryPage() {
       {editingProduct && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
-            <h2 className="text-2xl font-bold text-brand-navy mb-4">Editar Produto</h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold text-brand-navy">Editar Produto</h2>
+              <button
+                onClick={() => {
+                  setEditingProduct(null);
+                  setManagingImagesProduct(editingProduct);
+                }}
+                className="px-3 py-2 text-sm border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Gerenciar Imagens
+              </button>
+            </div>
             <EditProductForm
               product={editingProduct}
               onSubmit={handleEditProduct}
@@ -370,7 +384,7 @@ export default function InventoryPage() {
 
       {managingImagesProduct && (
         <ManageImagesModal
-          product={managingImagesProduct}
+          product={items.find(i => i?.id === managingImagesProduct.id) ?? managingImagesProduct}
           onUpload={handleUploadImages}
           onDelete={handleDeleteImage}
           onClose={() => setManagingImagesProduct(null)}

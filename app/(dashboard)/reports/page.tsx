@@ -190,8 +190,8 @@ export default function ReportsPage() {
 
           {/* Gráficos */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <SalesChart data={report.byDay} />
-            <PaymentMethodChart data={report.byPaymentMethod} />
+            <SalesChart data={report.byDay ?? []} />
+            <PaymentMethodChart data={report.byPaymentMethod ?? []} />
           </div>
 
           {/* Top Produtos */}
@@ -210,7 +210,7 @@ export default function ReportsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {report.topProducts.map((product, index) => (
+                  {(report.topProducts ?? []).map((product, index) => (
                     <tr key={index} className="border-b hover:bg-gray-50">
                       <td className="py-3 px-4 text-brand-navy">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-brand-blue to-brand-green flex items-center justify-center text-white font-bold text-sm">
@@ -269,7 +269,7 @@ export default function ReportsPage() {
                 </svg>
               </div>
               <div className="text-2xl font-bold text-brand-navy">
-                {report.topProducts.length}
+                {(report.topProducts ?? []).length}
               </div>
               <div className="text-xs text-brand-navy/60 mt-1">
                 Variedade vendida

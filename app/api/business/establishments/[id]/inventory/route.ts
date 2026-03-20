@@ -11,10 +11,10 @@ export async function GET(
     const searchParams = request.nextUrl.searchParams;
 
     console.log('📍 Fetching inventory for establishment:', id);
-    console.log('📍 Calling microservice:', `${apiUrl}/business/establishments/${id}/inventory`);
+    console.log('📍 Calling microservice:', `${apiUrl}/establishments/${id}/inventory`);
 
     const response = await fetch(
-      `${apiUrl}/business/establishments/${id}/inventory?${searchParams.toString()}`,
+      `${apiUrl}/establishments/${id}/inventory?${searchParams.toString()}`,
       {
         headers: {
           'Content-Type': 'application/json',
@@ -59,11 +59,11 @@ export async function POST(
     const body = await request.json();
 
     console.log('📍 Creating inventory item for establishment:', id);
-    console.log('📍 Calling microservice:', `${apiUrl}/business/establishments/${id}/inventory`);
+    console.log('📍 Calling microservice:', `${apiUrl}/establishments/${id}/inventory`);
     console.log('📍 Body:', body);
 
     const response = await fetch(
-      `${apiUrl}/business/establishments/${id}/inventory`,
+      `${apiUrl}/establishments/${id}/inventory`,
       {
         method: 'POST',
         headers: {

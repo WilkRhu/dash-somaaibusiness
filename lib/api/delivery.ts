@@ -36,6 +36,10 @@ class DeliveryService {
       `${this.getBasePath(establishmentId)}/orders`,
       { params: filters }
     );
+    // Suporta array direto ou wrapper { data, total, page, limit }
+    if (Array.isArray(response.data)) {
+      return { data: response.data, total: response.data.length, page: 1, limit: response.data.length };
+    }
     return response.data;
   }
 
@@ -91,7 +95,8 @@ class DeliveryService {
     const response = await apiClient.get(
       `${this.getBasePath(establishmentId)}/zones`
     );
-    return response.data.data;
+    // API retorna array direto
+    return Array.isArray(response.data) ? response.data : (response.data?.data ?? []);
   }
 
   async updateZone(

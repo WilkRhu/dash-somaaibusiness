@@ -21,7 +21,8 @@ export function useDeliveryOrders(filters?: {
       setLoading(true);
       setError(null);
       const result = await deliveryService.listOrders(currentEstablishment.id, filters);
-      setOrders(result.data);
+      // Suporta resposta com wrapper { data: [] } ou array direto
+      setOrders(Array.isArray(result) ? result : (result.data ?? []));
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar pedidos');
       console.error('Erro ao carregar pedidos:', err);
@@ -50,7 +51,8 @@ export function useDeliveryZones() {
       setLoading(true);
       setError(null);
       const data = await deliveryService.listZones(currentEstablishment.id);
-      setZones(data);
+      // Suporta resposta com wrapper { data: [] } ou array direto
+      setZones(Array.isArray(data) ? data : (data ?? []));
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar zonas');
       console.error('Erro ao carregar zonas:', err);

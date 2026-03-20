@@ -23,7 +23,7 @@ const PAYMENT_LABELS: Record<string, string> = {
 };
 
 export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
-  const chartData = data.map(item => ({
+  const chartData = (data ?? []).map(item => ({
     name: PAYMENT_LABELS[item.method] || item.method,
     value: item.total,
     count: item.count,

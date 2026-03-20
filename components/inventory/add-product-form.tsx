@@ -6,6 +6,14 @@ import { ImageUpload } from './image-upload';
 import { CurrencyInput } from '@/components/ui/currency-input';
 import { formatCurrency } from '@/lib/utils/format';
 
+const CATEGORY_OPTIONS = [
+  'Alimentos', 'Bebidas', 'Limpeza', 'Higiene', 'Hortifruti',
+  'Frios e Laticínios', 'Carnes', 'Padaria', 'Congelados',
+  'Doces e Sobremesas', 'Snacks', 'Temperos e Condimentos',
+  'Enlatados', 'Grãos e Cereais', 'Massas', 'Óleos e Gorduras',
+  'Eletrônicos', 'Vestuário', 'Papelaria', 'Outros',
+];
+
 interface AddProductFormProps {
   onSubmit: (data: AddProductDto, imageFiles: File[]) => Promise<void>;
   onCancel: () => void;
@@ -22,6 +30,7 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
   });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
   
   // Estados para cálculo de preço por peso
   const [useBulkCalculation, setUseBulkCalculation] = useState(false);
@@ -101,17 +110,35 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
           />
         </div>
 
-        <div>
+        <div className="relative">
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Categoria
           </label>
           <input
             type="text"
             maxLength={100}
+            autoComplete="off"
             value={formData.category || ''}
             onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+            onFocus={() => setShowCategorySuggestions(true)}
+            onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 150)}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
           />
+          {showCategorySuggestions && (
+            <ul className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-lg mt-1 max-h-48 overflow-y-auto">
+              {CATEGORY_OPTIONS.filter(c =>
+                c.toLowerCase().includes((formData.category || '').toLowerCase())
+              ).map(cat => (
+                <li
+                  key={cat}
+                  onMouseDown={() => setFormData({ ...formData, category: cat })}
+                  className="px-3 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-700"
+                >
+                  {cat}
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div>

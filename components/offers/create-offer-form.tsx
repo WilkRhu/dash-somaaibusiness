@@ -5,6 +5,7 @@ import { useOffers } from '@/lib/hooks/use-offers';
 import { useInventory } from '@/lib/hooks/use-inventory';
 import { CreateOfferDto } from '@/lib/types/offers';
 import { showToast } from '@/components/ui/toast';
+import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface CreateOfferFormProps {
   onSuccess?: () => void;
@@ -143,18 +144,11 @@ export function CreateOfferForm({ onSuccess, onCancel }: CreateOfferFormProps) {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Preço da Oferta *
-        </label>
-        <input
-          type="number"
-          step="0.01"
-          min="0"
-          value={formData.offerPrice || ''}
-          onChange={(e) => setFormData({ ...formData, offerPrice: parseFloat(e.target.value) || 0 })}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-          placeholder="0.00"
+        <CurrencyInput
+          label="Preço da Oferta"
           required
+          value={formData.offerPrice || 0}
+          onChange={(value) => setFormData({ ...formData, offerPrice: value })}
         />
         {selectedItem && formData.offerPrice > 0 && selectedItem.salePrice && (
           <p className="text-sm text-green-600 mt-1">

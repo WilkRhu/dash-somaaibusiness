@@ -33,7 +33,7 @@ export default function DashboardHomePage() {
     return days[date.getDay()];
   };
 
-  const salesData = weeklyReport?.byDay.map(day => ({
+  const salesData = weeklyReport?.byDay?.map(day => ({
     day: getDayLabel(day.date),
     value: day.total,
     date: day.date,
@@ -78,35 +78,35 @@ export default function DashboardHomePage() {
       </div>
 
       {/* Stats Cards */}
-      {stats && (
+      {stats?.today && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Vendas Hoje"
-            value={formatCurrency(stats.today.revenue)}
-            description={`${stats.today.comparisonYesterday.revenue > 0 ? '+' : ''}${stats.today.comparisonYesterday.revenue.toFixed(1)}% vs ontem`}
-            trend={stats.today.comparisonYesterday.revenue > 0 ? 'up' : 'down'}
+            value={formatCurrency(stats.today.revenue ?? 0)}
+            description={`${(stats.today.comparisonYesterday?.revenue ?? 0) > 0 ? '+' : ''}${(stats.today.comparisonYesterday?.revenue ?? 0).toFixed(1)}% vs ontem`}
+            trend={(stats.today.comparisonYesterday?.revenue ?? 0) > 0 ? 'up' : 'down'}
           />
           <StatsCard
             title="Ticket Médio Hoje"
-            value={formatCurrency(stats.today.averageTicket)}
-            description={`${stats.today.salesCount} vendas`}
+            value={formatCurrency(stats.today.averageTicket ?? 0)}
+            description={`${stats.today.salesCount ?? 0} vendas`}
           />
           <StatsCard
             title="Alertas"
-            value={stats.alerts.lowStockCount.toString()}
+            value={(stats.alerts?.lowStockCount ?? 0).toString()}
             description="Produtos com estoque baixo"
-            trend={stats.alerts.lowStockCount > 0 ? 'down' : undefined}
+            trend={(stats.alerts?.lowStockCount ?? 0) > 0 ? 'down' : undefined}
           />
           <StatsCard
             title="Vendas Pendentes"
-            value={stats.alerts.pendingSalesCount.toString()}
+            value={(stats.alerts?.pendingSalesCount ?? 0).toString()}
             description="Aguardando confirmação"
           />
         </div>
       )}
 
       {/* Alerts */}
-      {stats && (stats.alerts.lowStockCount > 0 || stats.alerts.expiringCount > 0) && (
+      {stats?.alerts && (stats.alerts.lowStockCount > 0 || stats.alerts.expiringCount > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {stats.alerts.lowStockCount > 0 && (
             <div className="p-4 rounded-lg border-l-4 bg-yellow-50 border-yellow-400">
@@ -289,7 +289,7 @@ export default function DashboardHomePage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Products */}
-        {stats && stats.topProductsToday.length > 0 && (
+        {stats && (stats.topProductsToday?.length ?? 0) > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <h2 className="text-lg font-bold text-brand-navy mb-4">Produtos Mais Vendidos Hoje</h2>
             <div className="space-y-3">
@@ -312,7 +312,7 @@ export default function DashboardHomePage() {
         )}
 
         {/* Recent Sales */}
-        {stats && stats.recentSales.length > 0 && (
+        {stats && (stats.recentSales?.length ?? 0) > 0 && (
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-bold text-brand-navy">Vendas Recentes</h2>
