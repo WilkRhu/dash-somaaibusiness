@@ -9,6 +9,7 @@ import { canAccess, PERMISSIONS } from '@/lib/utils/permissions';
 import { canAccessRoute } from '@/lib/utils/plan-restrictions';
 import { BusinessRole } from '@/lib/types/establishment';
 import { SubscriptionPlan } from '@/lib/types/subscription';
+import { usePendingDeliveryCount } from '@/lib/hooks/use-pending-delivery-count';
 import { ReactNode, useState, useEffect } from 'react';
 
 interface MenuItem {
@@ -182,6 +183,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuthStore();
   const [isOnline, setIsOnline] = useState(true);
   const [isClient, setIsClient] = useState(false);
+  const { count: pendingDeliveryCount } = usePendingDeliveryCount();
 
   useEffect(() => {
     setIsClient(true);
@@ -266,7 +268,14 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                   : 'text-brand-navy hover:bg-gray-50'
               }`}
             >
-              <span className="flex-shrink-0">{item.icon}</span>
+              <span className="flex-shrink-0 relative">
+                {item.icon}
+                {item.href === '/delivery' && pendingDeliveryCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {pendingDeliveryCount > 99 ? '99+' : pendingDeliveryCount}
+                  </span>
+                )}
+              </span>
               <span className="font-medium flex-1">{item.label}</span>
               {isLocked && (
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

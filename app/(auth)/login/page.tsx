@@ -27,7 +27,14 @@ export default function LoginPage() {
       router.push('/home');
     } catch (err: any) {
       console.error('Erro no login:', err);
-      setError(err.response?.data?.message || err.message || 'Erro ao fazer login. Verifique suas credenciais.');
+      const message = err.response?.data?.message || err.message || 'Erro ao fazer login';
+      
+      // Mensagem mais específica para credenciais inválidas
+      if (err.response?.status === 401 || message.toLowerCase().includes('unauthorized')) {
+        setError('Email ou senha incorretos. Verifique suas credenciais.');
+      } else {
+        setError(message);
+      }
     }
   };
 

@@ -313,13 +313,13 @@ export const fiscalApi = {
     }>;
   }> => {
     try {
-      const response = await api.get('/business/fiscal/reports/emissions', {
+      const response = await api.get('/business/fiscal/metrics/emissions', {
         params: { days },
       });
       return response.data;
     } catch (error: any) {
       // Fallback: retornar dados vazios se a rota não existir
-      console.warn('Rota /business/fiscal/reports/emissions não disponível, usando fallback');
+      console.warn('Rota /business/fiscal/metrics/emissions não disponível, usando fallback');
       const today = new Date();
       const startDate = new Date(today);
       startDate.setDate(startDate.getDate() - (days - 1));
