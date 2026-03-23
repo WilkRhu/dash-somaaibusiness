@@ -6,6 +6,7 @@ import { PaymentMethod } from '@/lib/types/sale';
 import { mercadoPagoApi } from '@/lib/api/mercadopago';
 import { salesApi } from '@/lib/api/sales';
 import { showToast } from '@/components/ui/toast';
+import { DanfePreview, type DanfeSaleData } from '@/components/sales/danfe-preview';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -18,6 +19,10 @@ interface CheckoutModalProps {
   isLoading?: boolean;
   hasMercadoPago?: boolean;
   establishmentId?: string;
+  // dados para o cupom simulado
+  saleNumber?: string;
+  establishment?: { name: string; cnpj?: string; address?: string };
+  discount?: number;
 }
 
 const paymentMethods = [
@@ -62,6 +67,9 @@ export default function CheckoutModal({
   isLoading = false,
   hasMercadoPago = false,
   establishmentId = '',
+  saleNumber,
+  establishment = { name: 'Estabelecimento' },
+  discount = 0,
 }: CheckoutModalProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [cashRegisterId, setCashRegisterId] = useState<number>(1);
@@ -70,10 +78,12 @@ export default function CheckoutModal({
   const [showNotes, setShowNotes] = useState(false);
 
   // Fase PIX
-  const [phase, setPhase] = useState<'form' | 'pix-loading' | 'pix-qr' | 'pix-approved' | 'pix-rejected'>('form');
+  const [phase, setPhase] = useState<'form' | 'pix-loading' | 'pix-qr' | 'pix-approved' | 'pix-rejected' | 'receipt'>('form');
+  const [receiptData, setReceiptData] = useState<DanfeSaleData | null>(null);
   const [pixData, setPixData] = useState<{ qrCodeBase64: string; qrCode: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [currentSaleId, setCurrentSaleId] = useState<string | null>(null);
+  const approvedRef = useRef(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -96,6 +106,8 @@ export default function CheckoutModal({
       setPhase('form');
       setPixData(null);
       setCurrentSaleId(null);
+      setReceiptData(null);
+      approvedRef.current = false;
       stopPolling();
     }
   }, [isOpen]);
@@ -105,12 +117,26 @@ export default function CheckoutModal({
     if (socketRef.current) { socketRef.current.disconnect(); socketRef.current = null; }
   };
 
+  const buildReceiptData = (paymentLabel: string): DanfeSaleData => ({
+    saleNumber: saleNumber ?? `#${Date.now()}`,
+    createdAt: new Date().toISOString(),
+    establishment,
+    items: items.map((i) => ({
+      productName: i.name,
+      quantity: i.quantity,
+      unitPrice: i.unitPrice,
+      subtotal: i.quantity * i.unitPrice,
+    })),
+    subtotal: total + discount,
+    discount,
+    total,
+    paymentMethod: paymentLabel,
+  });
+
   const connectPaymentSocket = (saleId: string, saleTotal: number, saleItems: { name: string; quantity: number; price: number }[]) => {
     const apiUrl = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.NEXT_PUBLIC_API_URL;
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const userId = typeof window !== 'undefined' ? (localStorage.getItem('userId') || 'anonymous') : 'anonymous';
-
-    console.log('[PIX] Conectando socket:', `${apiUrl}/scanner`, { type: 'dashboard', userId, saleId });
 
     const socket = io(`${apiUrl}/scanner`, {
       transports: ['websocket', 'polling'],
@@ -119,7 +145,7 @@ export default function CheckoutModal({
     });
 
     socket.on('connect', () => {
-      console.log('[PIX] Socket /scanner conectado como dashboard, aguardando pix-payment-confirmed...');
+      console.log('[PIX] Socket conectado, aguardando pix-payment-confirmed para saleId:', saleId);
     });
 
     socket.on('connect_error', (err) => {
@@ -127,20 +153,19 @@ export default function CheckoutModal({
     });
 
     socket.on('pix-payment-confirmed', (data: { saleId: string; mercadoPagoPaymentId?: string; status?: string; timestamp?: string }) => {
-      console.log('[PIX] pix-payment-confirmed recebido:', data);
-      if (data.saleId === saleId) {
-        // Emite sale-completed SÓ após confirmação do pagamento
-        socket.emit('sale-completed', {
-          saleId,
-          total: saleTotal,
-          items: saleItems,
-        });
-        console.log('[PIX] sale-completed emitido para saleId:', saleId);
+      console.log('[PIX] pix-payment-confirmed recebido:', data, '| esperado saleId:', saleId);
+      if (data.saleId === saleId && !approvedRef.current) {
+        approvedRef.current = true;
+        socket.emit('sale-completed', { saleId, total: saleTotal, items: saleItems });
 
         stopPolling();
         setPhase('pix-approved');
         showToast('Pagamento aprovado!', 'success');
-        setTimeout(() => { onMpApproved?.(); onClose(); }, 1500);
+        setTimeout(() => {
+          onMpApproved?.();
+          setReceiptData(buildReceiptData('PIX (Mercado Pago)'));
+          setPhase('receipt');
+        }, 1500);
       }
     });
 
@@ -154,23 +179,33 @@ export default function CheckoutModal({
 
   const startPolling = (saleId: string) => {
     let count = 0;
-    pollRef.current = setInterval(async () => {
+
+    const check = async () => {
       count++;
       if (count > MAX_POLLS) { stopPolling(); return; }
       try {
         const sale = await salesApi.getById(establishmentId, saleId);
         const status = ((sale as any).status ?? (sale as any).data?.status ?? '').toLowerCase();
         if (status === 'completed') {
+          if (approvedRef.current) return;
+          approvedRef.current = true;
           stopPolling();
           setPhase('pix-approved');
           showToast('Pagamento aprovado!', 'success');
-          setTimeout(() => { onMpApproved?.(); onClose(); }, 1500);
+          setTimeout(() => {
+            onMpApproved?.();
+            setReceiptData(buildReceiptData('PIX (Mercado Pago)'));
+            setPhase('receipt');
+          }, 1500);
         } else if (status === 'cancelled') {
           stopPolling();
           setPhase('pix-rejected');
         }
       } catch { /* ignora */ }
-    }, POLL_INTERVAL);
+    };
+
+    // Aguarda 5s antes do primeiro poll — a venda recém-criada ainda não foi paga
+    pollRef.current = setInterval(check, POLL_INTERVAL);
   };
 
   const handleConfirm = async () => {
@@ -189,7 +224,7 @@ export default function CheckoutModal({
     if (isMpPixMethod) {
       setPhase('pix-loading');
       try {
-        // 1. Cria a venda (sem finalizar — modal permanece aberto)
+        // 1. Cria a venda
         const result = await onConfirm(selectedMethod, cashRegisterId, notes || undefined, true);
         const saleId = (result as any)?.id;
         if (!saleId) throw new Error('Venda não retornou ID');
@@ -200,7 +235,7 @@ export default function CheckoutModal({
         setPixData({ qrCodeBase64: pix.qrCodeBase64, qrCode: pix.qrCode });
         setPhase('pix-qr');
 
-        // 3. Aguarda pix-payment-confirmed via WebSocket
+        // 3. Conecta socket para aguardar pix-payment-confirmed
         const socketItems = items.map(i => ({ name: i.name, quantity: i.quantity, price: i.unitPrice }));
         connectPaymentSocket(saleId, total, socketItems);
       } catch (err: any) {
@@ -210,11 +245,17 @@ export default function CheckoutModal({
       return;
     }
 
-    onConfirm(selectedMethod, cashRegisterId, notes || undefined);
+    onConfirm(selectedMethod, cashRegisterId, notes || undefined).then((result) => {
+      if (result?.id) setCurrentSaleId(result.id);
+    });
+    const label = paymentMethods.find((m) => m.value === selectedMethod)?.label ?? selectedMethod;
+    setReceiptData(buildReceiptData(label));
+    setPhase('receipt');
   };
 
   const handleRetryPix = async () => {
     if (!currentSaleId) return;
+    approvedRef.current = false;
     setPhase('pix-loading');
     try {
       const pix = await mercadoPagoApi.generatePix({ saleId: currentSaleId, totalAmount: total });
@@ -251,7 +292,7 @@ export default function CheckoutModal({
         <div className="sticky top-0 bg-gradient-to-r from-brand-blue to-brand-green p-6 text-white">
           <div className="flex items-center justify-between">
             <h2 className="text-2xl font-bold">
-              {phase === 'form' ? 'Finalizar Venda' : 'Pagamento via PIX'}
+              {phase === 'form' ? 'Finalizar Venda' : phase === 'receipt' ? 'Cupom da Venda' : 'Pagamento via PIX'}
             </h2>
             <button onClick={onClose} disabled={isLoading || phase === 'pix-loading'} className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,6 +309,14 @@ export default function CheckoutModal({
         {/* Fase PIX */}
         {phase !== 'form' ? (
           <div className="p-6 flex flex-col items-center gap-6">
+            {phase === 'receipt' && receiptData ? (
+              <DanfePreview
+                sale={receiptData}
+                onClose={onClose}
+                establishmentId={establishmentId}
+                saleId={currentSaleId ?? undefined}
+              />
+            ) : null}
             {phase === 'pix-loading' && (
               <>
                 <div className="w-10 h-10 border-2 border-[#009EE3] border-t-transparent rounded-full animate-spin mt-8" />

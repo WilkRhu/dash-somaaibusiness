@@ -79,7 +79,17 @@ export interface DeliveryOrder {
     phone: string;
     vehicleType: string;
   };
-  
+
+  sale?: {
+    items?: Array<{
+      productName?: string;
+      name?: string;
+      quantity: number;
+      unitPrice: number;
+      subtotal: number;
+    }>;
+  };
+
   tracking?: DeliveryTracking[];
 }
 

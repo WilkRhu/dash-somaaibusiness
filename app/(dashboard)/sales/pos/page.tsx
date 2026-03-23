@@ -42,7 +42,7 @@ export default function POSPage() {
   const [activeOffers, setActiveOffers] = useState<Map<string, any>>(new Map());
   const { isConnected: hasMercadoPago, checked: mpChecked } = useMercadoPagoIntegration();
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
-  const { items: products, refetch: refetchInventory } = useInventory();
+  const { items: products, refetch: refetchInventory } = useInventory({ limit: 200 });
   const { createSale, isLoading } = useSales();
   const { sales, refetch: refetchSales } = useSales({ limit: 5, status: SaleStatus.COMPLETED });
   const { setFullscreenMode } = useUIStore();

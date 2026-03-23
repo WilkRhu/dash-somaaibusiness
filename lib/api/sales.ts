@@ -47,4 +47,12 @@ export const salesApi = {
     );
     return data;
   },
+
+  sendReceipt: async (establishmentId: string, saleId: string, email: string): Promise<{ sent: boolean; to: string }> => {
+    const { data } = await apiClient.post<{ sent: boolean; to: string }>(
+      `/business/establishments/${establishmentId}/sales/${saleId}/send-receipt`,
+      { email }
+    );
+    return data;
+  },
 };
