@@ -18,9 +18,23 @@ export default function AddCustomItemModal({ isOpen, onClose, onAdd }: AddCustom
 
   if (!isOpen) return null;
 
+  const parseCurrency = (value: string): number => {
+    // Remove "R$ ", pontos de milhar e troca vírgula por ponto
+    const numeric = value.replace(/R\$\s?/g, '').replace(/\./g, '').replace(',', '.');
+    return parseFloat(numeric);
+  };
+
+  const formatCurrency = (raw: string): string => {
+    // Mantém apenas dígitos
+    const digits = raw.replace(/\D/g, '');
+    if (!digits) return '';
+    const number = parseInt(digits, 10) / 100;
+    return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  };
+
   const calculateTotal = (): number => {
-    const price = parseFloat(unitPrice);
-    
+    const price = parseCurrency(unitPrice);
+
     if (priceType === 'weight') {
       const kg = parseFloat(weight);
       return isNaN(price) || isNaN(kg) ? 0 : price * kg;
@@ -38,7 +52,7 @@ export default function AddCustomItemModal({ isOpen, onClose, onAdd }: AddCustom
       return;
     }
 
-    const price = parseFloat(unitPrice);
+    const price = parseCurrency(unitPrice);
 
     if (isNaN(price) || price <= 0) {
       showToast('Informe um preço válido', 'error');
@@ -162,17 +176,8 @@ export default function AddCustomItemModal({ isOpen, onClose, onAdd }: AddCustom
               type="text"
               value={unitPrice}
               onChange={(e) => {
-                // Remove tudo exceto números
-                const value = e.target.value.replace(/\D/g, '');
-                setUnitPrice(value);
-              }}
-              onBlur={(e) => {
-                // Formata ao sair do campo
-                const value = e.target.value.replace(/\D/g, '');
-                if (value) {
-                  const formatted = (parseFloat(value) / 100).toFixed(2);
-                  setUnitPrice(formatted);
-                }
+                const formatted = formatCurrency(e.target.value);
+                setUnitPrice(formatted);
               }}
               placeholder="R$ 0,00"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
@@ -228,7 +233,7 @@ export default function AddCustomItemModal({ isOpen, onClose, onAdd }: AddCustom
               </div>
               {priceType === 'weight' && weight && (
                 <p className="text-xs text-blue-600 mt-1">
-                  R$ {unitPrice}/kg × {weight}kg
+                  {unitPrice}/kg × {weight}kg
                 </p>
               )}
             </div>

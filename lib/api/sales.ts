@@ -39,4 +39,12 @@ export const salesApi = {
     );
     return data;
   },
+
+  linkMercadoPagoPayment: async (establishmentId: string, saleId: string, mercadoPagoPaymentId: string): Promise<Sale> => {
+    const { data } = await apiClient.post<Sale>(
+      `/business/establishments/${establishmentId}/sales/${saleId}/link-payment`,
+      { mercadoPagoPaymentId }
+    );
+    return data;
+  },
 };

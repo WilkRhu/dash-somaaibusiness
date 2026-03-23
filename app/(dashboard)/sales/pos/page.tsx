@@ -18,11 +18,11 @@ import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
 import DiscountModal from '@/components/sales/discount-modal';
 import WeightInputModal from '@/components/sales/weight-input-modal';
 import SelectWeightProductModal from '@/components/sales/select-weight-product-modal';
-import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';
-import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { PaymentMethod, SaleStatus } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
 import { InventoryItem } from '@/lib/types/inventory';
+import { useMercadoPagoIntegration } from '@/lib/hooks/use-mercadopago-integration';
 
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
@@ -40,6 +40,7 @@ export default function POSPage() {
   const [selectedProductForWeight, setSelectedProductForWeight] = useState<InventoryItem | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [activeOffers, setActiveOffers] = useState<Map<string, any>>(new Map());
+  const { isConnected: hasMercadoPago, checked: mpChecked } = useMercadoPagoIntegration();
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
   const { items: products, refetch: refetchInventory } = useInventory();
   const { createSale, isLoading } = useSales();
@@ -263,7 +264,7 @@ export default function POSPage() {
     }
   };
 
-  const handleCheckout = async (paymentMethod: PaymentMethod, _cashRegisterId?: number, notes?: string) => {
+  const handleCheckout = async (paymentMethod: PaymentMethod, _cashRegisterId?: number, notes?: string, skipFinalize?: boolean) => {
     try {
       // Verifica ofertas ativas para cada item
       const itemsWithOffers = await Promise.all(
@@ -300,10 +301,10 @@ export default function POSPage() {
         })
       );
 
+      // Se MP conectado e método é PIX ou cartão, cria a venda primeiro e abre modal MP
       if (!isOnline) {
         // Salvar venda offline
-        const pendingSale: PendingSale = {
-          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        const pendingSale: PendingSale = {          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           items: itemsWithOffers.map(item => ({
             productId: item.itemId,
             quantity: item.quantity,
@@ -337,8 +338,8 @@ export default function POSPage() {
         customerId: selectedCustomer?.id,
       });
       
-      // Emitir evento de venda concluída para o WebSocket
-      if (socketRef.current?.connected && saleResult?.id) {
+      // Emitir evento de venda concluída para o WebSocket (apenas fluxo normal, não MP)
+      if (!skipFinalize && socketRef.current?.connected && saleResult?.id) {
         socketRef.current.emit('sale-completed', {
           saleId: saleResult.id,
           total,
@@ -349,14 +350,17 @@ export default function POSPage() {
           })),
         });
       }
-      
-      showToast('Venda realizada com sucesso!', 'success');
-      clear();
-      setSelectedCustomer(null);
-      setIsCheckoutOpen(false);
-      
-      refetchInventory();
-      refetchSales();
+
+      if (!skipFinalize) {
+        showToast('Venda realizada com sucesso!', 'success');
+        clear();
+        setSelectedCustomer(null);
+        setIsCheckoutOpen(false);
+        refetchInventory();
+        refetchSales();
+      }
+
+      return saleResult;
     } catch (error: any) {
       // Se der erro de rede, salvar offline
       if (!navigator.onLine) {
@@ -466,8 +470,10 @@ export default function POSPage() {
   };
 
   const filteredProducts = products.filter((p: InventoryItem) => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
+    !p.name.startsWith('[AVULSO]') && (
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
   return (
@@ -1016,8 +1022,12 @@ export default function POSPage() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onConfirm={handleCheckout}
+        onMpApproved={() => { clear(); setSelectedCustomer(null); setIsCheckoutOpen(false); refetchInventory(); refetchSales(); }}
         total={total}
+        items={items.map(i => ({ name: i.name, quantity: i.quantity, unitPrice: i.unitPrice }))}
         isLoading={isLoading}
+        hasMercadoPago={hasMercadoPago}
+        establishmentId={currentEstablishment?.id || ''}
       />
 
       <AddCustomItemModal

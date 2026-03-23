@@ -1,16 +1,13 @@
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { useDeliveryOrders, useDeliveryZones } from '@/lib/hooks/use-delivery';
+import { useDeliveryZones } from '@/lib/hooks/use-delivery';
 import { useDeliveryRealtime } from '@/lib/hooks/use-delivery-realtime';
-import { DeliveryOrder, DeliveryStatus } from '@/lib/types/delivery';
-import { DeliveryOrderCard } from '@/components/delivery/delivery-order-card';
-import { DeliveryOrderDetailsModal } from '@/components/delivery/delivery-order-details-modal';
-import { UpdateStatusModal } from '@/components/delivery/update-status-modal';
 import { DeliveryZonesTable } from '@/components/delivery/delivery-zones-table';
 import { CreateZoneModal } from '@/components/delivery/create-zone-modal';
 import { EditZoneModal } from '@/components/delivery/edit-zone-modal';
-import { DeliveryNotifications } from '@/components/delivery/delivery-notifications';
 import { DeliveryDelayAlerts } from '@/components/delivery/delivery-delay-alerts';
 import { DeliveryRealtimeStats } from '@/components/delivery/delivery-realtime-stats';
 import { DeliveryRealtimeMap } from '@/components/delivery/delivery-realtime-map';
@@ -21,42 +18,23 @@ import { deliveryApi } from '@/lib/api/delivery';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { showToast } from '@/components/ui/toast';
 import Link from 'next/link';
+import { useDeliveryOrders } from '@/lib/hooks/use-delivery';
 
-type TabType = 'dashboard' | 'orders' | 'zones';
+type TabType = 'dashboard' | 'zones';
 
 export default function DeliveryPage() {
+  const router = useRouter();
   const { currentEstablishment } = useEstablishmentStore();
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedOrder, setSelectedOrder] = useState<DeliveryOrder | null>(null);
-  const [orderToUpdate, setOrderToUpdate] = useState<DeliveryOrder | null>(null);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
   const [showCreateZoneModal, setShowCreateZoneModal] = useState(false);
   const [showEditZoneModal, setShowEditZoneModal] = useState(false);
   const [showDeleteZoneModal, setShowDeleteZoneModal] = useState(false);
   const [selectedZone, setSelectedZone] = useState<any>(null);
   const [selectedOrderIdMap, setSelectedOrderIdMap] = useState<string | undefined>();
 
-  const { orders, loading: ordersLoading, refetch: refetchOrders } = useDeliveryOrders(
-    statusFilter !== 'all' ? { status: statusFilter } : undefined
-  );
+  const { orders } = useDeliveryOrders();
   const { zones, loading: zonesLoading, refetch: refetchZones } = useDeliveryZones();
   const { isConnected, deliveryLocations, etas, geofenceAlerts, clearGeofenceAlert } = useDeliveryRealtime();
-
-  const handleViewDetails = (order: DeliveryOrder) => {
-    setSelectedOrder(order);
-    setShowDetailsModal(true);
-  };
-
-  const handleUpdateStatus = (order: DeliveryOrder) => {
-    setOrderToUpdate(order);
-    setShowUpdateModal(true);
-  };
-
-  const handleStatusUpdateSuccess = () => {
-    refetchOrders();
-  };
 
   const handleZoneCreated = () => {
     refetchZones();
@@ -76,21 +54,8 @@ export default function DeliveryPage() {
     }
   };
 
-  const filteredOrders = orders;
-
-  const activeOrders = orders.filter(
-    o => ![DeliveryStatus.DELIVERED, DeliveryStatus.CANCELLED].includes(o.status)
-  );
-
   return (
     <div className="p-6 max-w-7xl mx-auto">
-      {/* Notificações */}
-      {currentEstablishment && (
-        <DeliveryNotifications
-          establishmentId={currentEstablishment.id}
-          onNewOrder={() => refetchOrders()}
-        />
-      )}
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Delivery</h1>
         <p className="text-gray-600 mt-2">Gerencie pedidos e zonas de entrega</p>
@@ -128,10 +93,12 @@ export default function DeliveryPage() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-600">Pedidos Ativos</p>
-              <p className="text-2xl font-bold text-gray-900">{activeOrders.length}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {orders.filter(o => !['delivered', 'cancelled'].includes(o.status)).length}
+              </p>
             </div>
             <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
         </div>
@@ -179,16 +146,15 @@ export default function DeliveryPage() {
               </svg>
               Dashboard
             </button>
-            <button
-              onClick={() => setActiveTab('orders')}
-              className={`px-6 py-3 font-medium ${
-                activeTab === 'orders'
-                  ? 'border-b-2 border-blue-600 text-blue-600'
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
+            <Link
+              href="/delivery/orders"
+              className="px-6 py-3 font-medium text-gray-600 hover:text-gray-900 flex items-center gap-2"
             >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              </svg>
               Pedidos
-            </button>
+            </Link>
             <button
               onClick={() => setActiveTab('zones')}
               className={`px-6 py-3 font-medium ${
@@ -255,50 +221,6 @@ export default function DeliveryPage() {
             </div>
           )}
 
-          {activeTab === 'orders' && (
-            <div>
-              {/* Filtros */}
-              <div className="mb-6 flex gap-4">
-                <select
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">Todos os Status</option>
-                  <option value={DeliveryStatus.PENDING}>Pendente</option>
-                  <option value={DeliveryStatus.CONFIRMED}>Confirmado</option>
-                  <option value={DeliveryStatus.PREPARING}>Preparando</option>
-                  <option value={DeliveryStatus.READY_FOR_DELIVERY}>Pronto</option>
-                  <option value={DeliveryStatus.OUT_FOR_DELIVERY}>Saiu para Entrega</option>
-                  <option value={DeliveryStatus.DELIVERED}>Entregue</option>
-                  <option value={DeliveryStatus.CANCELLED}>Cancelado</option>
-                </select>
-              </div>
-
-              {/* Lista de Pedidos */}
-              {ordersLoading ? (
-                <div className="text-center py-12">
-                  <p className="text-gray-500">Carregando pedidos...</p>
-                </div>
-              ) : filteredOrders.length === 0 ? (
-                <div className="text-center py-12 bg-gray-50 rounded-lg">
-                  <p className="text-gray-500">Nenhum pedido encontrado</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredOrders.map((order) => (
-                    <DeliveryOrderCard
-                      key={order.id}
-                      order={order}
-                      onViewDetails={handleViewDetails}
-                      onUpdateStatus={handleUpdateStatus}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-
           {activeTab === 'zones' && (
             <div>
               <div className="mb-6 flex justify-between items-center">
@@ -334,27 +256,6 @@ export default function DeliveryPage() {
       </div>
 
       {/* Modals */}
-      {showDetailsModal && (
-        <DeliveryOrderDetailsModal
-          order={selectedOrder}
-          onClose={() => {
-            setShowDetailsModal(false);
-            setSelectedOrder(null);
-          }}
-        />
-      )}
-
-      {showUpdateModal && (
-        <UpdateStatusModal
-          order={orderToUpdate}
-          onClose={() => {
-            setShowUpdateModal(false);
-            setOrderToUpdate(null);
-          }}
-          onSuccess={handleStatusUpdateSuccess}
-        />
-      )}
-
       {showCreateZoneModal && (
         <CreateZoneModal
           onClose={() => setShowCreateZoneModal(false)}
