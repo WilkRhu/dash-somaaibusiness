@@ -35,9 +35,13 @@ export default function MercadoPagoPaymentModal({
   const [copied, setCopied] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCount = useRef(0);
+  const approvedRef = useRef(false);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      approvedRef.current = false;
+      return;
+    }
     initPix();
     return () => stopPolling();
   }, [isOpen]);
@@ -48,6 +52,7 @@ export default function MercadoPagoPaymentModal({
 
   const startPolling = () => {
     pollCount.current = 0;
+    approvedRef.current = false;
     pollRef.current = setInterval(async () => {
       pollCount.current++;
       if (pollCount.current > MAX_POLLS) {
@@ -58,6 +63,10 @@ export default function MercadoPagoPaymentModal({
         const sale = await salesApi.getById(establishmentId, saleId);
         const status = (sale as any).status ?? (sale as any).data?.status;
         if (status === 'completed' || status === 'COMPLETED') {
+          // Proteção contra múltiplas chamadas
+          if (approvedRef.current) return;
+          approvedRef.current = true;
+          
           stopPolling();
           setStep('approved');
           showToast('Pagamento aprovado!', 'success');

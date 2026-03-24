@@ -157,8 +157,13 @@ export default function CheckoutModal({
 
     socket.on('pix-payment-confirmed', (data: { saleId: string; mercadoPagoPaymentId?: string; status?: string; timestamp?: string }) => {
       console.log('[PIX] pix-payment-confirmed recebido:', data, '| esperado saleId:', saleId);
+      // Proteção contra eventos duplicados: verifica se já foi processado
       if (data.saleId === saleId && !approvedRef.current) {
         approvedRef.current = true;
+        // Desconecta o socket imediatamente para evitar receber o evento novamente
+        socket.off('pix-payment-confirmed');
+        socket.disconnect();
+        
         socket.emit('sale-completed', { saleId, total: saleTotal, items: saleItems });
 
         stopPolling();
