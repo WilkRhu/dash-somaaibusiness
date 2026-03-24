@@ -26,7 +26,7 @@ export default function CorrectionPage() {
         setNote(noteData);
 
         const correctionsData = await getCorrections(noteId);
-        setCorrections(correctionsData.data || []);
+        setCorrections(correctionsData || []);
       } catch (error: any) {
         showToast(error.message || 'Erro ao carregar dados', 'error');
         router.push(`/fiscal/notes/${noteId}`);

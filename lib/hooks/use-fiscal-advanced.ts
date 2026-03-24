@@ -26,8 +26,6 @@ export function useFiscalAdvanced() {
           startDate: params.startDate,
           endDate: params.endDate,
           status: params.status,
-          type: params.type,
-          format: params.format,
         });
 
         // Criar blob e download

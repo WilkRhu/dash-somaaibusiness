@@ -41,8 +41,12 @@ export function DanfePreview({ sale, onClose, establishmentId, saleId }: DanfePr
   const isFiscal = !!sale.fiscalNote?.accessKey;
   const [email, setEmail] = useState('');
   const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [showOptions, setShowOptions] = useState(true);
 
-  const handlePrint = () => window.print();
+  const handlePrint = () => {
+    setShowOptions(false);
+    setTimeout(() => window.print(), 100);
+  };
 
   const handleSendEmail = async () => {
     if (!email || !establishmentId || !saleId) return;
@@ -50,10 +54,58 @@ export function DanfePreview({ sale, onClose, establishmentId, saleId }: DanfePr
     try {
       await salesApi.sendReceipt(establishmentId, saleId, email);
       setEmailStatus('sent');
+      setTimeout(() => setShowOptions(false), 1500);
     } catch {
       setEmailStatus('error');
     }
   };
+
+  if (showOptions) {
+    return (
+      <div className="flex flex-col items-center gap-6 p-8 w-full max-w-md">
+        <div className="text-center">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">Cupom da Venda</h3>
+          <p className="text-sm text-gray-600">Como deseja receber o comprovante?</p>
+        </div>
+
+        {/* Opção Impressão */}
+        <button
+          onClick={handlePrint}
+          className="w-full p-6 border-2 border-gray-300 rounded-xl hover:border-brand-blue hover:bg-blue-50 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="text-4xl">🖨️</div>
+            <div className="text-left">
+              <p className="font-semibold text-gray-900">Imprimir</p>
+              <p className="text-xs text-gray-600">Imprimir o cupom agora</p>
+            </div>
+          </div>
+        </button>
+
+        {/* Opção Email */}
+        <button
+          onClick={() => setShowOptions(false)}
+          className="w-full p-6 border-2 border-gray-300 rounded-xl hover:border-brand-green hover:bg-green-50 transition-all group"
+        >
+          <div className="flex items-center gap-4">
+            <div className="text-4xl">📧</div>
+            <div className="text-left">
+              <p className="font-semibold text-gray-900">Enviar por Email</p>
+              <p className="text-xs text-gray-600">Enviar comprovante para o cliente</p>
+            </div>
+          </div>
+        </button>
+
+        {/* Opção Fechar */}
+        <button
+          onClick={onClose}
+          className="w-full p-4 text-gray-700 border-2 border-gray-300 rounded-xl hover:bg-gray-100 transition-colors font-semibold text-sm"
+        >
+          Fechar
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center gap-4 p-4 w-full">
@@ -184,10 +236,10 @@ export function DanfePreview({ sale, onClose, establishmentId, saleId }: DanfePr
       {/* Ações */}
       <div className="flex gap-3 w-full max-w-[380px]">
         <button
-          onClick={handlePrint}
+          onClick={() => setShowOptions(true)}
           className="flex-1 px-4 py-2 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-semibold text-sm"
         >
-          🖨️ Imprimir
+          ← Voltar
         </button>
         <button
           onClick={onClose}

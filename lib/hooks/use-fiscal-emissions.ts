@@ -100,7 +100,7 @@ export function useFiscalEmissions(days: number = 7) {
       const result = await fiscalApi.getEmissionsLastDays(days);
       setReport(result);
       setEmissions(
-        result.dailyBreakdown.map((d) => ({
+        result.dailyBreakdown.map((d: any) => ({
           date: d.date,
           dayOfWeek: d.dayOfWeek,
           count: d.count,

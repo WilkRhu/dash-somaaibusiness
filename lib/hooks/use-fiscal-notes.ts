@@ -43,7 +43,7 @@ export function useFiscalNotes(options: UseFiscalNotesOptions = {}) {
           page: result.page,
           limit: result.limit,
           total: result.total,
-          totalPages: result.totalPages,
+          totalPages: Math.ceil(result.total / result.limit),
         });
       } catch (err: any) {
         const message = err.response?.data?.message || err.message || 'Erro ao buscar notas';

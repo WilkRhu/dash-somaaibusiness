@@ -7,6 +7,7 @@ import { mercadoPagoApi } from '@/lib/api/mercadopago';
 import { salesApi } from '@/lib/api/sales';
 import { showToast } from '@/components/ui/toast';
 import { DanfePreview, type DanfeSaleData } from '@/components/sales/danfe-preview';
+import { ReceiptPreviewModal } from '@/components/sales/receipt-preview-modal';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -80,6 +81,7 @@ export default function CheckoutModal({
   // Fase PIX
   const [phase, setPhase] = useState<'form' | 'pix-loading' | 'pix-qr' | 'pix-approved' | 'pix-rejected' | 'receipt'>('form');
   const [receiptData, setReceiptData] = useState<DanfeSaleData | null>(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
   const [pixData, setPixData] = useState<{ qrCodeBase64: string; qrCode: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [currentSaleId, setCurrentSaleId] = useState<string | null>(null);
@@ -107,6 +109,7 @@ export default function CheckoutModal({
       setPixData(null);
       setCurrentSaleId(null);
       setReceiptData(null);
+      setShowReceiptModal(false);
       approvedRef.current = false;
       stopPolling();
     }
@@ -161,10 +164,12 @@ export default function CheckoutModal({
         stopPolling();
         setPhase('pix-approved');
         showToast('Pagamento aprovado!', 'success');
+        
         setTimeout(() => {
           onMpApproved?.();
           setReceiptData(buildReceiptData('PIX (Mercado Pago)'));
-          setPhase('receipt');
+          setShowReceiptModal(true);
+          setPhase('form');
         }, 1500);
       }
     });
@@ -246,11 +251,13 @@ export default function CheckoutModal({
     }
 
     onConfirm(selectedMethod, cashRegisterId, notes || undefined).then((result) => {
-      if (result?.id) setCurrentSaleId(result.id);
+      if (result?.id) {
+        setCurrentSaleId(result.id);
+      }
     });
     const label = paymentMethods.find((m) => m.value === selectedMethod)?.label ?? selectedMethod;
     setReceiptData(buildReceiptData(label));
-    setPhase('receipt');
+    setShowReceiptModal(true);
   };
 
   const handleRetryPix = async () => {
@@ -286,7 +293,8 @@ export default function CheckoutModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <>
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-gradient-to-r from-brand-blue to-brand-green p-6 text-white">
@@ -309,14 +317,6 @@ export default function CheckoutModal({
         {/* Fase PIX */}
         {phase !== 'form' ? (
           <div className="p-6 flex flex-col items-center gap-6">
-            {phase === 'receipt' && receiptData ? (
-              <DanfePreview
-                sale={receiptData}
-                onClose={onClose}
-                establishmentId={establishmentId}
-                saleId={currentSaleId ?? undefined}
-              />
-            ) : null}
             {phase === 'pix-loading' && (
               <>
                 <div className="w-10 h-10 border-2 border-[#009EE3] border-t-transparent rounded-full animate-spin mt-8" />
@@ -504,5 +504,19 @@ export default function CheckoutModal({
         )}
       </div>
     </div>
+
+    {receiptData && (
+      <ReceiptPreviewModal
+        isOpen={showReceiptModal}
+        onClose={() => {
+          setShowReceiptModal(false);
+          onClose();
+        }}
+        sale={receiptData}
+        establishmentId={establishmentId}
+        saleId={currentSaleId ?? undefined}
+      />
+    )}
+    </>
   );
 }

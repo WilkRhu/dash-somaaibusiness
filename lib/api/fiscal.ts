@@ -1,390 +1,154 @@
-// Serviço de API para o sistema fiscal
-
-import axios from 'axios';
+import apiClient from './client';
 import {
-  FiscalNote,
   FiscalCertificate,
-  FiscalCorrection,
-  FiscalDisablement,
-  FiscalContingencyNote,
-  FiscalMetrics,
+  FiscalNote,
   FiscalNoteFilters,
   FiscalNoteData,
+  FiscalMetrics,
+  FiscalCorrection,
+  FiscalContingencyNote,
+  FiscalDisablement,
   CorrectionData,
-  DisablementData,
-  CnpjLookupResult,
-  CnpjValidationResult,
 } from '@/lib/types/fiscal';
 
-const api = axios.create({
-  baseURL: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api`,
-});
+export interface UploadCertificateDto {
+  certificateBase64: string;
+  password: string;
+}
 
-// Interceptor para adicionar token
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+export interface EmitFiscalNoteDto {
+  establishmentId: string;
+  saleId: string;
+  customerId?: string;
+  items: Array<{
+    productId: string;
+    description: string;
+    quantity: number;
+    unitPrice: number;
+    totalPrice: number;
+  }>;
+  totalAmount: number;
+  paymentMethod: string;
+  type: 'NFCE' | 'NFE';
+}
+
+const BASE = '/api/business/fiscal';
 
 export const fiscalApi = {
-  // ==================== CERTIFICADOS ====================
-
-  /**
-   * Upload de certificado digital
-   */
-  uploadCertificate: async (data: {
-    certificateBase64: string;
-    password: string;
-  }): Promise<FiscalCertificate> => {
-    const response = await api.post('/business/fiscal/certificate/upload', data);
-    return response.data;
+  // Certificados
+  uploadCertificate: async (dto: UploadCertificateDto): Promise<FiscalCertificate> => {
+    const { data } = await apiClient.post<FiscalCertificate>(`${BASE}/certificate/upload`, dto);
+    return data;
   },
 
-  /**
-   * Consultar certificado atual
-   */
   getCertificate: async (): Promise<FiscalCertificate> => {
-    const response = await api.get('/business/fiscal/certificate');
-    return response.data;
+    const { data } = await apiClient.get<FiscalCertificate>(`${BASE}/certificate`);
+    return data;
   },
 
-  /**
-   * Validar certificado
-   */
-  validateCertificate: async (): Promise<{
-    valid: boolean;
-    cnpj: string;
-    holderName: string;
-    expiresAt: string;
-    daysUntilExpiration: number;
-    isExpired: boolean;
-    needsRenewal: boolean;
-  }> => {
-    const response = await api.get('/business/fiscal/certificate/validate');
-    return response.data;
+  validateCertificate: async (): Promise<{ valid: boolean; message?: string }> => {
+    const { data } = await apiClient.post<{ valid: boolean; message?: string }>(`${BASE}/certificate/validate`);
+    return data;
   },
 
-  // ==================== NOTAS FISCAIS ====================
-
-  /**
-   * Emitir nota fiscal
-   */
-  emitNote: async (data: FiscalNoteData): Promise<FiscalNote> => {
-    const response = await api.post('/business/fiscal/notes', data);
-    return response.data;
+  // Notas fiscais
+  emit: async (dto: EmitFiscalNoteDto): Promise<FiscalNote> => {
+    const { data } = await apiClient.post<FiscalNote>(`${BASE}/notes/emit`, dto);
+    return data;
   },
 
-  /**
-   * Listar notas fiscais
-   */
-  getNotes: async (filters?: FiscalNoteFilters): Promise<{
-    data: FiscalNote[];
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  }> => {
-    const response = await api.get('/business/fiscal/notes', { params: filters });
-    return response.data;
+  emitNote: async (noteData: FiscalNoteData): Promise<FiscalNote> => {
+    const { data } = await apiClient.post<FiscalNote>(`${BASE}/notes`, noteData);
+    return data;
   },
 
-  /**
-   * Consultar nota fiscal específica
-   */
+  getNotes: async (filters?: FiscalNoteFilters): Promise<{ data: FiscalNote[]; total: number; page: number; limit: number }> => {
+    const { data } = await apiClient.get(`${BASE}/notes`, { params: filters });
+    return data;
+  },
+
   getNote: async (id: string): Promise<FiscalNote> => {
-    const response = await api.get(`/business/fiscal/notes/${id}`);
-    return response.data;
+    const { data } = await apiClient.get<FiscalNote>(`${BASE}/notes/${id}`);
+    return data;
   },
 
-  /**
-   * Cancelar nota fiscal
-   */
-  cancelNote: async (id: string, reason: string): Promise<{
-    id: string;
-    status: string;
-    cancellationReason: string;
-    cancelledAt: string;
-    message: string;
-  }> => {
-    const response = await api.delete(`/business/fiscal/notes/${id}`, {
-      data: { reason },
-    });
-    return response.data;
+  getById: async (noteId: string): Promise<FiscalNote> => {
+    const { data } = await apiClient.get<FiscalNote>(`${BASE}/notes/${noteId}`);
+    return data;
   },
 
-  /**
-   * Enviar nota por email
-   */
-  sendEmail: async (id: string): Promise<{
-    success: boolean;
-    message: string;
-    sentAt: string;
-  }> => {
-    const response = await api.post(`/business/fiscal/notes/${id}/send-email`);
-    return response.data;
+  cancelNote: async (id: string, reason: string): Promise<FiscalNote> => {
+    const { data } = await apiClient.post<FiscalNote>(`${BASE}/notes/${id}/cancel`, { reason });
+    return data;
   },
 
-  /**
-   * Reenviar nota por email
-   */
-  resendEmail: async (id: string): Promise<{
-    success: boolean;
-    message: string;
-    sentAt: string;
-  }> => {
-    const response = await api.post(`/business/fiscal/notes/${id}/resend-email`);
-    return response.data;
+  cancel: async (noteId: string, reason: string): Promise<FiscalNote> => {
+    const { data } = await apiClient.post<FiscalNote>(`${BASE}/notes/${noteId}/cancel`, { reason });
+    return data;
   },
 
-  /**
-   * Baixar DANFE (PDF)
-   */
+  sendEmail: async (id: string): Promise<{ sent: boolean }> => {
+    const { data } = await apiClient.post<{ sent: boolean }>(`${BASE}/notes/${id}/send-email`);
+    return data;
+  },
+
+  resendEmail: async (id: string): Promise<{ sent: boolean }> => {
+    const { data } = await apiClient.post<{ sent: boolean }>(`${BASE}/notes/${id}/resend-email`);
+    return data;
+  },
+
   downloadDanfe: async (id: string): Promise<Blob> => {
-    const response = await api.get(`/business/fiscal/notes/${id}/danfe`, {
-      responseType: 'blob',
-    });
-    return response.data;
+    const { data } = await apiClient.get(`${BASE}/notes/${id}/danfe`, { responseType: 'blob' });
+    return data;
   },
 
-  // ==================== CARTAS DE CORREÇÃO ====================
-
-  /**
-   * Criar carta de correção
-   */
-  createCorrection: async (noteId: string, data: CorrectionData): Promise<FiscalCorrection> => {
-    const response = await api.post(`/business/fiscal/notes/${noteId}/correction`, data);
-    return response.data;
+  // Correções
+  createCorrection: async (noteId: string, correctionData: CorrectionData): Promise<FiscalCorrection> => {
+    const { data } = await apiClient.post<FiscalCorrection>(`${BASE}/notes/${noteId}/corrections`, correctionData);
+    return data;
   },
 
-  /**
-   * Listar correções de uma nota
-   */
-  getCorrections: async (noteId: string): Promise<{
-    data: FiscalCorrection[];
-    total: number;
-  }> => {
-    const response = await api.get(`/business/fiscal/notes/${noteId}/corrections`);
-    return response.data;
+  getCorrections: async (noteId: string): Promise<FiscalCorrection[]> => {
+    const { data } = await apiClient.get<FiscalCorrection[]>(`${BASE}/notes/${noteId}/corrections`);
+    return data;
   },
 
-  // ==================== INUTILIZAÇÃO ====================
-
-  /**
-   * Criar inutilização de numeração
-   */
-  createDisablement: async (data: DisablementData): Promise<FiscalDisablement> => {
-    const response = await api.post('/business/fiscal/disablement', data);
-    return response.data;
-  },
-
-  /**
-   * Listar inutilizações
-   */
-  getDisablements: async (params?: {
-    page?: number;
-    limit?: number;
-  }): Promise<{
-    data: FiscalDisablement[];
-    total: number;
-    page: number;
-    limit: number;
-  }> => {
-    const response = await api.get('/business/fiscal/disablement', { params });
-    return response.data;
-  },
-
-  // ==================== RELATÓRIOS ====================
-
-  /**
-   * Relatório de notas
-   */
-  getNotesReport: async (params: {
-    startDate: string;
-    endDate: string;
-    status?: string;
-    type?: string;
-    format?: 'json' | 'excel' | 'csv';
-  }): Promise<any> => {
-    const response = await api.get('/business/fiscal/reports/notes', { params });
-    return response.data;
-  },
-
-  /**
-   * Relatório de vendas vs notas
-   */
-  getSalesNotesReport: async (params: {
-    startDate: string;
-    endDate: string;
-  }): Promise<{
-    summary: {
-      totalSales: number;
-      salesWithNotes: number;
-      salesWithoutNotes: number;
-      complianceRate: number;
-    };
-    salesWithoutNotes: any[];
-  }> => {
-    const response = await api.get('/business/fiscal/reports/sales-notes', { params });
-    return response.data;
-  },
-
-  // ==================== CONTINGÊNCIA ====================
-
-  /**
-   * Listar notas em contingência
-   */
-  getContingencyNotes: async (params?: {
-    page?: number;
-    limit?: number;
-  }): Promise<{
-    data: FiscalContingencyNote[];
-    total: number;
-    page: number;
-    limit: number;
-  }> => {
-    const response = await api.get('/business/fiscal/contingency', { params });
-    return response.data;
-  },
-
-  /**
-   * Transmitir nota em contingência
-   */
-  transmitContingencyNote: async (id: string): Promise<{
-    id: string;
-    status: string;
-    transmittedAt: string;
-    fiscalNoteId: string;
-    message: string;
-  }> => {
-    const response = await api.post(`/business/fiscal/contingency/${id}/transmit`);
-    return response.data;
-  },
-
-  // ==================== MÉTRICAS ====================
-
-  /**
-   * Obter métricas fiscais
-   */
+  // Métricas
   getMetrics: async (): Promise<FiscalMetrics> => {
-    const response = await api.get('/business/fiscal/metrics');
-    return response.data;
+    const { data } = await apiClient.get<FiscalMetrics>(`${BASE}/metrics`);
+    return data;
   },
 
-  /**
-   * Obter emissões dos últimos 7 dias
-   */
-  getEmissionsLastDays: async (days: number = 7): Promise<{
-    period: {
-      startDate: string;
-      endDate: string;
-      days: number;
-    };
-    summary: {
-      totalEmissions: number;
-      totalValue: number;
-      averageValue: number;
-      successRate: number;
-    };
-    byStatus: {
-      authorized: number;
-      rejected: number;
-      cancelled: number;
-      pending: number;
-    };
-    byType: {
-      nfe: number;
-      nfce: number;
-      nfse: number;
-    };
-    dailyBreakdown: Array<{
-      date: string;
-      dayOfWeek: string;
-      count: number;
-      value: number;
-      status: {
-        authorized: number;
-        rejected: number;
-        cancelled: number;
-        pending: number;
-      };
-    }>;
-  }> => {
-    try {
-      const response = await api.get('/business/fiscal/metrics/emissions', {
-        params: { days },
-      });
-      return response.data;
-    } catch (error: any) {
-      // Fallback: retornar dados vazios se a rota não existir
-      console.warn('Rota /business/fiscal/metrics/emissions não disponível, usando fallback');
-      const today = new Date();
-      const startDate = new Date(today);
-      startDate.setDate(startDate.getDate() - (days - 1));
-      
-      return {
-        period: {
-          startDate: startDate.toISOString().split('T')[0],
-          endDate: today.toISOString().split('T')[0],
-          days,
-        },
-        summary: {
-          totalEmissions: 0,
-          totalValue: 0,
-          averageValue: 0,
-          successRate: 0,
-        },
-        byStatus: {
-          authorized: 0,
-          rejected: 0,
-          cancelled: 0,
-          pending: 0,
-        },
-        byType: {
-          nfe: 0,
-          nfce: 0,
-          nfse: 0,
-        },
-        dailyBreakdown: Array.from({ length: days }, (_, i) => {
-          const date = new Date();
-          date.setDate(date.getDate() - (days - 1 - i));
-          const dayOfWeek = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab'][date.getDay()];
-          return {
-            date: date.toISOString().split('T')[0],
-            dayOfWeek,
-            count: 0,
-            value: 0,
-            status: {
-              authorized: 0,
-              rejected: 0,
-              cancelled: 0,
-              pending: 0,
-            },
-          };
-        }),
-      };
-    }
+  // Relatórios
+  getNotesReport: async (params: { startDate?: string; endDate?: string; status?: string }): Promise<Blob> => {
+    const { data } = await apiClient.get(`${BASE}/reports/notes`, { params, responseType: 'blob' });
+    return data;
   },
 
-  // ==================== CNPJ ====================
-
-  /**
-   * Consultar CNPJ
-   */
-  lookupCnpj: async (cnpj: string): Promise<CnpjLookupResult> => {
-    const response = await api.get(`/business/fiscal/cnpj/${cnpj}`);
-    return response.data;
+  getSalesNotesReport: async (params: { startDate?: string; endDate?: string }): Promise<any> => {
+    const { data } = await apiClient.get(`${BASE}/reports/sales-notes`, { params });
+    return data;
   },
 
-  /**
-   * Validar CNPJ
-   */
-  validateCnpj: async (cnpj: string): Promise<CnpjValidationResult> => {
-    const response = await api.get(`/business/fiscal/cnpj/${cnpj}/validate`);
-    return response.data;
+  getEmissionsLastDays: async (days: number): Promise<any> => {
+    const { data } = await apiClient.get(`${BASE}/metrics/emissions`, { params: { days } });
+    return data;
+  },
+
+  // Contingência
+  getContingencyNotes: async (params?: any): Promise<FiscalContingencyNote[]> => {
+    const { data } = await apiClient.get<FiscalContingencyNote[]>(`${BASE}/contingency`, { params });
+    return data;
+  },
+
+  transmitContingencyNote: async (id: string): Promise<FiscalContingencyNote> => {
+    const { data } = await apiClient.post<FiscalContingencyNote>(`${BASE}/contingency/${id}/transmit`);
+    return data;
+  },
+
+  // Inutilizações
+  getDisablements: async (params?: any): Promise<FiscalDisablement[]> => {
+    const { data } = await apiClient.get<FiscalDisablement[]>(`${BASE}/disablements`, { params });
+    return data;
   },
 };
-
-export default fiscalApi;

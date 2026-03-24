@@ -23,6 +23,7 @@ import { PaymentMethod, SaleStatus } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
 import { InventoryItem } from '@/lib/types/inventory';
 import { useMercadoPagoIntegration } from '@/lib/hooks/use-mercadopago-integration';
+import { DraggableBadge } from '@/components/ui/draggable-badge';
 
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
@@ -269,6 +270,17 @@ export default function POSPage() {
       // Verifica ofertas ativas para cada item
       const itemsWithOffers = await Promise.all(
         items.map(async (item) => {
+          // Item avulso: sem itemId, sem verificação de oferta
+          if (item.isCustom) {
+            return {
+              productName: item.name,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              discount: item.discount,
+              applyOffer: false,
+            };
+          }
+
           try {
             if (!currentEstablishment?.id) {
               return {
@@ -305,12 +317,14 @@ export default function POSPage() {
       if (!isOnline) {
         // Salvar venda offline
         const pendingSale: PendingSale = {          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          items: itemsWithOffers.map(item => ({
-            productId: item.itemId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.unitPrice * item.quantity - item.discount,
-          })),
+          items: itemsWithOffers
+            .filter(item => item.itemId)
+            .map(item => ({
+              productId: item.itemId!,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.unitPrice * item.quantity - item.discount,
+            })),
           customerId: selectedCustomer?.id,
           paymentMethod,
           total,
@@ -394,46 +408,17 @@ export default function POSPage() {
     }
   };
 
-  const handleAddCustomItem = async (customItem: { name: string; unitPrice: number; quantity: number }) => {
-    try {
-      if (!isOnline) {
-        showToast('Adicione itens apenas com conexão', 'warning');
-        return;
-      }
-
-      if (!currentEstablishment?.id) {
-        showToast('Nenhum estabelecimento selecionado', 'error');
-        return;
-      }
-
-      // Cria um produto temporário no inventário
-      const tempProduct = await inventoryApi.add(currentEstablishment.id, {
-        name: `[AVULSO] ${customItem.name}`,
-        category: 'Avulso',
-        quantity: customItem.quantity,
-        salePrice: customItem.unitPrice,
-        costPrice: 0,
-        minQuantity: 0,
-        unit: 'un',
-      });
-
-      // Adiciona o produto ao carrinho
-      addItem({
-        itemId: tempProduct.data.id,
-        name: customItem.name,
-        quantity: customItem.quantity,
-        unitPrice: customItem.unitPrice,
-        discount: 0,
-      });
-
-      setShowCustomItemModal(false);
-      showToast('Item avulso adicionado', 'success');
-      
-      // Atualiza a lista de produtos
-      refetchInventory();
-    } catch (error: any) {
-      showToast(error.message || 'Erro ao adicionar item avulso', 'error');
-    }
+  const handleAddCustomItem = (customItem: { name: string; unitPrice: number; quantity: number }) => {
+    addItem({
+      itemId: crypto.randomUUID(),
+      name: customItem.name,
+      quantity: customItem.quantity,
+      unitPrice: customItem.unitPrice,
+      discount: 0,
+      isCustom: true,
+    });
+    setShowCustomItemModal(false);
+    showToast('Item avulso adicionado', 'success');
   };
 
   const handleAddProductToCart = (product: InventoryItem) => {
@@ -504,15 +489,17 @@ export default function POSPage() {
 
         {/* Indicador de conexão com App Mobile */}
         {isClient && (
-          <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-lg font-semibold">
-            <div className={`w-3 h-3 rounded-full ${isAppConnected ? 'bg-white animate-pulse' : 'bg-red-300'}`}></div>
-            <span>{isAppConnected ? 'App Conectado' : 'App Desconectado'}</span>
-            {lastAppScan && lastAppScan.product && (
-              <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
-                {lastAppScan.product.originalName?.substring(0, 15)}...
-              </span>
-            )}
-          </div>
+          <DraggableBadge storageKey="pos-app-badge" defaultPosition={{ x: 24, y: 24 }}>
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-lg font-semibold">
+              <div className={`w-3 h-3 rounded-full ${isAppConnected ? 'bg-white animate-pulse' : 'bg-red-300'}`}></div>
+              <span>{isAppConnected ? 'App Conectado' : 'App Desconectado'}</span>
+              {lastAppScan && lastAppScan.product && (
+                <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
+                  {lastAppScan.product.originalName?.substring(0, 15)}...
+                </span>
+              )}
+            </div>
+          </DraggableBadge>
         )}
 
         {/* Botão Fullscreen */}
@@ -1022,7 +1009,7 @@ export default function POSPage() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onConfirm={handleCheckout}
-        onMpApproved={() => { clear(); setSelectedCustomer(null); setIsCheckoutOpen(false); refetchInventory(); refetchSales(); }}
+        onMpApproved={() => { clear(); setSelectedCustomer(null); refetchInventory(); refetchSales(); }}
         total={total}
         items={items.map(i => ({ name: i.name, quantity: i.quantity, unitPrice: i.unitPrice }))}
         isLoading={isLoading}
