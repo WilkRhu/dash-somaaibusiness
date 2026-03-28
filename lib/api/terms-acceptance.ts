@@ -1,4 +1,4 @@
-import { api } from './client';
+import apiClient from './client';
 
 export interface TermsAcceptanceData {
   userId: string;
@@ -18,7 +18,7 @@ export async function recordTermsAcceptance(
   data: Omit<TermsAcceptanceData, 'acceptanceDate'>
 ): Promise<TermsAcceptanceData> {
   try {
-    const response = await api.post('/api/terms-acceptance', {
+    const response = await apiClient.post('/api/terms-acceptance', {
       ...data,
       acceptanceDate: new Date().toISOString(),
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : undefined,
@@ -37,7 +37,7 @@ export async function getTermsAcceptanceHistory(
   userId: string
 ): Promise<TermsAcceptanceData[]> {
   try {
-    const response = await api.get(`/api/terms-acceptance/${userId}`);
+    const response = await apiClient.get(`/api/terms-acceptance/${userId}`);
     return response.data;
   } catch (error) {
     console.error('Erro ao obter histórico de aceites:', error);
@@ -53,7 +53,7 @@ export async function hasAcceptedCurrentTerms(
   termsVersion: string = '1.0.0'
 ): Promise<boolean> {
   try {
-    const response = await api.get(
+    const response = await apiClient.get(
       `/api/terms-acceptance/${userId}/check?version=${termsVersion}`
     );
     return response.data.accepted;
@@ -68,7 +68,7 @@ export async function hasAcceptedCurrentTerms(
  */
 export async function getCurrentTermsVersion(): Promise<string> {
   try {
-    const response = await api.get('/api/terms-acceptance/version');
+    const response = await apiClient.get('/api/terms-acceptance/version');
     return response.data.version;
   } catch (error) {
     console.error('Erro ao obter versão dos termos:', error);
