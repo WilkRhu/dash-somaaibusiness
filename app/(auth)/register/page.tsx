@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useRouter } from 'next/navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
+import { TermsAcceptanceModal } from '@/components/auth/terms-acceptance-modal';
 
 export default function RegisterPage() {
   const [name, setName] = useState('');
@@ -16,6 +17,8 @@ export default function RegisterPage() {
   const [phone, setPhone] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState('');
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const { register, isLoading } = useAuthStore();
   const router = useRouter();
 
@@ -53,8 +56,8 @@ export default function RegisterPage() {
       return;
     }
     
-    if (!acceptTerms) {
-      setError('Você precisa aceitar os termos de uso');
+    if (!termsAccepted) {
+      setShowTermsModal(true);
       return;
     }
     
@@ -68,6 +71,16 @@ export default function RegisterPage() {
       console.error('Erro no registro:', err);
       setError(err.response?.data?.message || err.message || 'Erro ao criar conta. Tente novamente.');
     }
+  };
+
+  const handleAcceptTerms = () => {
+    setTermsAccepted(true);
+    setAcceptTerms(true);
+    setShowTermsModal(false);
+  };
+
+  const handleRejectTerms = () => {
+    setShowTermsModal(false);
   };
 
   return (
@@ -331,17 +344,24 @@ export default function RegisterPage() {
                   type="checkbox"
                   id="terms"
                   checked={acceptTerms}
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setShowTermsModal(true);
+                    } else {
+                      setAcceptTerms(false);
+                      setTermsAccepted(false);
+                    }
+                  }}
                   className="w-4 h-4 mt-1 rounded border-gray-300 text-[#4C99C2] focus:ring-[#4C99C2]"
                   required
                 />
                 <label htmlFor="terms" className="text-sm text-[#142D4A]/70">
                   Eu aceito os{' '}
-                  <a href="#" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
+                  <a href="/terms-of-service" target="_blank" rel="noopener noreferrer" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
                     Termos de Uso
                   </a>
                   {' '}e{' '}
-                  <a href="#" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
+                  <a href="/privacy-policy" target="_blank" rel="noopener noreferrer" className="text-[#4C99C2] hover:text-[#3A7A9A] font-semibold">
                     Política de Privacidade
                   </a>
                 </label>
@@ -386,6 +406,14 @@ export default function RegisterPage() {
           </div>
         </div>
       </div>
+
+      {/* Modal de Aceite de Termos */}
+      <TermsAcceptanceModal
+        open={showTermsModal}
+        onAccept={handleAcceptTerms}
+        onReject={handleRejectTerms}
+        isLoading={isLoading}
+      />
     </div>
   );
 }

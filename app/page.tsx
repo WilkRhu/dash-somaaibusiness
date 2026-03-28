@@ -38,6 +38,12 @@ export default function LandingPage() {
                 Contato
               </a>
               <Link 
+                href="/register"
+                className="px-6 py-2 bg-white border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all font-semibold"
+              >
+                Criar Conta
+              </Link>
+              <Link 
                 href="/login"
                 className="px-6 py-2 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity font-semibold"
               >
@@ -66,6 +72,12 @@ export default function LandingPage() {
               <a href="#contact" className="block text-brand-navy hover:text-brand-blue">
                 Contato
               </a>
+              <Link 
+                href="/register"
+                className="block text-center px-6 py-2 bg-white border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all font-semibold"
+              >
+                Criar Conta
+              </Link>
               <Link 
                 href="/login"
                 className="block text-center px-6 py-2 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg"
@@ -580,12 +592,20 @@ export default function LandingPage() {
           <p className="text-xl text-brand-navy/70 mb-8">
             Comece gratuitamente hoje e veja como o SomaAI Business pode revolucionar sua gestão.
           </p>
-          <Link
-            href="/login"
-            className="inline-block px-8 py-4 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity font-semibold text-lg"
-          >
-            Começar Gratuitamente
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/register"
+              className="inline-block px-8 py-4 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity font-semibold text-lg"
+            >
+              Criar Conta Grátis
+            </Link>
+            <Link
+              href="/login"
+              className="inline-block px-8 py-4 border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all font-semibold text-lg"
+            >
+              Já tenho conta
+            </Link>
+          </div>
         </div>
       </section>
 
