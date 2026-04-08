@@ -32,9 +32,15 @@ class DeliveryService {
       limit?: number;
     }
   ): Promise<{ data: DeliveryOrder[]; total: number; page: number; limit: number }> {
+    const params = {
+      page: 1,
+      limit: 50,
+      ...filters,
+    };
+
     const response = await apiClient.get(
       `${this.getBasePath(establishmentId)}/orders`,
-      { params: filters }
+      { params }
     );
     return response.data;
   }
@@ -82,7 +88,7 @@ class DeliveryService {
     driverId: string,
     photoType: 'front' | 'back' | 'side',
     photoBase64: string
-  ): Promise<any> {
+  ): Promise<unknown> {
     const response = await apiClient.patch(
       `/business/establishments/${establishmentId}/delivery/drivers/${driverId}/vehicle-photos/${photoType}`,
       { photo: photoBase64, photoType }

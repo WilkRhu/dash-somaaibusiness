@@ -11,6 +11,8 @@ export interface Product {
   costPrice: number;
   salePrice: number;
   quantity: number;
+  shelfQuantity?: number | null;
+  storageQuantity?: number | null;
   minQuantity: number;
   unit: string;
   expirationDate?: string | null;

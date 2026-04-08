@@ -8,6 +8,8 @@ export interface InventoryItem {
   costPrice: number;
   salePrice: number;
   quantity: number;
+  shelfQuantity?: number | null;
+  storageQuantity?: number | null;
   minQuantity: number;
   unit: string;
   expirationDate?: string | null;
@@ -45,6 +47,8 @@ export interface AddProductDto {
   costPrice: number;
   salePrice: number;
   quantity: number;
+  shelfQuantity?: number;
+  storageQuantity?: number;
   minQuantity: number;
   unit: string;
   expirationDate?: string;
@@ -53,10 +57,14 @@ export interface AddProductDto {
   description?: string;
 }
 
+export type UpdateProductDto = Partial<Omit<InventoryItem, 'id' | 'establishmentId' | 'createdAt' | 'updatedAt'>>;
+
 export interface UpdateStockDto {
   type: 'entry' | 'sale' | 'adjustment' | 'loss' | 'return';
   quantity: number;
   reason?: string;
+  shelfQuantity?: number;
+  storageQuantity?: number;
 }
 
 export interface InventoryFilters {

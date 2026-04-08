@@ -17,6 +17,8 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
     costPrice: 0,
     salePrice: 0,
     quantity: 1,
+    shelfQuantity: 0,
+    storageQuantity: 0,
     minQuantity: 1,
     unit: 'un',
   });
@@ -44,18 +46,26 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
     return 0;
   };
 
+  const shelfQuantity = Number(formData.shelfQuantity || 0);
+  const storageQuantity = Number(formData.storageQuantity || 0);
+  const hasLocationSplit = shelfQuantity > 0 || storageQuantity > 0;
+  const calculatedTotalQuantity = hasLocationSplit
+    ? shelfQuantity + storageQuantity
+    : Number(formData.quantity || 0);
+
   // Atualiza o preço de custo quando muda os valores do lote
   useEffect(() => {
     if (useBulkCalculation) {
-      const unitCost = calculateUnitCost();
+      const cost = parseFloat(bulkCost);
+      const bulkQty = parseFloat(bulkQuantity);
+      const unitCost = !isNaN(cost) && !isNaN(bulkQty) && bulkQty > 0 ? cost / bulkQty : 0;
       if (unitCost > 0) {
         setFormData(prev => ({ ...prev, costPrice: unitCost }));
       }
       
       // Atualiza a quantidade inicial com o peso total do lote
-      const qty = parseFloat(bulkQuantity);
-      if (!isNaN(qty) && qty > 0) {
-        setFormData(prev => ({ ...prev, quantity: qty }));
+      if (!isNaN(bulkQty) && bulkQty > 0) {
+        setFormData(prev => ({ ...prev, quantity: bulkQty }));
       }
     }
   }, [bulkCost, bulkQuantity, useBulkCalculation]);
@@ -64,7 +74,15 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await onSubmit(formData, imageFiles);
+      const hasCustomLocation = shelfQuantity > 0 || storageQuantity > 0;
+      const productData: AddProductDto = {
+        ...formData,
+        quantity: hasCustomLocation ? shelfQuantity + storageQuantity : formData.quantity,
+        shelfQuantity: hasCustomLocation ? shelfQuantity : undefined,
+        storageQuantity: hasCustomLocation ? storageQuantity : formData.quantity,
+      };
+
+      await onSubmit(productData, imageFiles);
     } finally {
       setIsSubmitting(false);
     }
@@ -367,7 +385,7 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
             placeholder="Ex: 100"
           />
           <p className="text-xs text-gray-500 mt-1">
-            Quantidade em estoque ao cadastrar o produto
+            Quantidade total ao cadastrar o produto
           </p>
         </div>
 
@@ -388,6 +406,59 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
           <p className="text-xs text-gray-500 mt-1">
             Alerta quando o estoque atingir este valor
           </p>
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="border-t border-gray-200 pt-4 mt-2">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Localização do estoque</h3>
+                <p className="text-xs text-gray-500">
+                  Se não preencher, o sistema assume todo o estoque no depósito.
+                </p>
+              </div>
+              <div className="text-xs font-semibold text-brand-blue">
+                Total calculado: {calculatedTotalQuantity} {formData.unit}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prateleira
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.shelfQuantity ?? 0}
+                  onChange={(e) => setFormData({ ...formData, shelfQuantity: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                  placeholder="Ex: 20"
+                />
+                <p className="text-xs text-gray-500 mt-1">Quantidade exposta na loja</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Depósito
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.storageQuantity ?? 0}
+                  onChange={(e) => setFormData({ ...formData, storageQuantity: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                  placeholder="Ex: 80"
+                />
+                <p className="text-xs text-gray-500 mt-1">Quantidade guardada no estoque</p>
+              </div>
+            </div>
+            {hasLocationSplit && (
+              <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+                Prateleira + depósito = {shelfQuantity} + {storageQuantity} = {calculatedTotalQuantity} {formData.unit}
+              </div>
+            )}
+          </div>
         </div>
 
         <div>

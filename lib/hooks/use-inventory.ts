@@ -4,7 +4,7 @@ import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offlineDB } from '@/lib/offline-db';
 import { syncProducts } from '@/lib/offline-sync';
-import { AddProductDto, UpdateStockDto, InventoryFilters } from '@/lib/types/inventory';
+import { AddProductDto, UpdateStockDto, InventoryFilters, UpdateProductDto } from '@/lib/types/inventory';
 
 export function useInventory(filters?: InventoryFilters) {
   const { items, isLoading, error, setItems, addItem, updateItem, removeItem, setLoading, setError } = useInventoryStore();
@@ -105,7 +105,7 @@ export function useInventory(filters?: InventoryFilters) {
     }
   };
 
-  const updateProduct = async (id: string, dto: Partial<AddProductDto>) => {
+  const updateProduct = async (id: string, dto: UpdateProductDto) => {
     if (!currentEstablishment) throw new Error('Nenhum estabelecimento selecionado');
     
     try {

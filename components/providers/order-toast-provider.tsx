@@ -6,6 +6,7 @@ import { OrderToastContext } from '@/lib/context/order-toast-context';
 import { PersistentOrderToast } from '@/components/delivery/persistent-order-toast';
 import { AudioPlayer } from './audio-player';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/stores/auth-store';
 
 interface OrderToastProviderProps {
   children: ReactNode;
@@ -14,6 +15,7 @@ interface OrderToastProviderProps {
 
 export function OrderToastProvider({ children, establishmentId }: OrderToastProviderProps) {
   const router = useRouter();
+  const { user } = useAuthStore();
   const [order, setOrder] = useState<DeliveryOrder | null>(null);
   const [isViewed, setIsViewed] = useState(false);
 
@@ -22,7 +24,7 @@ export function OrderToastProvider({ children, establishmentId }: OrderToastProv
     setIsViewed(false);
   }, []);
 
-  const markAsViewed = useCallback((orderId: string) => {
+  const markAsViewed = useCallback(() => {
     setIsViewed(true);
   }, []);
 
@@ -43,9 +45,15 @@ export function OrderToastProvider({ children, establishmentId }: OrderToastProv
   }, [isViewed, dismiss]);
 
   const handleViewOrder = (orderId: string) => {
-    markAsViewed(orderId);
+    markAsViewed();
+    // Super admin no painel admin deve permanecer no fluxo do admin
+    if (user?.role === 'super_admin' && establishmentId) {
+      router.push(`/admin/business/establishments/${establishmentId}/delivery`);
+      return;
+    }
+
     // Navegar para a página de pedidos
-    router.push(`/delivery/orders`);
+    router.push('/delivery/orders');
   };
 
   const handleDismiss = () => {

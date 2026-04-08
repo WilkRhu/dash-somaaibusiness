@@ -7,11 +7,15 @@ import { DeliveryStatus } from '@/lib/types/delivery';
 
 export function useOrderNotifications(establishmentId: string) {
   const { showNewOrder } = useOrderToast();
-  const { orders, refetch } = useDeliveryOrders();
+  const { orders, refetch } = useDeliveryOrders({ limit: 100 });
   const previousOrdersRef = useRef<string[]>([]);
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Verificar novos pedidos quando a lista muda
+  useEffect(() => {
+    previousOrdersRef.current = [];
+  }, [establishmentId]);
+
   useEffect(() => {
     if (!orders || orders.length === 0) return;
 
@@ -52,4 +56,3 @@ export function useOrderNotifications(establishmentId: string) {
     };
   }, [refetch]);
 }
-

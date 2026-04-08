@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { InventoryItem, AddProductDto, StockMovement, InventoryFilters, UpdateStockDto } from '@/lib/types/inventory';
+import { InventoryItem, AddProductDto, StockMovement, InventoryFilters, UpdateStockDto, UpdateProductDto } from '@/lib/types/inventory';
 
 interface ApiResponse<T> {
   success: boolean;
@@ -35,7 +35,7 @@ export const inventoryApi = {
     return response.data;
   },
 
-  update: async (establishmentId: string, id: string, dto: Partial<AddProductDto>) => {
+  update: async (establishmentId: string, id: string, dto: UpdateProductDto) => {
     const response = await apiClient.patch<ApiResponse<InventoryItem>>(
       `/business/establishments/${establishmentId}/inventory/${id}`,
       dto
