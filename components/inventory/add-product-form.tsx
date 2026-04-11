@@ -47,11 +47,10 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
   };
 
   const shelfQuantity = Number(formData.shelfQuantity || 0);
-  const storageQuantity = Number(formData.storageQuantity || 0);
-  const hasLocationSplit = shelfQuantity > 0 || storageQuantity > 0;
-  const calculatedTotalQuantity = hasLocationSplit
-    ? shelfQuantity + storageQuantity
-    : Number(formData.quantity || 0);
+  const totalQuantity = Number(formData.quantity || 0);
+  const storageQuantity = Math.max(totalQuantity - shelfQuantity, 0);
+  const hasLocationSplit = shelfQuantity > 0;
+  const calculatedTotalQuantity = totalQuantity;
 
   // Atualiza o preço de custo quando muda os valores do lote
   useEffect(() => {
@@ -74,12 +73,12 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const hasCustomLocation = shelfQuantity > 0 || storageQuantity > 0;
+      const hasCustomLocation = shelfQuantity > 0 || totalQuantity > 0;
       const productData: AddProductDto = {
         ...formData,
-        quantity: hasCustomLocation ? shelfQuantity + storageQuantity : formData.quantity,
+        quantity: totalQuantity,
         shelfQuantity: hasCustomLocation ? shelfQuantity : undefined,
-        storageQuantity: hasCustomLocation ? storageQuantity : formData.quantity,
+        storageQuantity: hasCustomLocation ? storageQuantity : totalQuantity,
       };
 
       await onSubmit(productData, imageFiles);
@@ -445,12 +444,11 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
                   type="number"
                   min="0"
                   step="1"
-                  value={formData.storageQuantity ?? 0}
-                  onChange={(e) => setFormData({ ...formData, storageQuantity: parseInt(e.target.value) || 0 })}
+                  value={storageQuantity}
+                  readOnly
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                  placeholder="Ex: 80"
                 />
-                <p className="text-xs text-gray-500 mt-1">Quantidade guardada no estoque</p>
+                <p className="text-xs text-gray-500 mt-1">Calculado automaticamente: total - prateleira</p>
               </div>
             </div>
             {hasLocationSplit && (

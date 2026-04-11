@@ -11,6 +11,7 @@ interface EditProductFormProps {
 }
 
 export function EditProductForm({ product, onSubmit, onCancel }: EditProductFormProps) {
+  const totalQuantity = Number(product.quantity || 0);
   const [formData, setFormData] = useState({
     name: product.name,
     category: product.category || '',
@@ -18,7 +19,7 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
     costPrice: product.costPrice,
     salePrice: product.salePrice,
     shelfQuantity: product.shelfQuantity ?? 0,
-    storageQuantity: product.storageQuantity ?? product.quantity,
+    storageQuantity: Math.max(totalQuantity - (product.shelfQuantity ?? 0), 0),
     minQuantity: product.minQuantity,
     unit: product.unit,
     expirationDate: product.expirationDate || '',
@@ -28,8 +29,8 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const shelfQuantity = Number(formData.shelfQuantity || 0);
-  const storageQuantity = Number(formData.storageQuantity || 0);
-  const calculatedTotalQuantity = shelfQuantity + storageQuantity;
+  const storageQuantity = Math.max(totalQuantity - shelfQuantity, 0);
+  const calculatedTotalQuantity = totalQuantity;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +50,7 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
       if (formData.expirationDate !== (product.expirationDate || '')) dataToSend.expirationDate = formData.expirationDate || undefined;
       if (formData.description !== (product.description || '')) dataToSend.description = formData.description || undefined;
       if (shelfQuantity !== (product.shelfQuantity ?? 0)) dataToSend.shelfQuantity = shelfQuantity;
-      if (storageQuantity !== (product.storageQuantity ?? product.quantity)) dataToSend.storageQuantity = storageQuantity;
+      if (storageQuantity !== (product.storageQuantity ?? Math.max(product.quantity - (product.shelfQuantity ?? 0), 0))) dataToSend.storageQuantity = storageQuantity;
       if (calculatedTotalQuantity !== product.quantity) dataToSend.quantity = calculatedTotalQuantity;
       
       // NUNCA enviar image ou images no update - eles são gerenciados separadamente
@@ -176,11 +177,11 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
               <div>
                 <h3 className="text-sm font-semibold text-gray-900">Localização do estoque</h3>
                 <p className="text-xs text-gray-500">
-                  Ajuste o que fica na prateleira e no depósito.
+                  A prateleira é informada manualmente; o depósito é calculado como restante do total.
                 </p>
               </div>
               <div className="text-xs font-semibold text-brand-blue">
-                Total calculado: {calculatedTotalQuantity} {formData.unit}
+                Total atual: {calculatedTotalQuantity} {formData.unit}
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -206,11 +207,11 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
                   type="number"
                   min="0"
                   step="1"
-                  value={formData.storageQuantity}
-                  onChange={(e) => setFormData({ ...formData, storageQuantity: parseInt(e.target.value) || 0 })}
+                  value={storageQuantity}
+                  readOnly
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                 />
-                <p className="text-xs text-gray-500 mt-1">Quantidade guardada no estoque</p>
+                <p className="text-xs text-gray-500 mt-1">Calculado automaticamente: total - prateleira</p>
               </div>
             </div>
             <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
