@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect } from 'react';
 import { useNewOrders } from '@/lib/hooks/use-delivery-websocket';
 import { usePersistentOrderToast } from '@/lib/hooks/use-persistent-order-toast';
 import { PersistentOrderToast } from './persistent-order-toast';
 import { useRouter } from 'next/navigation';
+import { DeliveryOrder } from '@/lib/types/delivery';
 
 interface DeliveryOrderNotificationsContainerProps {
   establishmentId: string;
@@ -18,7 +18,7 @@ export function DeliveryOrderNotificationsContainer({
     usePersistentOrderToast();
 
   // Escutar novos pedidos via WebSocket
-  const handleNewOrder = (newOrder: any) => {
+  const handleNewOrder = (newOrder: DeliveryOrder) => {
     console.log('DeliveryOrderNotificationsContainer - handleNewOrder called with:', newOrder);
     showNewOrder(newOrder);
   };
@@ -29,7 +29,7 @@ export function DeliveryOrderNotificationsContainer({
     console.log('DeliveryOrderNotificationsContainer - handleViewOrder called with:', orderId);
     markAsViewed(orderId);
     // Navegar para o pedido
-    router.push(`/admin/business/establishments/${establishmentId}/delivery/${orderId}`);
+    router.push(`/admin/business/establishments/${establishmentId}/delivery`);
   };
 
   console.log('DeliveryOrderNotificationsContainer - rendering with order:', order, 'isViewed:', isViewed);

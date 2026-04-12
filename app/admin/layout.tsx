@@ -1,11 +1,11 @@
 'use client';
 
-import { redirect } from 'next/navigation';
 import { AdminNavigation } from '@/components/admin/AdminNavigation';
 import { Header } from '@/components/dashboard/header';
 import { ToastContainer } from '@/components/ui/toast';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AdminLayout({
   children,
@@ -14,29 +14,49 @@ export default function AdminLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { user, isAuthenticated } = useAuthStore();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isAuthReady, setIsAuthReady] = useState(false);
+  const router = useRouter();
+  type AuthStoreWithPersist = typeof useAuthStore & {
+    persist?: {
+      hasHydrated?: () => boolean;
+      onFinishHydration?: (callback: () => void) => (() => void) | void;
+    };
+  };
+  const authPersist = (useAuthStore as AuthStoreWithPersist).persist;
 
   const userRole = user?.role;
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
 
   useEffect(() => {
-    // Esperar o Zustand hidratar
-    const checkAuth = () => {
-      setIsLoading(false);
-    };
-    
-    // Pequeno delay para garantir hidratação
-    const timer = setTimeout(checkAuth, 50);
-    return () => clearTimeout(timer);
-  }, []);
+    const hydrated = authPersist?.hasHydrated?.() ?? true;
+    setIsAuthReady(hydrated);
 
-  if (isLoading) {
-    return null; // ou um spinner de loading
+    if (!authPersist?.onFinishHydration) {
+      return;
+    }
+
+    const unsubscribe = authPersist.onFinishHydration(() => {
+      setIsAuthReady(true);
+    });
+
+    return unsubscribe;
+  }, [authPersist]);
+
+  useEffect(() => {
+    if (!isAuthReady) return;
+
+    // Redireciona somente depois que a store terminou de hidratar
+    if (!isAuthenticated || !isAdmin) {
+      router.replace('/dashboard');
+    }
+  }, [isAuthReady, isAuthenticated, isAdmin, router]);
+
+  if (!isAuthReady) {
+    return null;
   }
 
-  // Redirecionar se não estiver logado ou não for admin
   if (!isAuthenticated || !isAdmin) {
-    redirect('/dashboard');
+    return null;
   }
 
   return (

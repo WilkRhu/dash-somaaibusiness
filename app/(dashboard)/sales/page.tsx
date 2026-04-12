@@ -26,7 +26,9 @@ export default function SalesPage() {
   const [statusFilter, setStatusFilter] = useState<SaleStatus | 'all'>('all');
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
+  const [showReasonModal, setShowReasonModal] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [selectedCancellationReason, setSelectedCancellationReason] = useState<string>('');
   const [cancelReason, setCancelReason] = useState('');
   
   const { sales, isLoading, cancelSale, refetch } = useSales(
@@ -50,6 +52,11 @@ export default function SalesPage() {
     } catch (error: any) {
       showToast(error.message || 'Erro ao cancelar venda', 'error');
     }
+  };
+
+  const handleViewReason = (reason: string) => {
+    setSelectedCancellationReason(reason);
+    setShowReasonModal(true);
   };
 
   const handleConfirmPayment = async () => {
@@ -148,15 +155,26 @@ export default function SalesPage() {
                     </td>
                     <td className="py-3 px-4 text-center">
                       {sale.status === SaleStatus.PENDING && (
-                        <button
-                          onClick={() => {
-                            setSelectedSaleId(sale.id);
-                            setShowConfirmPaymentModal(true);
-                          }}
-                          className="text-green-600 hover:text-green-800 font-medium"
-                        >
-                          Confirmar Pagamento
-                        </button>
+                        <div className="flex flex-wrap items-center justify-center gap-3">
+                          <button
+                            onClick={() => {
+                              setSelectedSaleId(sale.id);
+                              setShowConfirmPaymentModal(true);
+                            }}
+                            className="text-green-600 hover:text-green-800 font-medium"
+                          >
+                            Confirmar Pagamento
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedSaleId(sale.id);
+                              setShowCancelModal(true);
+                            }}
+                            className="text-red-600 hover:text-red-800 font-medium"
+                          >
+                            Cancelar
+                          </button>
+                        </div>
                       )}
                       {sale.status === SaleStatus.COMPLETED && (
                         <button
@@ -170,9 +188,12 @@ export default function SalesPage() {
                         </button>
                       )}
                       {sale.status === SaleStatus.CANCELLED && sale.cancellationReason && (
-                        <span className="text-gray-500 text-sm" title={sale.cancellationReason}>
+                        <button
+                          onClick={() => handleViewReason(sale.cancellationReason || '')}
+                          className="text-gray-500 hover:text-gray-700 text-sm font-medium"
+                        >
                           Ver motivo
-                        </span>
+                        </button>
                       )}
                     </td>
                   </tr>
@@ -257,6 +278,34 @@ export default function SalesPage() {
                 className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold"
               >
                 Confirmar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showReasonModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-brand-navy">Motivo do Cancelamento</h2>
+            </div>
+
+            <div className="p-6">
+              <p className="text-gray-700 whitespace-pre-wrap">
+                {selectedCancellationReason || 'Nenhum motivo informado.'}
+              </p>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex justify-end">
+              <button
+                onClick={() => {
+                  setShowReasonModal(false);
+                  setSelectedCancellationReason('');
+                }}
+                className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+              >
+                Fechar
               </button>
             </div>
           </div>
