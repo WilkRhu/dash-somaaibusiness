@@ -75,6 +75,10 @@ export default function InventoryPage({ params }: { params: Promise<{ id: string
     return category.charAt(0).toUpperCase() + category.slice(1);
   };
 
+  const getItemImage = (item: InventoryItem) => {
+    return item.images?.[0] || item.image || '';
+  };
+
   if (loading) {
     return (
       <div className="p-6">
@@ -171,9 +175,9 @@ export default function InventoryPage({ params }: { params: Promise<{ id: string
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        {item.image ? (
+                        {getItemImage(item) ? (
                           <Image
-                            src={item.image}
+                            src={getItemImage(item)}
                             alt={item.name}
                             width={40}
                             height={40}
