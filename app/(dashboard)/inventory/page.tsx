@@ -54,7 +54,7 @@ export default function InventoryPage() {
     getExpiring,
     uploadImages,
     deleteImage,
-  } = useInventory(filters);
+  } = useInventory(filters, { fetchAll: true });
 
   useEffect(() => {
     const fetchAlerts = async () => {
