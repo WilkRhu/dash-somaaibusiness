@@ -177,26 +177,17 @@ interface SidebarProps {
 // Páginas que funcionam offline
 const offlineSupported = ['/sales', '/sales/pos', '/inventory'];
 
-// Páginas que NÃO funcionam offline
-const onlineOnlyPages = [
-  '/home', '/establishments', '/inventory', '/offers', 
-  '/customers', '/members', '/suppliers', '/expenses', 
-  '/delivery', '/reports', '/subscription'
-];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { currentEstablishment } = useEstablishmentStore();
   const { user } = useAuthStore();
-  const [isOnline, setIsOnline] = useState(true);
-  const [isClient, setIsClient] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const { count: pendingDeliveryCount } = usePendingDeliveryCount();
   const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+  const isClient = typeof window !== 'undefined';
 
   useEffect(() => {
-    setIsClient(true);
     if (typeof window === 'undefined') return;
-    setIsOnline(navigator.onLine);
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
