@@ -27,7 +27,6 @@ export function UpgradeRequiredModal({
 
   const handleUpgrade = () => {
     router.push('/subscription');
-    onClose();
   };
 
   return (
