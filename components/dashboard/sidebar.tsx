@@ -9,13 +9,20 @@ import { canAccess, PERMISSIONS } from '@/lib/utils/permissions';
 import { canAccessRoute } from '@/lib/utils/plan-restrictions';
 import { BusinessRole } from '@/lib/types/establishment';
 import { SubscriptionPlan } from '@/lib/types/subscription';
+import { usePendingDeliveryCount } from '@/lib/hooks/use-pending-delivery-count';
 import { ReactNode, useState, useEffect } from 'react';
+
+interface SubMenuItem {
+  href: string;
+  label: string;
+}
 
 interface MenuItem {
   href: string;
   label: string;
   icon: ReactNode;
   requiredPermissions: BusinessRole[];
+  children?: SubMenuItem[];
 }
 
 const menuItems: MenuItem[] = [
@@ -37,7 +44,8 @@ const menuItems: MenuItem[] = [
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
       </svg>
-    )
+    ),
+
   },
   { 
     href: '/inventory', 
@@ -66,6 +74,16 @@ const menuItems: MenuItem[] = [
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+      </svg>
+    )
+  },
+  { 
+    href: '/fiscal/dashboard', 
+    label: 'Sistema Fiscal',
+    requiredPermissions: PERMISSIONS.VIEW_SALES,
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
       </svg>
     )
   },
@@ -159,24 +177,17 @@ interface SidebarProps {
 // Páginas que funcionam offline
 const offlineSupported = ['/sales', '/sales/pos', '/inventory'];
 
-// Páginas que NÃO funcionam offline
-const onlineOnlyPages = [
-  '/home', '/establishments', '/inventory', '/offers', 
-  '/customers', '/members', '/suppliers', '/expenses', 
-  '/delivery', '/reports', '/subscription'
-];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { currentEstablishment } = useEstablishmentStore();
   const { user } = useAuthStore();
-  const [isOnline, setIsOnline] = useState(true);
-  const [isClient, setIsClient] = useState(false);
+  const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
+  const { count: pendingDeliveryCount } = usePendingDeliveryCount();
+  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+  const isClient = typeof window !== 'undefined';
 
   useEffect(() => {
-    setIsClient(true);
     if (typeof window === 'undefined') return;
-    setIsOnline(navigator.onLine);
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -190,11 +201,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
     };
   }, []);
   
+  // super_admin vê tudo, independente das permissões do estabelecimento
+  const userGlobalRole = user?.role;
+  const isSuperAdmin = userGlobalRole === 'super_admin';
+  
   // Filtrar itens do menu baseado nas permissões do usuário
   const userRole = currentEstablishment?.role;
   const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
   
   const visibleMenuItems = menuItems.filter(item => {
+    // super_admin vê todos os itens
+    if (isSuperAdmin) return true;
+    
     // Se não tem role definido, mostra todos os itens (owner ou ainda carregando)
     if (!userRole) return true;
     return canAccess(userRole, item.requiredPermissions);
@@ -225,43 +243,88 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {visibleMenuItems.map((item) => {
           const { allowed } = canAccessRoute(item.href, userPlan);
           const isLocked = !allowed;
-          
-          // Verificar se a página funciona offline
           const supportsOffline = offlineSupported.some(path => item.href.startsWith(path));
           const isOfflineRestricted = isClient && !isOnline && !supportsOffline;
-          
+          const hasChildren = item.children && item.children.length > 0;
+          const isSubmenuOpen = openSubmenus[item.href] ?? pathname.startsWith(item.href + '/');
+          const isActive = pathname === item.href || (hasChildren && pathname.startsWith(item.href + '/'));
+
           return (
-            <Link
-              key={item.href}
-              href={isOfflineRestricted ? '#' : item.href}
-              onClick={(e) => {
-                if (isOfflineRestricted) {
-                  e.preventDefault();
-                } else {
-                  onClose();
-                }
-              }}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                pathname === item.href
-                  ? 'bg-primary-50 text-primary-600 font-semibold'
-                  : isLocked || isOfflineRestricted
-                  ? 'text-gray-400 hover:bg-gray-50 cursor-not-allowed'
-                  : 'text-brand-navy hover:bg-gray-50'
-              }`}
-            >
-              <span className="flex-shrink-0">{item.icon}</span>
-              <span className="font-medium flex-1">{item.label}</span>
-              {isLocked && (
-                <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                </svg>
+            <div key={item.href}>
+              <div className="flex items-center">
+                <Link
+                  href={isOfflineRestricted ? '#' : item.href}
+                  onClick={(e) => {
+                    if (isOfflineRestricted) {
+                      e.preventDefault();
+                    } else {
+                      if (hasChildren) setOpenSubmenus(prev => ({ ...prev, [item.href]: true }));
+                      onClose();
+                    }
+                  }}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors flex-1 ${
+                    isActive
+                      ? 'bg-primary-50 text-primary-600 font-semibold'
+                      : isLocked || isOfflineRestricted
+                      ? 'text-gray-400 hover:bg-gray-50 cursor-not-allowed'
+                      : 'text-brand-navy hover:bg-gray-50'
+                  }`}
+                >
+                  <span className="flex-shrink-0 relative">
+                    {item.icon}
+                    {item.href === '/delivery' && pendingDeliveryCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                        {pendingDeliveryCount > 99 ? '99+' : pendingDeliveryCount}
+                      </span>
+                    )}
+                  </span>
+                  <span className="font-medium flex-1">{item.label}</span>
+                  {isLocked && (
+                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                  )}
+                  {isOfflineRestricted && (
+                    <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+                    </svg>
+                  )}
+                </Link>
+                {hasChildren && (
+                  <button
+                    onClick={() => setOpenSubmenus(prev => ({ ...prev, [item.href]: !isSubmenuOpen }))}
+                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Expandir submenu"
+                  >
+                    <svg
+                      className={`w-4 h-4 transition-transform duration-200 ${isSubmenuOpen ? 'rotate-180' : ''}`}
+                      fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {hasChildren && isSubmenuOpen && (
+                <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-100 pl-3">
+                  {item.children!.map((child) => (
+                    <Link
+                      key={child.href}
+                      href={child.href}
+                      onClick={onClose}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
+                        pathname === child.href
+                          ? 'bg-primary-50 text-primary-600 font-semibold'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      {child.label}
+                    </Link>
+                  ))}
+                </div>
               )}
-              {isOfflineRestricted && (
-                <svg className="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
-                </svg>
-              )}
-            </Link>
+            </div>
           );
         })}
       </nav>

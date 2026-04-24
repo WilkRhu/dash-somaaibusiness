@@ -89,7 +89,7 @@ class DeliveryWebSocketService {
 
   subscribeToOrder(orderId: string) {
     if (!this.socket) {
-      console.error('Socket não conectado');
+      console.warn('⚠️ Socket não conectado. WebSocket desabilitado.');
       return;
     }
 
@@ -106,7 +106,7 @@ class DeliveryWebSocketService {
 
   subscribeToEstablishment(establishmentId: string) {
     if (!this.socket) {
-      console.error('Socket não conectado');
+      console.warn('⚠️ Socket não conectado. WebSocket desabilitado.');
       return;
     }
 

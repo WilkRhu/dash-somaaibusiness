@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useState, useEffect, useRef } from 'react';
@@ -11,6 +12,7 @@ interface HeaderProps {
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
+  const router = useRouter();
   const { user, logout } = useAuthStore();
   const { currentEstablishment } = useEstablishmentStore();
   const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -84,7 +86,11 @@ export function Header({ onMenuClick }: HeaderProps) {
           )}
 
           {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button 
+            onClick={() => router.push('/notifications')}
+            className="relative p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            title="Notificações"
+          >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -102,9 +108,20 @@ export function Header({ onMenuClick }: HeaderProps) {
               onClick={() => setUserMenuOpen(!userMenuOpen)}
               className="flex items-center gap-3 p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#4C99C2] to-[#7CBD6A] flex items-center justify-center text-white font-semibold">
-                {(user?.name || 'U').charAt(0).toUpperCase()}
-              </div>
+              {user?.avatar ? (
+                <Image
+                  src={user.avatar}
+                  alt={user.name || 'Avatar'}
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 rounded-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-[#4C99C2] to-[#7CBD6A] flex items-center justify-center text-white font-semibold">
+                  {(user?.name || 'U').charAt(0).toUpperCase()}
+                </div>
+              )}
               <div className="hidden md:block text-left">
                 <p className="text-sm font-semibold text-[#142D4A]">
                   {user?.name || 'Usuário'}
@@ -143,7 +160,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </div>
 
                 <Link
-                  href="/profile"
+                  href="/admin/profile"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >
@@ -159,7 +176,7 @@ export function Header({ onMenuClick }: HeaderProps) {
                 </Link>
 
                 <Link
-                  href="/settings"
+                  href="/admin/settings"
                   onClick={() => setUserMenuOpen(false)}
                   className="flex items-center gap-3 px-4 py-2 text-sm text-[#142D4A] hover:bg-gray-50 transition-colors"
                 >

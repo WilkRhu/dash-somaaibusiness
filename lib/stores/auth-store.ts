@@ -41,6 +41,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  avatar?: string;
   role?: string;
   isActive?: boolean;
   subscriptionPlan?: SubscriptionPlan;

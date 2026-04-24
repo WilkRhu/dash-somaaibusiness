@@ -78,6 +78,23 @@ export const maskPhone = (value: string): string => {
   }
 };
 
+export const maskPhoneInternational = (value: string): string => {
+  value = value.replace(/\D/g, '');
+  value = value.substring(0, 13);
+  
+  if (value.length === 0) {
+    return '';
+  } else if (value.length <= 2) {
+    return `+${value}`;
+  } else if (value.length <= 4) {
+    return `+${value.substring(0, 2)} ${value.substring(2)}`;
+  } else if (value.length <= 9) {
+    return `+${value.substring(0, 2)} ${value.substring(2, 4)} ${value.substring(4)}`;
+  } else {
+    return `+${value.substring(0, 2)} ${value.substring(2, 4)} ${value.substring(4, 9)}-${value.substring(9)}`;
+  }
+};
+
 export const maskCEP = (value: string): string => {
   value = value.replace(/\D/g, '');
   value = value.substring(0, 8);

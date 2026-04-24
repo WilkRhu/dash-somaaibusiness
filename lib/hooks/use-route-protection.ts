@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { SubscriptionPlan } from '@/lib/types/subscription';
@@ -10,30 +10,29 @@ export function useRouteProtection() {
   const pathname = usePathname();
   const router = useRouter();
   const { user } = useAuthStore();
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [restriction, setRestriction] = useState<RouteRestriction | null>(null);
 
-  useEffect(() => {
-    if (!user || !pathname) return;
+  const restriction = useMemo<RouteRestriction | null>(() => {
+    if (!user || !pathname || user.role === 'super_admin') return null;
 
     const userPlan = user.subscriptionPlan || SubscriptionPlan.FREE;
     const { allowed, restriction: routeRestriction } = canAccessRoute(pathname, userPlan);
 
-    if (!allowed && routeRestriction) {
-      setRestriction(routeRestriction);
-      setShowUpgradeModal(true);
-      
-      // Redirecionar para home após 2 segundos se não fechar o modal
-      const timeout = setTimeout(() => {
-        router.push('/home');
-      }, 5000);
+    return !allowed ? routeRestriction ?? null : null;
+  }, [pathname, user]);
 
-      return () => clearTimeout(timeout);
-    }
-  }, [pathname, user, router]);
+  const showUpgradeModal = Boolean(restriction);
+
+  useEffect(() => {
+    if (!showUpgradeModal) return;
+
+    const timeout = setTimeout(() => {
+      router.push('/home');
+    }, 5000);
+
+    return () => clearTimeout(timeout);
+  }, [showUpgradeModal, router]);
 
   const closeModal = () => {
-    setShowUpgradeModal(false);
     router.push('/home');
   };
 

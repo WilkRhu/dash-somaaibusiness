@@ -102,21 +102,21 @@ export function DeliveryOrderDetailsModal({ order, onClose }: DeliveryOrderDetai
           <div>
             <h3 className="font-semibold mb-2">Pagamento</h3>
             <p className="text-gray-700">{paymentMethodLabels[order.paymentMethod]}</p>
-          {order.isPaid ? (
-            <span className="inline-flex items-center gap-1 text-green-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-              </svg>
-              Pago
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-yellow-600">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Pendente
-            </span>
-          )}
+            {order.isPaid ? (
+              <span className="inline-flex items-center gap-1 text-green-600">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Pago
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-yellow-600">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Pendente
+              </span>
+            )}
           </div>
 
           {/* Tempo Estimado */}
@@ -130,6 +130,35 @@ export function DeliveryOrderDetailsModal({ order, onClose }: DeliveryOrderDetai
             <div>
               <h3 className="font-semibold mb-2">Observações</h3>
               <p className="text-gray-700">{order.notes}</p>
+            </div>
+          )}
+
+          {/* Itens da Compra */}
+          {order.sale && order.sale.items && order.sale.items.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-3">Itens da Compra</h3>
+              <div className="space-y-2 border rounded-lg p-4 bg-gray-50">
+                {order.sale.items.map((item: any, index: number) => (
+                  <div key={item.id || index} className="flex justify-between items-start py-2 border-b last:border-b-0">
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">{item.productName}</p>
+                      <p className="text-sm text-gray-600">
+                        Quantidade: {typeof item.quantity === 'string' ? parseFloat(item.quantity).toFixed(0) : item.quantity} × {formatCurrency(typeof item.unitPrice === 'string' ? parseFloat(item.unitPrice) : item.unitPrice)}
+                      </p>
+                      {item.discount && parseFloat(item.discount) > 0 && (
+                        <p className="text-sm text-green-600">
+                          Desconto: -{formatCurrency(typeof item.discount === 'string' ? parseFloat(item.discount) : item.discount)}
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">
+                        {formatCurrency(typeof item.subtotal === 'string' ? parseFloat(item.subtotal) : item.subtotal)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

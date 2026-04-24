@@ -5,6 +5,7 @@ import { InventoryItem } from '@/lib/types/inventory';
 import { formatCurrency } from '@/lib/utils/format';
 import { offersApi } from '@/lib/api/offers';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { ActiveOfferCheck } from '@/lib/types/offers';
 
 interface ProductCardProps {
   product: InventoryItem;
@@ -16,12 +17,16 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onEdit, onUpdateStock, onDelete, onManageImages }: ProductCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [activeOffer, setActiveOffer] = useState<any>(null);
+  const [activeOffer, setActiveOffer] = useState<ActiveOfferCheck['offer']>(null);
   const { currentEstablishment } = useEstablishmentStore();
   
   const isLowStock = product.quantity <= product.minQuantity;
-  const isExpiringSoon = product.expirationDate && 
-    new Date(product.expirationDate) <= new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  const expiringThreshold = new Date();
+  expiringThreshold.setDate(expiringThreshold.getDate() + 30);
+  const isExpiringSoon = product.expirationDate ? new Date(product.expirationDate) <= expiringThreshold : false;
+  const shelfQuantity = Number(product.shelfQuantity ?? 0);
+  const storageQuantity = Number(product.storageQuantity ?? Math.max(Number(product.quantity || 0) - shelfQuantity, 0));
+  const hasLocationSplit = product.shelfQuantity != null || product.storageQuantity != null;
 
   const productImages = product.images && product.images.length > 0 
     ? product.images 
@@ -39,7 +44,7 @@ export function ProductCard({ product, onEdit, onUpdateStock, onDelete, onManage
         if (offerCheck.hasOffer && offerCheck.offer) {
           setActiveOffer(offerCheck.offer);
         }
-      } catch (error) {
+      } catch {
         // Ignora erros silenciosamente
       }
     };
@@ -132,6 +137,30 @@ export function ProductCard({ product, onEdit, onUpdateStock, onDelete, onManage
               </svg>
             )}
           </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+            <p className="text-slate-500">Prateleira</p>
+            <p className="font-semibold text-slate-900">
+              {shelfQuantity} {product.unit}
+            </p>
+          </div>
+          <div className="rounded-lg bg-slate-50 border border-slate-200 px-3 py-2">
+            <p className="text-slate-500">Depósito</p>
+            <p className="font-semibold text-slate-900">
+              {storageQuantity} {product.unit}
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center justify-between text-xs">
+          <span className={`inline-flex rounded-full px-2 py-1 font-semibold ${hasLocationSplit ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+            {hasLocationSplit ? 'Com localização' : 'Sem divisão'}
+          </span>
+          {hasLocationSplit && (
+            <span className="text-gray-500">
+              Total: {Math.floor(product.quantity)} {product.unit}
+            </span>
+          )}
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-gray-600">Preço de Venda:</span>

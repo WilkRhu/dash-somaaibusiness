@@ -8,6 +8,7 @@ export interface CartItem {
   unitPrice: number;
   discount: number;
   subtotal: number;
+  isCustom?: boolean;
 }
 
 interface CartStore {

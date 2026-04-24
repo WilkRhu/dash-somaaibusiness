@@ -1,7 +1,9 @@
 interface StatsCardProps {
   title: string;
-  value: string;
-  description: string;
+  value: string | number;
+  description?: string;
+  icon?: React.ReactNode;
+  color?: string;
   trend?: 'up' | 'down';
 }
 

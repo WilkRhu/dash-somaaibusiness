@@ -39,4 +39,20 @@ export const salesApi = {
     );
     return data;
   },
+
+  linkMercadoPagoPayment: async (establishmentId: string, saleId: string, mercadoPagoPaymentId: string): Promise<Sale> => {
+    const { data } = await apiClient.post<Sale>(
+      `/business/establishments/${establishmentId}/sales/${saleId}/link-payment`,
+      { mercadoPagoPaymentId }
+    );
+    return data;
+  },
+
+  sendReceipt: async (establishmentId: string, saleId: string, email: string): Promise<{ sent: boolean; to: string }> => {
+    const { data } = await apiClient.post<{ sent: boolean; to: string }>(
+      `/business/establishments/${establishmentId}/sales/${saleId}/send-receipt`,
+      { email }
+    );
+    return data;
+  },
 };

@@ -1,22 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { InventoryItem, UNIT_OPTIONS } from '@/lib/types/inventory';
+import { InventoryItem, UNIT_OPTIONS, UpdateProductDto } from '@/lib/types/inventory';
 import { CurrencyInput } from '@/components/ui/currency-input';
 
 interface EditProductFormProps {
   product: InventoryItem;
-  onSubmit: (data: Partial<InventoryItem>) => Promise<void>;
+  onSubmit: (data: UpdateProductDto) => Promise<void>;
   onCancel: () => void;
 }
 
 export function EditProductForm({ product, onSubmit, onCancel }: EditProductFormProps) {
+  const totalQuantity = Number(product.quantity || 0);
   const [formData, setFormData] = useState({
     name: product.name,
     category: product.category || '',
     brand: product.brand || '',
     costPrice: product.costPrice,
     salePrice: product.salePrice,
+    shelfQuantity: product.shelfQuantity ?? 0,
+    storageQuantity: Math.max(totalQuantity - (product.shelfQuantity ?? 0), 0),
     minQuantity: product.minQuantity,
     unit: product.unit,
     expirationDate: product.expirationDate || '',
@@ -25,13 +28,16 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
     images: product.images,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const shelfQuantity = Number(formData.shelfQuantity || 0);
+  const storageQuantity = Math.max(totalQuantity - shelfQuantity, 0);
+  const calculatedTotalQuantity = totalQuantity;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
       // Preparar dados para envio
-      const dataToSend: any = {};
+      const dataToSend: UpdateProductDto = {};
       
       // Adicionar apenas campos que foram modificados ou que têm valor
       if (formData.name !== product.name) dataToSend.name = formData.name;
@@ -43,6 +49,9 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
       if (formData.unit !== product.unit) dataToSend.unit = formData.unit;
       if (formData.expirationDate !== (product.expirationDate || '')) dataToSend.expirationDate = formData.expirationDate || undefined;
       if (formData.description !== (product.description || '')) dataToSend.description = formData.description || undefined;
+      if (shelfQuantity !== (product.shelfQuantity ?? 0)) dataToSend.shelfQuantity = shelfQuantity;
+      if (storageQuantity !== (product.storageQuantity ?? Math.max(product.quantity - (product.shelfQuantity ?? 0), 0))) dataToSend.storageQuantity = storageQuantity;
+      if (calculatedTotalQuantity !== product.quantity) dataToSend.quantity = calculatedTotalQuantity;
       
       // NUNCA enviar image ou images no update - eles são gerenciados separadamente
       // Isso evita sobrescrever as imagens existentes
@@ -160,6 +169,55 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
             onChange={(e) => setFormData({ ...formData, expirationDate: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
           />
+        </div>
+
+        <div className="md:col-span-2">
+          <div className="border-t border-gray-200 pt-4 mt-2">
+            <div className="flex items-center justify-between gap-3 mb-3">
+              <div>
+                <h3 className="text-sm font-semibold text-gray-900">Localização do estoque</h3>
+                <p className="text-xs text-gray-500">
+                  A prateleira é informada manualmente; o depósito é calculado como restante do total.
+                </p>
+              </div>
+              <div className="text-xs font-semibold text-brand-blue">
+                Total atual: {calculatedTotalQuantity} {formData.unit}
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Prateleira
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={formData.shelfQuantity}
+                  onChange={(e) => setFormData({ ...formData, shelfQuantity: parseInt(e.target.value) || 0 })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Quantidade exposta na loja</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Depósito
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={storageQuantity}
+                  readOnly
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                />
+                <p className="text-xs text-gray-500 mt-1">Calculado automaticamente: total - prateleira</p>
+              </div>
+            </div>
+            <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+              Prateleira + depósito = {shelfQuantity} + {storageQuantity} = {calculatedTotalQuantity} {formData.unit}
+            </div>
+          </div>
         </div>
       </div>
 

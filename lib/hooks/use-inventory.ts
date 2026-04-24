@@ -4,9 +4,13 @@ import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offlineDB } from '@/lib/offline-db';
 import { syncProducts } from '@/lib/offline-sync';
-import { AddProductDto, UpdateStockDto, InventoryFilters } from '@/lib/types/inventory';
+import { AddProductDto, UpdateStockDto, InventoryFilters, UpdateProductDto } from '@/lib/types/inventory';
 
-export function useInventory(filters?: InventoryFilters) {
+interface UseInventoryOptions {
+  fetchAll?: boolean;
+}
+
+export function useInventory(filters?: InventoryFilters, options?: UseInventoryOptions) {
   const { items, isLoading, error, setItems, addItem, updateItem, removeItem, setLoading, setError } = useInventoryStore();
   const { currentEstablishment } = useEstablishmentStore();
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
@@ -56,13 +60,46 @@ export function useInventory(filters?: InventoryFilters) {
         return;
       }
 
+      const requestFilters = filters || {};
+
+      if (options?.fetchAll) {
+        const pageSize = requestFilters.limit && requestFilters.limit > 0 ? requestFilters.limit : 100;
+        let page = 1;
+        let totalPages = 1;
+        let total = 0;
+        const allProducts: Awaited<ReturnType<typeof inventoryApi.list>>['data'] = [];
+
+        while (page <= totalPages) {
+          const response = await inventoryApi.list(currentEstablishment.id, {
+            ...requestFilters,
+            page,
+            limit: pageSize,
+          });
+
+          allProducts.push(...response.data);
+          total = response.total || total || response.data.length;
+          totalPages = response.totalPages || 1;
+          page += 1;
+        }
+
+        setItems(allProducts);
+        await offlineDB.saveProducts(allProducts);
+        setPagination({
+          total: total || allProducts.length,
+          page: 1,
+          limit: allProducts.length || pageSize,
+          totalPages: 1,
+        });
+        return;
+      }
+
       // Online: carregar da API e salvar no cache
-      const response = await inventoryApi.list(currentEstablishment.id, filters);
+      const response = await inventoryApi.list(currentEstablishment.id, requestFilters);
       setItems(response.data);
-      
+
       // Salvar no cache para uso offline
       await offlineDB.saveProducts(response.data);
-      
+
       setPagination({
         total: response.total || 0,
         page: response.page || 1,
@@ -105,7 +142,7 @@ export function useInventory(filters?: InventoryFilters) {
     }
   };
 
-  const updateProduct = async (id: string, dto: Partial<AddProductDto>) => {
+  const updateProduct = async (id: string, dto: UpdateProductDto) => {
     if (!currentEstablishment) throw new Error('Nenhum estabelecimento selecionado');
     
     try {
@@ -227,7 +264,7 @@ export function useInventory(filters?: InventoryFilters) {
 
   useEffect(() => {
     fetchInventory();
-  }, [currentEstablishment?.id, JSON.stringify(filters)]);
+  }, [currentEstablishment?.id, JSON.stringify(filters), options?.fetchAll]);
 
   return {
     items,

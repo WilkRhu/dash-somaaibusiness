@@ -44,12 +44,12 @@ export function SalesChart({ data }: SalesChartProps) {
               borderRadius: '8px',
               padding: '12px'
             }}
-            formatter={(value: number | undefined, name: string | undefined) => {
+            formatter={(value, name) => {
               if (!value) return ['', ''];
               if (name === 'receita' || name === 'ticket') {
-                return [formatCurrency(value), name === 'receita' ? 'Receita' : 'Ticket Médio'];
+                return [formatCurrency(value as number), name === 'receita' ? 'Receita' : 'Ticket Médio'];
               }
-              return [value, 'Vendas'];
+              return [value as number, 'Vendas'];
             }}
           />
           <Legend 

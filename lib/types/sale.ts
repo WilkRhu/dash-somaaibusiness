@@ -59,11 +59,12 @@ export interface Sale {
 }
 
 export interface CreateSaleItemDto {
-  itemId: string;
+  itemId?: string;           // opcional para itens avulsos
+  productName?: string;      // usado quando não há itemId
   unitPrice: number;
   quantity: number;
   discount?: number;
-  applyOffer?: boolean;  // Aplicar oferta ativa automaticamente
+  applyOffer?: boolean;
 }
 
 export interface CreateSaleDto {

@@ -1,6 +1,9 @@
 import apiClient from './client';
 import type { Member, AddMemberRequest, CreateEmployeeRequest, UpdateMemberRoleRequest } from '@/lib/types/member';
 
+// Re-export types for convenience
+export type { Member, AddMemberRequest, CreateEmployeeRequest, UpdateMemberRoleRequest };
+
 export const membersApi = {
   async getMembers(establishmentId: string): Promise<Member[]> {
     const response = await apiClient.get<{ data: Member[] }>(

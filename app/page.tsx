@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
+import PricingPlans from '@/components/PricingPlans';
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -37,6 +38,12 @@ export default function LandingPage() {
                 Contato
               </a>
               <Link 
+                href="/register"
+                className="px-6 py-2 bg-white border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all font-semibold"
+              >
+                Criar Conta
+              </Link>
+              <Link 
                 href="/login"
                 className="px-6 py-2 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity font-semibold"
               >
@@ -65,6 +72,12 @@ export default function LandingPage() {
               <a href="#contact" className="block text-brand-navy hover:text-brand-blue">
                 Contato
               </a>
+              <Link 
+                href="/register"
+                className="block text-center px-6 py-2 bg-white border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all font-semibold"
+              >
+                Criar Conta
+              </Link>
               <Link 
                 href="/login"
                 className="block text-center px-6 py-2 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg"
@@ -194,7 +207,11 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <div className="bg-white rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-8 border-t-4 border-brand-blue group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">📦</div>
+              <div className="w-14 h-14 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-brand-blue/10 rounded-xl">
+                <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+              </div>
               <h4 className="text-2xl font-bold text-brand-navy mb-3">
                 Controle de Estoque
               </h4>
@@ -204,7 +221,11 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-8 border-t-4 border-brand-green group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">💰</div>
+              <div className="w-14 h-14 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-brand-green/10 rounded-xl">
+                <svg className="w-8 h-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
               <h4 className="text-2xl font-bold text-brand-navy mb-3">
                 PDV Completo
               </h4>
@@ -214,7 +235,11 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-8 border-t-4 border-brand-blue group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">🎁</div>
+              <div className="w-14 h-14 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-brand-blue/10 rounded-xl">
+                <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              </div>
               <h4 className="text-2xl font-bold text-brand-navy mb-3">
                 Ofertas e Promoções
               </h4>
@@ -224,7 +249,11 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-8 border-t-4 border-brand-green group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">📈</div>
+              <div className="w-14 h-14 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-brand-green/10 rounded-xl">
+                <svg className="w-8 h-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+              </div>
               <h4 className="text-2xl font-bold text-brand-navy mb-3">
                 Relatórios Detalhados
               </h4>
@@ -234,7 +263,11 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-8 border-t-4 border-brand-blue group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">👥</div>
+              <div className="w-14 h-14 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-brand-blue/10 rounded-xl">
+                <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
               <h4 className="text-2xl font-bold text-brand-navy mb-3">
                 Gestão de Clientes
               </h4>
@@ -244,7 +277,11 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-white rounded-xl shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-300 p-8 border-t-4 border-brand-green group">
-              <div className="text-5xl mb-4 group-hover:scale-110 transition-transform duration-300">🏪</div>
+              <div className="w-14 h-14 mb-4 group-hover:scale-110 transition-transform duration-300 flex items-center justify-center bg-brand-green/10 rounded-xl">
+                <svg className="w-8 h-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+              </div>
               <h4 className="text-2xl font-bold text-brand-navy mb-3">
                 Multi-estabelecimentos
               </h4>
@@ -266,18 +303,265 @@ export default function LandingPage() {
         </div>
         
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center text-white">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center text-white">
             <div className="transform hover:scale-110 transition-transform duration-300">
-              <div className="text-6xl font-bold mb-2 drop-shadow-lg">1000+</div>
-              <div className="text-xl opacity-90">Empresas Ativas</div>
+              <div className="text-5xl font-bold mb-2 drop-shadow-lg">1000+</div>
+              <div className="text-lg opacity-90">Empresas Ativas</div>
             </div>
             <div className="transform hover:scale-110 transition-transform duration-300">
-              <div className="text-6xl font-bold mb-2 drop-shadow-lg">50K+</div>
-              <div className="text-xl opacity-90">Vendas Processadas</div>
+              <div className="text-5xl font-bold mb-2 drop-shadow-lg">50K+</div>
+              <div className="text-lg opacity-90">Vendas/Mês</div>
             </div>
             <div className="transform hover:scale-110 transition-transform duration-300">
-              <div className="text-6xl font-bold mb-2 drop-shadow-lg">99.9%</div>
-              <div className="text-xl opacity-90">Uptime</div>
+              <div className="text-5xl font-bold mb-2 drop-shadow-lg">200K+</div>
+              <div className="text-lg opacity-90">Produtos Cadastrados</div>
+            </div>
+            <div className="transform hover:scale-110 transition-transform duration-300">
+              <div className="text-5xl font-bold mb-2 drop-shadow-lg">99.9%</div>
+              <div className="text-lg opacity-90">Uptime</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-brand-background">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold text-brand-navy mb-4">
+              O que nossos clientes dizem
+            </h3>
+            <p className="text-xl text-brand-navy/70">
+              Empresas que confiam no SomaAI Business
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-brand-navy/70 mb-6 italic">
+                "O SomaAI revolucionou nossa gestão de estoque. Reduzimos perdas em 80% e ganhamos muito mais controle sobre as vendas."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-brand-blue to-brand-green rounded-full flex items-center justify-center text-white font-bold">
+                  JM
+                </div>
+                <div>
+                  <p className="font-semibold text-brand-navy">João Martins</p>
+                  <p className="text-sm text-brand-navy/60">Diretor, Mercado São João</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-brand-navy/70 mb-6 italic">
+                "O PDV é incrivelmente rápido e intuitivo. Nossos caixas agora atendem o dobro de clientes no mesmo tempo."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-brand-green to-brand-blue rounded-full flex items-center justify-center text-white font-bold">
+                  RC
+                </div>
+                <div>
+                  <p className="font-semibold text-brand-navy">Roberta Costa</p>
+                  <p className="text-sm text-brand-navy/60">Gerente, Padaria Bella</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-xl shadow-lg p-8">
+              <div className="flex items-center gap-1 mb-4">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <svg key={star} className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                ))}
+              </div>
+              <p className="text-brand-navy/70 mb-6 italic">
+                "Os relatórios me ajudam a tomar decisões muito mais assertivas. O programa de fidelidade aumentou nossas vendas em 25%."
+              </p>
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-r from-brand-blue to-brand-green rounded-full flex items-center justify-center text-white font-bold">
+                  PL
+                </div>
+                <div>
+                  <p className="font-semibold text-brand-navy">Pedro Lima</p>
+                  <p className="text-sm text-brand-navy/60">Proprietário, Lanchonete Top</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trust Badges */}
+      <section className="py-12 bg-white border-y border-gray-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-brand-navy/50 text-sm mb-8">Confiado por empresas em todo o Brasil</p>
+          <div className="flex flex-wrap justify-center items-center gap-12 opacity-50">
+            <div className="flex items-center gap-2">
+              <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="font-semibold text-brand-navy">LGPD Compliant</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-8 h-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+              <span className="font-semibold text-brand-navy">SSL Seguro</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="font-semibold text-brand-navy">Alta Performance</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-8 h-8 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <span className="font-semibold text-brand-navy">Suporte 24/7</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <svg className="w-8 h-8 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span className="font-semibold text-brand-navy">Backup Diário</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className="py-20 bg-brand-background">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl font-bold text-brand-navy mb-4">
+              Perguntas Frequentes
+            </h3>
+            <p className="text-xl text-brand-navy/70">
+              Tire suas dúvidas sobre o SomaAI Business
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: 'O SomaAI Business tem período de teste gratuito?',
+                a: 'Sim! Oferecemos 14 dias de teste gratuito sem necessidade de cartão de crédito. Você terá acesso a todos os recursos do plano Profissional.'
+              },
+              {
+                q: 'Posso mudar de plano depois?',
+                a: 'Claro! Você pode fazer upgrade ou downgrade do seu plano a qualquer momento. As alterações entram em vigor na próxima fatura.'
+              },
+              {
+                q: 'Meus dados estão seguros no SomaAI?',
+                a: 'Sim! Utilizamos criptografia de ponta a ponta, backup diário automático e estamos em conformidade com a LGPD. Seus dados são armazenados em servidores seguros no Brasil.'
+              },
+              {
+                q: 'Preciso de conhecimento técnico para usar?',
+                a: 'Não! O SomaAI Business foi projetado para ser intuitivo e fácil de usar. Oferecemos tutoriais em vídeo e suporte para ajudá-lo em cada etapa.'
+              },
+              {
+                q: 'O sistema funciona offline?',
+                a: 'Sim! O PDV e principais funcionalidades funcionam offline e sincronizam automaticamente quando a conexão é restaurada.'
+              }
+            ].map((faq, i) => (
+              <div key={i} className="bg-white rounded-xl shadow-md p-6">
+                <h4 className="font-semibold text-brand-navy mb-2">{faq.q}</h4>
+                <p className="text-brand-navy/70">{faq.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* About Section */}
+      <section className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-4xl font-bold text-brand-navy mb-6">
+                Sobre o SomaAI Business
+              </h3>
+              <p className="text-brand-navy/70 mb-4">
+                Fundado em 2025, o SomaAI Business nasceu da necessidade de simplificar a gestão de pequenos e médios negócios no Brasil.
+              </p>
+              <p className="text-brand-navy/70 mb-4">
+                Nossa missão é democratizar o acesso a ferramentas de gestão empresarial de alta qualidade, permitindo que qualquer empreendedor tome decisões baseadas em dados.
+              </p>
+              <p className="text-brand-navy/70 mb-6">
+                Hoje, ajudamos mais de 1.000 empresas a otimizar suas operações, aumentar vendas e fidelizar clientes.
+              </p>
+              <div className="flex gap-4">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-brand-blue">2023</div>
+                  <div className="text-sm text-brand-navy/60">Fundação</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-brand-green">1000+</div>
+                  <div className="text-sm text-brand-navy/60">Clientes</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-brand-blue">50+</div>
+                  <div className="text-sm text-brand-navy/60">Cidades</div>
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="bg-gradient-to-br from-brand-blue/10 to-brand-green/10 rounded-2xl p-8">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                    <div className="w-12 h-12 bg-brand-blue/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-brand-navy">Equipe</p>
+                    <p className="text-sm text-brand-navy/60">25 profissionais</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                    <div className="w-12 h-12 bg-brand-green/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-brand-navy">Escritório</p>
+                    <p className="text-sm text-brand-navy/60">Paulista, PE</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                    <div className="w-12 h-12 bg-brand-blue/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-brand-navy">Missão</p>
+                    <p className="text-sm text-brand-navy/60">Simplificar gestão</p>
+                  </div>
+                  <div className="bg-white rounded-xl p-6 text-center shadow-md">
+                    <div className="w-12 h-12 bg-brand-green/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                      <svg className="w-6 h-6 text-brand-green" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <p className="font-semibold text-brand-navy">Investimento</p>
+                    <p className="text-sm text-brand-navy/60">Acessível</p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -295,106 +579,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-200 hover:border-brand-blue transition-colors">
-              <h4 className="text-2xl font-bold text-brand-navy mb-2">Básico</h4>
-              <div className="text-4xl font-bold text-brand-blue mb-6">
-                R$ 49<span className="text-lg text-brand-navy/70">/mês</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Até 100 produtos</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">2 usuários</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">1 estabelecimento</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Relatórios básicos</span>
-                </li>
-              </ul>
-              <button className="w-full px-6 py-3 border-2 border-brand-blue text-brand-navy rounded-lg hover:bg-brand-blue/5 transition-colors font-semibold">
-                Começar
-              </button>
-            </div>
-
-            <div className="bg-gradient-to-br from-brand-blue to-brand-green rounded-xl shadow-xl p-8 text-white transform scale-105">
-              <div className="bg-white/20 text-white text-sm font-semibold px-3 py-1 rounded-full inline-block mb-4">
-                MAIS POPULAR
-              </div>
-              <h4 className="text-2xl font-bold mb-2">Profissional</h4>
-              <div className="text-4xl font-bold mb-6">
-                R$ 99<span className="text-lg opacity-90">/mês</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2">
-                  <span className="text-xl">✓</span>
-                  <span className="opacity-90">Até 1000 produtos</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-xl">✓</span>
-                  <span className="opacity-90">5 usuários</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-xl">✓</span>
-                  <span className="opacity-90">3 estabelecimentos</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-xl">✓</span>
-                  <span className="opacity-90">Relatórios avançados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-xl">✓</span>
-                  <span className="opacity-90">Programa de fidelidade</span>
-                </li>
-              </ul>
-              <button className="w-full px-6 py-3 bg-white text-brand-blue rounded-lg hover:bg-gray-50 transition-colors font-semibold">
-                Começar
-              </button>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-lg p-8 border-2 border-gray-200 hover:border-brand-green transition-colors">
-              <h4 className="text-2xl font-bold text-brand-navy mb-2">Enterprise</h4>
-              <div className="text-4xl font-bold text-brand-green mb-6">
-                R$ 199<span className="text-lg text-brand-navy/70">/mês</span>
-              </div>
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Produtos ilimitados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Usuários ilimitados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Estabelecimentos ilimitados</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Todos os recursos</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">Suporte prioritário</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-brand-green text-xl">✓</span>
-                  <span className="text-brand-navy/70">API Access</span>
-                </li>
-              </ul>
-              <button className="w-full px-6 py-3 border-2 border-brand-green text-brand-navy rounded-lg hover:bg-brand-green/5 transition-colors font-semibold">
-                Começar
-              </button>
-            </div>
-          </div>
+          <PricingPlans />
         </div>
       </section>
 
@@ -407,12 +592,20 @@ export default function LandingPage() {
           <p className="text-xl text-brand-navy/70 mb-8">
             Comece gratuitamente hoje e veja como o SomaAI Business pode revolucionar sua gestão.
           </p>
-          <Link
-            href="/login"
-            className="inline-block px-8 py-4 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity font-semibold text-lg"
-          >
-            Começar Gratuitamente
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link
+              href="/register"
+              className="inline-block px-8 py-4 bg-gradient-to-r from-brand-blue to-brand-green text-white rounded-lg hover:opacity-90 transition-opacity font-semibold text-lg"
+            >
+              Criar Conta Grátis
+            </Link>
+            <Link
+              href="/login"
+              className="inline-block px-8 py-4 border-2 border-brand-blue text-brand-blue rounded-lg hover:bg-brand-blue hover:text-white transition-all font-semibold text-lg"
+            >
+              Já tenho conta
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -458,7 +651,7 @@ export default function LandingPage() {
           </div>
           
           <div className="border-t border-white/20 mt-8 pt-8 text-center text-white/70">
-            <p>&copy; 2024 SomaAI Business. Todos os direitos reservados.</p>
+            <p>&copy; {new Date().getFullYear()} SomaAI Business. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>

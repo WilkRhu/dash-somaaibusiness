@@ -1,27 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useCartStore } from '@/lib/stores/cart-store';
 import { useInventory } from '@/lib/hooks/use-inventory';
 import { useSales } from '@/lib/hooks/use-sales';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { useAuthStore } from '@/lib/stores/auth-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offersApi } from '@/lib/api/offers';
 import { offlineDB, PendingSale } from '@/lib/offline-db';
-import { PaymentMethod } from '@/lib/types/sale';
 import { syncPendingSales } from '@/lib/offline-sync';
+import { io, Socket } from 'socket.io-client';
 import CheckoutModal from '@/components/sales/checkout-modal';
 import SalePreviewModal from '@/components/sales/sale-preview-modal';
 import AddCustomItemModal from '@/components/sales/add-custom-item-modal';
 import DiscountModal from '@/components/sales/discount-modal';
 import WeightInputModal from '@/components/sales/weight-input-modal';
 import SelectWeightProductModal from '@/components/sales/select-weight-product-modal';
-import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';
-import { ConfirmModal } from '@/components/ui/confirm-modal';
+import { QuickCustomerSearch } from '@/components/customers/quick-customer-search';import { ConfirmModal } from '@/components/ui/confirm-modal';
 import { PaymentMethod, SaleStatus } from '@/lib/types/sale';
 import { showToast } from '@/components/ui/toast';
 import { InventoryItem } from '@/lib/types/inventory';
+import { useMercadoPagoIntegration } from '@/lib/hooks/use-mercadopago-integration';
+import { DraggableBadge } from '@/components/ui/draggable-badge';
 
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
@@ -39,8 +41,9 @@ export default function POSPage() {
   const [selectedProductForWeight, setSelectedProductForWeight] = useState<InventoryItem | null>(null);
   const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [activeOffers, setActiveOffers] = useState<Map<string, any>>(new Map());
+  const { isConnected: hasMercadoPago, checked: mpChecked } = useMercadoPagoIntegration();
   const { items, total, subtotal, discount, addItem, removeItem, updateQuantity, updateItemDiscount, setDiscount, clear } = useCartStore();
-  const { items: products, refetch: refetchInventory } = useInventory();
+  const { items: products, refetch: refetchInventory } = useInventory({ limit: 200 });
   const { createSale, isLoading } = useSales();
   const { sales, refetch: refetchSales } = useSales({ limit: 5, status: SaleStatus.COMPLETED });
   const { setFullscreenMode } = useUIStore();
@@ -48,6 +51,64 @@ export default function POSPage() {
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isClient, setIsClient] = useState(false);
+  const [isAppConnected, setIsAppConnected] = useState(false);
+  const [lastAppScan, setLastAppScan] = useState<any>(null);
+  const socketRef = useRef<Socket | null>(null);
+
+  // WebSocket para receber scans do app mobile
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const { user } = useAuthStore.getState();
+    const userId = user?.id || 'anonymous';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    
+    const socket = io(`${apiUrl}/scanner`, {
+      transports: ['websocket', 'polling'],
+      reconnectionAttempts: 3,
+      query: {
+        type: 'pdv',
+        userId,
+      },
+    });
+
+    socket.on('connect', () => {
+      setIsAppConnected(true);
+      console.log('PDV connected to scanner WebSocket');
+    });
+
+    socket.on('disconnect', () => {
+      setIsAppConnected(false);
+    });
+
+    socket.on('scan-result', (result: any) => {
+      setLastAppScan(result);
+      
+      // Adicionar produto ao carrinho automaticamente
+      if (result.product && isOnline) {
+        const product = products.find((p: InventoryItem) => p.barcode === result.barcode);
+        if (product) {
+          const offer = activeOffers.get(product.id);
+          const salePrice = offer ? Number(offer.offerPrice) : Number(product.salePrice ?? 0);
+          
+          addItem({
+            itemId: product.id,
+            name: product.name,
+            quantity: 1,
+            unitPrice: salePrice,
+            discount: 0,
+          });
+          showToast(`App: ${product.name} adicionado`, 'success');
+        }
+      }
+    });
+
+    socketRef.current = socket;
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [products, activeOffers, isOnline]);
 
   // Detectar status de conexão (apenas no cliente)
   useEffect(() => {
@@ -204,11 +265,22 @@ export default function POSPage() {
     }
   };
 
-  const handleCheckout = async (paymentMethod: PaymentMethod, _cashRegisterId?: number, notes?: string) => {
+  const handleCheckout = async (paymentMethod: PaymentMethod, _cashRegisterId?: number, notes?: string, skipFinalize?: boolean) => {
     try {
       // Verifica ofertas ativas para cada item
       const itemsWithOffers = await Promise.all(
         items.map(async (item) => {
+          // Item avulso: sem itemId, sem verificação de oferta
+          if (item.isCustom) {
+            return {
+              productName: item.name,
+              unitPrice: item.unitPrice,
+              quantity: item.quantity,
+              discount: item.discount,
+              applyOffer: false,
+            };
+          }
+
           try {
             if (!currentEstablishment?.id) {
               return {
@@ -241,20 +313,22 @@ export default function POSPage() {
         })
       );
 
+      // Se MP conectado e método é PIX ou cartão, cria a venda primeiro e abre modal MP
       if (!isOnline) {
         // Salvar venda offline
-        const pendingSale: PendingSale = {
-          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          items: itemsWithOffers.map(item => ({
-            productId: item.itemId,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.unitPrice * item.quantity - item.discount,
-          })),
+        const pendingSale: PendingSale = {          id: `offline-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          items: itemsWithOffers
+            .filter(item => item.itemId)
+            .map(item => ({
+              productId: item.itemId!,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.unitPrice * item.quantity - item.discount,
+            })),
           customerId: selectedCustomer?.id,
           paymentMethod,
           total,
-          establishmentId: currentEstablishment.id,
+          establishmentId: currentEstablishment?.id || '',
           createdAt: new Date().toISOString(),
           synced: false,
         };
@@ -270,7 +344,7 @@ export default function POSPage() {
       }
 
       // Online - enviar normalmente
-      await createSale({
+      const saleResult = await createSale({
         items: itemsWithOffers,
         paymentMethod,
         discount,
@@ -278,13 +352,29 @@ export default function POSPage() {
         customerId: selectedCustomer?.id,
       });
       
-      showToast('Venda realizada com sucesso!', 'success');
-      clear();
-      setSelectedCustomer(null);
-      setIsCheckoutOpen(false);
-      
-      refetchInventory();
-      refetchSales();
+      // Emitir evento de venda concluída para o WebSocket (apenas fluxo normal, não MP)
+      if (!skipFinalize && socketRef.current?.connected && saleResult?.id) {
+        socketRef.current.emit('sale-completed', {
+          saleId: saleResult.id,
+          total,
+          items: items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.unitPrice,
+          })),
+        });
+      }
+
+      if (!skipFinalize) {
+        showToast('Venda realizada com sucesso!', 'success');
+        clear();
+        setSelectedCustomer(null);
+        setIsCheckoutOpen(false);
+        refetchInventory();
+        refetchSales();
+      }
+
+      return saleResult;
     } catch (error: any) {
       // Se der erro de rede, salvar offline
       if (!navigator.onLine) {
@@ -318,46 +408,17 @@ export default function POSPage() {
     }
   };
 
-  const handleAddCustomItem = async (customItem: { name: string; unitPrice: number; quantity: number }) => {
-    try {
-      if (!isOnline) {
-        showToast('Adicione itens apenas com conexão', 'warning');
-        return;
-      }
-
-      if (!currentEstablishment?.id) {
-        showToast('Nenhum estabelecimento selecionado', 'error');
-        return;
-      }
-
-      // Cria um produto temporário no inventário
-      const tempProduct = await inventoryApi.add(currentEstablishment.id, {
-        name: `[AVULSO] ${customItem.name}`,
-        category: 'Avulso',
-        quantity: customItem.quantity,
-        salePrice: customItem.unitPrice,
-        costPrice: 0,
-        minQuantity: 0,
-        unit: 'un',
-      });
-
-      // Adiciona o produto ao carrinho
-      addItem({
-        itemId: tempProduct.data.id,
-        name: customItem.name,
-        quantity: customItem.quantity,
-        unitPrice: customItem.unitPrice,
-        discount: 0,
-      });
-
-      setShowCustomItemModal(false);
-      showToast('Item avulso adicionado', 'success');
-      
-      // Atualiza a lista de produtos
-      refetchInventory();
-    } catch (error: any) {
-      showToast(error.message || 'Erro ao adicionar item avulso', 'error');
-    }
+  const handleAddCustomItem = (customItem: { name: string; unitPrice: number; quantity: number }) => {
+    addItem({
+      itemId: crypto.randomUUID(),
+      name: customItem.name,
+      quantity: customItem.quantity,
+      unitPrice: customItem.unitPrice,
+      discount: 0,
+      isCustom: true,
+    });
+    setShowCustomItemModal(false);
+    showToast('Item avulso adicionado', 'success');
   };
 
   const handleAddProductToCart = (product: InventoryItem) => {
@@ -394,8 +455,10 @@ export default function POSPage() {
   };
 
   const filteredProducts = products.filter((p: InventoryItem) => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
+    !p.name.startsWith('[AVULSO]') && (
+      p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      p.barcode?.toLowerCase().includes(searchTerm.toLowerCase())
+    )
   );
 
   return (
@@ -422,6 +485,21 @@ export default function POSPage() {
             <div className="w-3 h-3 bg-white rounded-full"></div>
             <span>Caixa Livre</span>
           </div>
+        )}
+
+        {/* Indicador de conexão com App Mobile */}
+        {isClient && (
+          <DraggableBadge storageKey="pos-app-badge" defaultPosition={{ x: 24, y: 24 }}>
+            <div className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg shadow-lg font-semibold">
+              <div className={`w-3 h-3 rounded-full ${isAppConnected ? 'bg-white animate-pulse' : 'bg-red-300'}`}></div>
+              <span>{isAppConnected ? 'App Conectado' : 'App Desconectado'}</span>
+              {lastAppScan && lastAppScan.product && (
+                <span className="bg-white/20 px-2 py-0.5 rounded text-sm">
+                  {lastAppScan.product.originalName?.substring(0, 15)}...
+                </span>
+              )}
+            </div>
+          </DraggableBadge>
         )}
 
         {/* Botão Fullscreen */}
@@ -931,8 +1009,12 @@ export default function POSPage() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onConfirm={handleCheckout}
+        onMpApproved={() => { clear(); setSelectedCustomer(null); refetchInventory(); refetchSales(); }}
         total={total}
+        items={items.map(i => ({ name: i.name, quantity: i.quantity, unitPrice: i.unitPrice }))}
         isLoading={isLoading}
+        hasMercadoPago={hasMercadoPago}
+        establishmentId={currentEstablishment?.id || ''}
       />
 
       <AddCustomItemModal

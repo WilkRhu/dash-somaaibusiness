@@ -5,7 +5,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000,
+  timeout: 60000, // Aumentado de 10s para 60s para suportar uploads de imagens
 });
 
 // Interceptor para adicionar token
