@@ -7,7 +7,7 @@ import { SubscriptionPlan } from '@/lib/types/subscription';
 function normalizePlan(planType?: string): SubscriptionPlan {
   if (!planType) return SubscriptionPlan.FREE;
   
-  const normalized = planType.toUpperCase();
+  const normalized = planType.toUpperCase().replace('BUSINESS-', '');
   
   // Mapear valores do backend para o enum
   switch (normalized) {

@@ -12,7 +12,8 @@ export interface Establishment {
   cnpj: string;
   type: string;
   logo?: string;
-  role: BusinessRole;
+  role?: BusinessRole;
+  roles?: BusinessRole[];
   phone?: string;
   email?: string;
   address?: string;

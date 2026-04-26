@@ -8,17 +8,21 @@ export function useEstablishments() {
   const fetchEstablishments = async () => {
     try {
       const data = await establishmentsApi.list();
-      console.log('📍 Estabelecimentos carregados:', data);
-      setEstablishments(data);
+      
+      // Mapear 'roles' (array) para 'role' (string) se necessário
+      const normalizedData = data.map(est => ({
+        ...est,
+        role: est.role || (est.roles && est.roles[0]) || undefined,
+      }));
+      
+      setEstablishments(normalizedData);
       
       // Set first establishment as current if none selected
-      if (!currentEstablishment && data.length > 0) {
+      if (!currentEstablishment && normalizedData.length > 0) {
         const savedId = localStorage.getItem('currentEstablishmentId');
         const establishment = savedId 
-          ? data.find(e => e.id === savedId) || data[0]
-          : data[0];
-        console.log('📍 Estabelecimento selecionado:', establishment);
-        console.log('📍 Role do usuário:', establishment.role);
+          ? normalizedData.find(e => e.id === savedId) || normalizedData[0]
+          : normalizedData[0];
         setCurrentEstablishment(establishment);
       }
     } catch (err) {
