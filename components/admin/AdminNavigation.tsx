@@ -8,6 +8,15 @@ import { useAuthStore } from '@/lib/stores/auth-store';
 
 const somaAiMenu = [
   {
+    label: 'Publicidades',
+    href: '/admin/advertisements',
+    icon: (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4v16a1 1 0 001 1h8a1 1 0 001-1V4m0 0L7 4m8 0l4-3m-4 3v16m-8-16l-4-3m4 3v16" />
+      </svg>
+    ),
+  },
+  {
     label: 'Usuários',
     href: '/admin/users',
     icon: (

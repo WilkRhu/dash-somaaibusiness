@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 
 interface ScannedProduct {
   normalizedName: string;
@@ -18,11 +19,14 @@ interface ScanResult {
   success: boolean;
   barcode: string;
   timestamp: string;
+  establishmentId?: string;
   product?: ScannedProduct;
 }
 
 function ScannerContent() {
   const searchParams = useSearchParams();
+  const { user } = useAuthStore();
+  const { currentEstablishment } = useEstablishmentStore();
   const [lastScan, setLastScan] = useState<ScanResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [manualBarcode, setManualBarcode] = useState('');
@@ -32,11 +36,16 @@ function ScannerContent() {
 
   // Conectar ao WebSocket
   useEffect(() => {
-    const { user } = useAuthStore.getState();
-    const userId = user?.id || 'anonymous';
+    if (!currentEstablishment?.id || !user?.id) {
+      console.warn('[Scanner] Estabelecimento ou usuário não disponível');
+      return;
+    }
+
+    const userId = user.id;
+    const establishmentId = currentEstablishment.id;
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
     
-    console.log(`[WS] Conectando como dashboard, User ID: ${userId}`);
+    console.log(`[WS] Conectando como dashboard, User ID: ${userId}, Establishment: ${establishmentId}`);
     
     const socket = io(`${apiUrl}/scanner`, {
       transports: ['websocket', 'polling'],
@@ -44,26 +53,35 @@ function ScannerContent() {
       query: {
         type: 'dashboard',
         userId,
+        establishmentId,
       },
     });
 
     socket.on('connect', () => {
       setIsConnected(true);
-      console.log('WebSocket connected');
+      console.log('✅ WebSocket connected');
+      // Entrar em room específica do estabelecimento
+      socket.emit('join:establishment', { establishmentId });
     });
 
     socket.on('disconnect', () => {
       setIsConnected(false);
-      console.log('WebSocket disconnected');
+      console.log('❌ WebSocket disconnected');
     });
 
-    socket.on('connect_error', () => {
+    socket.on('connect_error', (error) => {
       setIsConnected(false);
+      console.error('❌ Erro de conexão:', error);
     });
 
     socket.on('scan-result', (result: ScanResult) => {
-      setLastScan(result);
-      setScanHistory((prev) => [result, ...prev.slice(0, 9)]);
+      // ✅ Validar que o scan é do estabelecimento correto
+      if (result.establishmentId === establishmentId) {
+        setLastScan(result);
+        setScanHistory((prev) => [result, ...prev.slice(0, 9)]);
+      } else {
+        console.warn('[Scanner] Scan de outro estabelecimento ignorado:', result.establishmentId);
+      }
     });
 
     socketRef.current = socket;
@@ -71,33 +89,44 @@ function ScannerContent() {
     return () => {
       socket.disconnect();
     };
-  }, []);
+  }, [currentEstablishment?.id, user?.id]);
 
   // Busca manual via HTTP
   const fetchProduct = useCallback(async (barcode: string) => {
+    if (!currentEstablishment?.id) {
+      console.error('[Scanner] Estabelecimento não disponível');
+      return;
+    }
+
     setIsLoading(true);
     try {
-      const res = await fetch(`http://localhost:3000/scanner/product?barcode=${barcode}`);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const res = await fetch(
+        `${apiUrl}/scanner/product?barcode=${barcode}&establishmentId=${currentEstablishment.id}`
+      );
       const data = await res.json();
       const result: ScanResult = {
         success: true,
         barcode,
         timestamp: new Date().toISOString(),
+        establishmentId: currentEstablishment.id,
         product: data.product,
       };
       setLastScan(result);
       setScanHistory((prev) => [result, ...prev.slice(0, 9)]);
-    } catch {
+    } catch (error) {
+      console.error('[Scanner] Erro ao buscar produto:', error);
       const result: ScanResult = {
         success: false,
         barcode,
         timestamp: new Date().toISOString(),
+        establishmentId: currentEstablishment.id,
       };
       setLastScan(result);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [currentEstablishment?.id]);
 
   // Deep link params
   useEffect(() => {
@@ -116,7 +145,14 @@ function ScannerContent() {
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Leitor de Códigos de Barras</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Leitor de Códigos de Barras</h1>
+          {currentEstablishment && (
+            <p className="text-sm text-gray-600 mt-1">
+              Estabelecimento: <strong>{currentEstablishment.name}</strong>
+            </p>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <span className={`w-3 h-3 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
           <span className="text-sm text-gray-600">
