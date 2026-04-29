@@ -15,6 +15,7 @@ import { ReactNode, useState, useEffect } from 'react';
 interface SubMenuItem {
   href: string;
   label: string;
+  icon?: ReactNode;
 }
 
 interface MenuItem {
@@ -148,6 +149,45 @@ const menuItems: MenuItem[] = [
     )
   },
   { 
+    href: '/kitchen', 
+    label: 'Cozinha',
+    requiredPermissions: PERMISSIONS.VIEW_SALES,
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+      </svg>
+    ),
+    children: [
+      {
+        href: '/kitchen/create',
+        label: 'Criar Pedido',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        ),
+      },
+      {
+        href: '/kitchen/display',
+        label: 'KDS (Cozinha)',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2m0 0a2 2 0 012-2h2a2 2 0 012 2m0 0V7a2 2 0 012-2h2a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        ),
+      },
+      {
+        href: '/kitchen/tickets',
+        label: 'Acompanhamento',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        ),
+      },
+    ]
+  },
+  { 
     href: '/reports', 
     label: 'Relatórios',
     requiredPermissions: PERMISSIONS.VIEW_REPORTS,
@@ -177,13 +217,36 @@ interface SidebarProps {
 // Páginas que funcionam offline
 const offlineSupported = ['/sales', '/sales/pos', '/inventory'];
 
+// Categorias de estabelecimento que usam cozinha
+const KITCHEN_CATEGORIES = [
+  'Restaurante',
+  'Bar',
+  'Lanchonete',
+  'Pizzaria',
+  'Churrascaria',
+  'Sorveteria',
+  'Café',
+  'Padaria',
+  'Confeitaria',
+  'Pastelaria',
+  'Açaí',
+  'Hamburgueria',
+  'Sushi',
+  'Comida Árabe',
+  'Comida Chinesa',
+  'Comida Italiana',
+  'Comida Mexicana',
+  'Comida Tailandesa',
+  'Comida Vegana',
+];
+
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { currentEstablishment } = useEstablishmentStore();
   const { user } = useAuthStore();
   const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const { count: pendingDeliveryCount } = usePendingDeliveryCount();
-  const [openSubmenus, setOpenSubmenus] = useState<Record<string, boolean>>({});
+  const [openSubmenus, setOpenSubmenus] = useState({} as { [key: string]: boolean });
   const isClient = typeof window !== 'undefined';
 
   useEffect(() => {
@@ -206,16 +269,38 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const isSuperAdmin = userGlobalRole === 'super_admin';
   
   // Filtrar itens do menu baseado nas permissões do usuário
+  const userRoles = currentEstablishment?.roles || [];
   const userRole = currentEstablishment?.role;
   const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+  
+  // Owner tem acesso a tudo
+  const isOwner = userRole === BusinessRole.OWNER || 
+    userRoles.includes(BusinessRole.OWNER) ||
+    userRole === 'business_owner' as any ||
+    userRoles.some(r => r === ('business_owner' as any));
+  
+  // Roles de cozinha do backend
+  const KITCHEN_ROLES = ['kitchen_chef', 'kitchen_cook', 'kitchen_assistant'];
+  const allUserRoles = userRole ? [...userRoles, userRole] : [...userRoles];
+  const hasKitchenRole = allUserRoles.some(r => KITCHEN_ROLES.includes(r as string));
   
   const visibleMenuItems = menuItems.filter(item => {
     // super_admin vê todos os itens
     if (isSuperAdmin) return true;
     
-    // Se não tem role definido, mostra todos os itens (owner ou ainda carregando)
-    if (!userRole) return true;
-    return canAccess(userRole, item.requiredPermissions);
+    // Owner vê tudo
+    if (isOwner) return true;
+    
+    // Se não tem roles definido, mostra todos os itens (ainda carregando)
+    if (userRoles.length === 0 && !userRole) return true;
+    
+    // Funcionário de cozinha só vê o menu Cozinha e Dashboard
+    if (hasKitchenRole && (item.href === '/kitchen' || item.href === '/home')) {
+      return true;
+    }
+    
+    // Verificar permissão baseada nos requiredPermissions do item
+    return item.requiredPermissions.some(role => allUserRoles.includes(role));
   });
 
   return (
@@ -308,7 +393,19 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
               {hasChildren && isSubmenuOpen && (
                 <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-100 pl-3">
-                  {item.children!.map((child) => (
+                  {item.children!
+                    .filter((child) => {
+                      // Funcionário de cozinha não vê "Criar Pedido"
+                      if (child.href === '/kitchen/create' && hasKitchenRole && !isOwner && !isSuperAdmin) {
+                        // Só esconde se o usuário NÃO tem roles administrativos
+                        const hasAdminRole = allUserRoles.some(r => 
+                          [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES].includes(r as BusinessRole)
+                        );
+                        return hasAdminRole;
+                      }
+                      return true;
+                    })
+                    .map((child) => (
                     <Link
                       key={child.href}
                       href={child.href}
@@ -319,6 +416,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                           : 'text-gray-600 hover:bg-gray-50'
                       }`}
                     >
+                      {child.icon && <span className="flex-shrink-0">{child.icon}</span>}
                       {child.label}
                     </Link>
                   ))}

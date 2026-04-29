@@ -9,9 +9,44 @@ import { formatCurrency } from '@/lib/utils/format';
 interface AddProductFormProps {
   onSubmit: (data: AddProductDto, imageFiles: File[]) => Promise<void>;
   onCancel: () => void;
+  categories?: string[];
 }
 
-export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
+const DEFAULT_CATEGORIES = [
+  'Bebidas',
+  'Alimentos',
+  'Lanches',
+  'Sobremesas',
+  'Café',
+  'Sucos',
+  'Refrigerantes',
+  'Cerveja',
+  'Vinho',
+  'Destilados',
+  'Higiene Pessoal',
+  'Limpeza',
+  'Eletrônicos',
+  'Roupas',
+  'Calçados',
+  'Acessórios',
+  'Livros',
+  'Brinquedos',
+  'Esportes',
+  'Beleza',
+  'Medicamentos',
+  'Vitaminas',
+  'Suplementos',
+  'Artigos de Festa',
+  'Decoração',
+  'Móveis',
+  'Utensílios de Cozinha',
+  'Louças',
+  'Vidros',
+  'Papel e Papelão',
+  'Embalagens',
+];
+
+export function AddProductForm({ onSubmit, onCancel, categories = [] }: AddProductFormProps) {
   const [formData, setFormData] = useState<AddProductDto>({
     name: '',
     costPrice: 0,
@@ -21,6 +56,7 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
     storageQuantity: 0,
     minQuantity: 1,
     unit: 'un',
+    trackStock: true,
   });
   const [imageFiles, setImageFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,6 +65,9 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
   const [useBulkCalculation, setUseBulkCalculation] = useState(false);
   const [bulkCost, setBulkCost] = useState('');
   const [bulkQuantity, setBulkQuantity] = useState('');
+
+  // Merge default categories with existing categories
+  const mergedCategories = Array.from(new Set([...DEFAULT_CATEGORIES, ...categories])).sort();
 
   // Calcula a margem de lucro percentual
   const getProfitMargin = () => {
@@ -89,6 +128,30 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Controle de Estoque</h3>
+          <p className="text-xs text-gray-600 mt-1">
+            {formData.trackStock 
+              ? 'O estoque será controlado automaticamente nas vendas'
+              : 'O estoque não será controlado (produto sem rastreamento)'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setFormData({ ...formData, trackStock: !formData.trackStock })}
+          className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+            formData.trackStock ? 'bg-green-500' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+              formData.trackStock ? 'translate-x-7' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -122,13 +185,55 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Categoria
           </label>
-          <input
-            type="text"
-            maxLength={100}
-            value={formData.category || ''}
-            onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-          />
+          <div className="space-y-2">
+            {/* Select de categorias existentes */}
+            <select
+              value={formData.category || ''}
+              onChange={(e) => {
+                if (e.target.value === '__create__') {
+                  // Abre um input para criar nova categoria
+                  const newCategory = prompt('Digite o nome da nova categoria:');
+                  if (newCategory && newCategory.trim()) {
+                    setFormData({ ...formData, category: newCategory.trim() });
+                  }
+                } else {
+                  setFormData({ ...formData, category: e.target.value });
+                }
+              }}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+            >
+              <option value="">Selecione uma categoria</option>
+              {mergedCategories.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+              <option value="__create__" className="font-semibold text-blue-600">
+                + Criar nova categoria
+              </option>
+            </select>
+            
+            {/* Mostrar categoria customizada se houver */}
+            {formData.category && !['', '__create__'].includes(formData.category) && (
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-xs text-blue-600 font-medium">
+                      {categories.includes(formData.category) ? 'Categoria selecionada' : 'Categoria customizada'}
+                    </p>
+                    <p className="text-sm font-semibold text-blue-900">{formData.category}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, category: '' })}
+                    className="text-blue-600 hover:text-blue-800 font-semibold"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div>
@@ -297,167 +402,171 @@ export function AddProductForm({ onSubmit, onCancel }: AddProductFormProps) {
           </div>
         )}
 
-        <CurrencyInput
-          label={useBulkCalculation ? "Preço de Custo (calculado automaticamente)" : "Preço de Custo *"}
-          required
-          value={formData.costPrice}
-          onChange={(value) => setFormData({ ...formData, costPrice: value })}
-          disabled={useBulkCalculation}
-        />
-        <CurrencyInput
-          label="Preço de Venda *"
-          required
-          value={formData.salePrice}
-          onChange={(value) => setFormData({ ...formData, salePrice: value })}
-        />
+        {formData.trackStock && (
+          <>
+            <CurrencyInput
+              label={useBulkCalculation ? "Preço de Custo (calculado automaticamente)" : "Preço de Custo *"}
+              required
+              value={formData.costPrice}
+              onChange={(value) => setFormData({ ...formData, costPrice: value })}
+              disabled={useBulkCalculation}
+            />
+            <CurrencyInput
+              label="Preço de Venda *"
+              required
+              value={formData.salePrice}
+              onChange={(value) => setFormData({ ...formData, salePrice: value })}
+            />
 
-        {formData.costPrice > 0 && formData.salePrice > 0 && (
-          <div className="md:col-span-2">
-            <div className={`border-2 rounded-lg p-4 ${
-              getProfitMargin() >= 0 
-                ? 'bg-green-50 border-green-300' 
-                : 'bg-red-50 border-red-300'
-            }`}>
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-gray-600 mb-1">Margem de Lucro</p>
-                  <p className={`text-2xl font-bold ${
-                    getProfitMargin() >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {getProfitMargin() >= 0 ? '+' : ''}{getProfitMargin().toFixed(2)}%
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-600 mb-1">Lucro por {formData.unit}</p>
-                  <p className={`text-xl font-bold ${
-                    (formData.salePrice - formData.costPrice) >= 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {formatCurrency(formData.salePrice - formData.costPrice)}
-                  </p>
-                </div>
-              </div>
-              {getProfitMargin() < 0 && (
-                <div className="mt-3 pt-3 border-t border-red-200">
-                  <div className="flex items-start gap-2">
-                    <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+            {formData.costPrice > 0 && formData.salePrice > 0 && (
+              <div className="md:col-span-2">
+                <div className={`border-2 rounded-lg p-4 ${
+                  getProfitMargin() >= 0 
+                    ? 'bg-green-50 border-green-300' 
+                    : 'bg-red-50 border-red-300'
+                }`}>
+                  <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm text-red-700 font-medium">
-                        Atenção: Você está vendendo com prejuízo!
+                      <p className="text-xs text-gray-600 mb-1">Margem de Lucro</p>
+                      <p className={`text-2xl font-bold ${
+                        getProfitMargin() >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {getProfitMargin() >= 0 ? '+' : ''}{getProfitMargin().toFixed(2)}%
                       </p>
-                      <p className="text-xs text-red-600 mt-1">
-                        O preço de venda está menor que o custo. Revise os valores.
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs text-gray-600 mb-1">Lucro por {formData.unit}</p>
+                      <p className={`text-xl font-bold ${
+                        (formData.salePrice - formData.costPrice) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {formatCurrency(formData.salePrice - formData.costPrice)}
                       </p>
                     </div>
                   </div>
+                  {getProfitMargin() < 0 && (
+                    <div className="mt-3 pt-3 border-t border-red-200">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-5 h-5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                        </svg>
+                        <div>
+                          <p className="text-sm text-red-700 font-medium">
+                            Atenção: Você está vendendo com prejuízo!
+                          </p>
+                          <p className="text-xs text-red-600 mt-1">
+                            O preço de venda está menor que o custo. Revise os valores.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  {getProfitMargin() >= 0 && getProfitMargin() < 20 && (
+                    <div className="mt-3 pt-3 border-t border-yellow-200 bg-yellow-50 -mx-4 -mb-4 px-4 pb-4 rounded-b-lg">
+                      <div className="flex items-start gap-2">
+                        <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p className="text-xs text-yellow-700">
+                          Margem baixa. Considere aumentar o preço de venda para ter mais lucro.
+                        </p>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-              {getProfitMargin() >= 0 && getProfitMargin() < 20 && (
-                <div className="mt-3 pt-3 border-t border-yellow-200 bg-yellow-50 -mx-4 -mb-4 px-4 pb-4 rounded-b-lg">
-                  <div className="flex items-start gap-2">
-                    <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <p className="text-xs text-yellow-700">
-                      Margem baixa. Considere aumentar o preço de venda para ter mais lucro.
-                    </p>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Quantidade Inicial *
-          </label>
-          <input
-            type="number"
-            required
-            min="0"
-            step="1"
-            value={formData.quantity}
-            onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-            placeholder="Ex: 100"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Quantidade total ao cadastrar o produto
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Estoque Mínimo *
-          </label>
-          <input
-            type="number"
-            required
-            min="0"
-            step="1"
-            value={formData.minQuantity}
-            onChange={(e) => setFormData({ ...formData, minQuantity: parseInt(e.target.value) || 0 })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-            placeholder="Ex: 10"
-          />
-          <p className="text-xs text-gray-500 mt-1">
-            Alerta quando o estoque atingir este valor
-          </p>
-        </div>
-
-        <div className="md:col-span-2">
-          <div className="border-t border-gray-200 pt-4 mt-2">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">Localização do estoque</h3>
-                <p className="text-xs text-gray-500">
-                  Se não preencher, o sistema assume todo o estoque no depósito.
-                </p>
-              </div>
-              <div className="text-xs font-semibold text-brand-blue">
-                Total calculado: {calculatedTotalQuantity} {formData.unit}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prateleira
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.shelfQuantity ?? 0}
-                  onChange={(e) => setFormData({ ...formData, shelfQuantity: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                  placeholder="Ex: 20"
-                />
-                <p className="text-xs text-gray-500 mt-1">Quantidade exposta na loja</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Depósito
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={storageQuantity}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">Calculado automaticamente: total - prateleira</p>
-              </div>
-            </div>
-            {hasLocationSplit && (
-              <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
-                Prateleira + depósito = {shelfQuantity} + {storageQuantity} = {calculatedTotalQuantity} {formData.unit}
               </div>
             )}
-          </div>
-        </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Quantidade Inicial *
+              </label>
+              <input
+                type="number"
+                required
+                min="0"
+                step="1"
+                value={formData.quantity}
+                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                placeholder="Ex: 100"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Quantidade total ao cadastrar o produto
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Estoque Mínimo *
+              </label>
+              <input
+                type="number"
+                required
+                min="0"
+                step="1"
+                value={formData.minQuantity}
+                onChange={(e) => setFormData({ ...formData, minQuantity: parseInt(e.target.value) || 0 })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                placeholder="Ex: 10"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Alerta quando o estoque atingir este valor
+              </p>
+            </div>
+
+            <div className="md:col-span-2">
+              <div className="border-t border-gray-200 pt-4 mt-2">
+                <div className="flex items-center justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900">Localização do estoque</h3>
+                    <p className="text-xs text-gray-500">
+                      Se não preencher, o sistema assume todo o estoque no depósito.
+                    </p>
+                  </div>
+                  <div className="text-xs font-semibold text-brand-blue">
+                    Total calculado: {calculatedTotalQuantity} {formData.unit}
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Prateleira
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={formData.shelfQuantity ?? 0}
+                      onChange={(e) => setFormData({ ...formData, shelfQuantity: parseInt(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                      placeholder="Ex: 20"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Quantidade exposta na loja</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Depósito
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={storageQuantity}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Calculado automaticamente: total - prateleira</p>
+                  </div>
+                </div>
+                {hasLocationSplit && (
+                  <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+                    Prateleira + depósito = {shelfQuantity} + {storageQuantity} = {calculatedTotalQuantity} {formData.unit}
+                  </div>
+                )}
+              </div>
+            </div>
+          </>
+        )}
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

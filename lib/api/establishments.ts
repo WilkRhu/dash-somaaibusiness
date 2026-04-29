@@ -77,4 +77,14 @@ export const establishmentsApi = {
     );
     return response.data;
   },
+
+  open: async (establishmentId: string): Promise<Establishment> => {
+    const response = await apiClient.post(`/business/establishments/${establishmentId}/open`);
+    return response.data.data || response.data;
+  },
+
+  close: async (establishmentId: string): Promise<Establishment> => {
+    const response = await apiClient.post(`/business/establishments/${establishmentId}/close`);
+    return response.data.data || response.data;
+  },
 };

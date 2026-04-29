@@ -25,6 +25,7 @@ export interface Establishment {
   description?: string;
   cashRegistersCount?: number;
   isActive?: boolean;
+  isOpen?: boolean;
   loyaltyEnabled?: boolean;
   loyaltyPointsPerReal?: number;
   createdAt?: string;

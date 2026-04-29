@@ -24,6 +24,10 @@ import { showToast } from '@/components/ui/toast';
 import { InventoryItem } from '@/lib/types/inventory';
 import { useMercadoPagoIntegration } from '@/lib/hooks/use-mercadopago-integration';
 import { DraggableBadge } from '@/components/ui/draggable-badge';
+import OpenCloseModal from '@/components/establishments/open-close-modal';
+import ReadyOrdersSelect from '@/components/sales/ready-orders-select';
+import { KitchenOrder } from '@/lib/types/kitchen-order';
+import { salesApi } from '@/lib/api/sales';
 
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
@@ -53,7 +57,65 @@ export default function POSPage() {
   const [isClient, setIsClient] = useState(false);
   const [isAppConnected, setIsAppConnected] = useState(false);
   const [lastAppScan, setLastAppScan] = useState<any>(null);
+  const [showOpenCloseModal, setShowOpenCloseModal] = useState(false);
+  const [selectedKitchenOrder, setSelectedKitchenOrder] = useState<KitchenOrder | null>(null);
+  const [showKitchenPayment, setShowKitchenPayment] = useState(false);
+  const [kitchenPaymentMethod, setKitchenPaymentMethod] = useState<string>('cash');
+  const [kitchenPaymentLoading, setKitchenPaymentLoading] = useState(false);
   const socketRef = useRef<Socket | null>(null);
+
+  // WebSocket para receber scans do app mobile
+  // Mostrar modal de abrir se o estabelecimento está fechado
+  useEffect(() => {
+    if (currentEstablishment && currentEstablishment.isOpen === false) {
+      setShowOpenCloseModal(true);
+    }
+  }, [currentEstablishment?.id]);
+
+  const handleKitchenOrderSelect = (order: KitchenOrder) => {
+    clear();
+    order.items.forEach((item) => {
+      const price = Number(item.unitPrice) || 0;
+      addItem({
+        itemId: `kitchen-${order.id}-${item.id}`,
+        name: item.productName,
+        quantity: item.quantity,
+        unitPrice: price,
+        discount: 0,
+      });
+    });
+    setSelectedKitchenOrder(order);
+    showToast(`Pedido #${order.orderNumber} adicionado ao carrinho`, 'success');
+  };
+
+  const handleKitchenOrderPayment = async () => {
+    if (!selectedKitchenOrder || !currentEstablishment?.id) return;
+    try {
+      setKitchenPaymentLoading(true);
+
+      const saleItems = selectedKitchenOrder.items.map((item) => ({
+        inventoryItemId: '',
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      }));
+
+      await salesApi.create(currentEstablishment.id, {
+        items: saleItems as any,
+        paymentMethod: kitchenPaymentMethod as any,
+        orderId: Number(selectedKitchenOrder.id),
+        notes: `Pedido cozinha #${selectedKitchenOrder.orderNumber}`,
+      });
+
+      showToast(`Pedido #${selectedKitchenOrder.orderNumber} cobrado!`, 'success');
+      setShowKitchenPayment(false);
+      setSelectedKitchenOrder(null);
+    } catch (error: any) {
+      showToast(error.message || 'Erro ao cobrar pedido', 'error');
+    } finally {
+      setKitchenPaymentLoading(false);
+    }
+  };
 
   // WebSocket para receber scans do app mobile
   useEffect(() => {
@@ -463,7 +525,118 @@ export default function POSPage() {
 
   return (
     <>
+      {/* Modal Abrir/Fechar Estabelecimento */}
+      {showOpenCloseModal && (
+        <OpenCloseModal
+          onClose={() => setShowOpenCloseModal(false)}
+          onStatusChange={(isOpen) => {
+            if (!isOpen) {
+              // Se fechou, pode redirecionar ou mostrar aviso
+            }
+          }}
+        />
+      )}
+
+      {/* Modal de Pagamento de Pedido da Cozinha */}
+      {showKitchenPayment && selectedKitchenOrder && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full overflow-hidden">
+            <div className="px-6 py-4 bg-green-50 border-b flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">
+                  Cobrar Pedido #{selectedKitchenOrder.orderNumber}
+                </h2>
+                {selectedKitchenOrder.customerName && (
+                  <p className="text-sm text-gray-600">{selectedKitchenOrder.customerName}</p>
+                )}
+              </div>
+              <button
+                onClick={() => { setShowKitchenPayment(false); setSelectedKitchenOrder(null); }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              {/* Itens */}
+              <div className="space-y-1">
+                {selectedKitchenOrder.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span>{item.quantity}x {item.productName}</span>
+                    <span className="text-gray-600">R$ {(item.quantity * item.unitPrice).toFixed(2)}</span>
+                  </div>
+                ))}
+                <div className="flex justify-between font-bold text-base pt-2 border-t mt-2">
+                  <span>Total</span>
+                  <span className="text-green-700">R$ {selectedKitchenOrder.total.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Método de pagamento */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Forma de Pagamento</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: 'cash', label: 'Dinheiro' },
+                    { value: 'credit_card', label: 'Crédito' },
+                    { value: 'debit_card', label: 'Débito' },
+                    { value: 'pix', label: 'PIX' },
+                  ].map((method) => (
+                    <button
+                      key={method.value}
+                      type="button"
+                      onClick={() => setKitchenPaymentMethod(method.value)}
+                      className={`px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
+                        kitchenPaymentMethod === method.value
+                          ? 'bg-green-600 text-white border-green-600'
+                          : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      {method.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Botões */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  onClick={() => { setShowKitchenPayment(false); setSelectedKitchenOrder(null); }}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-sm"
+                  disabled={kitchenPaymentLoading}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleKitchenOrderPayment}
+                  disabled={kitchenPaymentLoading}
+                  className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium text-sm disabled:opacity-50"
+                >
+                  {kitchenPaymentLoading ? 'Processando...' : 'Cobrar'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className={`flex gap-4 ${isFullscreen ? 'h-screen p-6 bg-gray-100' : 'h-[calc(100vh-8rem)]'}`}>
+        {/* Indicador de estabelecimento aberto/fechado */}
+        <button
+          onClick={() => setShowOpenCloseModal(true)}
+          className={`fixed bottom-6 right-6 z-40 flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-md transition-colors ${
+            currentEstablishment?.isOpen
+              ? 'bg-green-100 text-green-800 hover:bg-green-200'
+              : 'bg-red-100 text-red-800 hover:bg-red-200'
+          }`}
+        >
+          <span className={`w-2 h-2 rounded-full ${currentEstablishment?.isOpen ? 'bg-green-500' : 'bg-red-500'}`} />
+          {currentEstablishment?.isOpen ? 'Aberto' : 'Fechado'}
+        </button>
+
         {/* Indicador de status offline */}
         {isClient && !isOnline && (
           <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
@@ -555,6 +728,9 @@ export default function POSPage() {
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                   />
+                  <div className="mt-2">
+                    <ReadyOrdersSelect onSelectOrder={handleKitchenOrderSelect} />
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">

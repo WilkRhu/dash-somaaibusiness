@@ -16,6 +16,7 @@ export interface InventoryItem {
   image?: string | null;
   images?: string[];
   description?: string | null;
+  trackStock?: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
@@ -55,6 +56,7 @@ export interface AddProductDto {
   image?: string;
   images?: string[]; // Array de base64
   description?: string;
+  trackStock?: boolean;
 }
 
 export type UpdateProductDto = Partial<Omit<InventoryItem, 'id' | 'establishmentId' | 'createdAt' | 'updatedAt'>>;

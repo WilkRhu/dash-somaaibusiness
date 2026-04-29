@@ -3,7 +3,14 @@ export type MemberRole =
   | 'business_admin'
   | 'business_sales'
   | 'business_stock'
-  | 'business_marketing';
+  | 'business_marketing'
+  | 'kitchen_chef'
+  | 'kitchen_cook'
+  | 'kitchen_assistant'
+  | 'waiter'
+  | 'cashier'
+  | 'delivery_driver'
+  | 'host';
 
 export interface Member {
   id: string;
@@ -41,6 +48,13 @@ export const ROLE_LABELS: Record<MemberRole, string> = {
   business_sales: 'Vendedor',
   business_stock: 'Estoquista',
   business_marketing: 'Marketing',
+  kitchen_chef: 'Chef de Cozinha',
+  kitchen_cook: 'Cozinheiro',
+  kitchen_assistant: 'Auxiliar de Cozinha',
+  waiter: 'Garçom',
+  cashier: 'Caixa',
+  delivery_driver: 'Motorista de Delivery',
+  host: 'Recepcionista',
 };
 
 export const ROLE_PERMISSIONS: Record<MemberRole, string[]> = {
@@ -70,5 +84,43 @@ export const ROLE_PERMISSIONS: Record<MemberRole, string[]> = {
   ],
   business_marketing: [
     'Ver relatórios (somente leitura)',
+  ],
+  kitchen_chef: [
+    'Gerenciar cozinha',
+    'Visualizar pedidos',
+    'Atualizar status de pedidos',
+    'Gerenciar cozinheiros',
+    'Ver relatórios de cozinha',
+  ],
+  kitchen_cook: [
+    'Visualizar pedidos',
+    'Atualizar status de pedidos',
+    'Ver cardápio',
+  ],
+  kitchen_assistant: [
+    'Visualizar pedidos',
+    'Auxiliar na preparação',
+  ],
+  waiter: [
+    'Registrar pedidos',
+    'Ver mesas',
+    'Atualizar status de pedidos',
+    'Registrar vendas',
+  ],
+  cashier: [
+    'Registrar vendas',
+    'Processar pagamentos',
+    'Ver relatórios de caixa',
+    'Emitir recibos',
+  ],
+  delivery_driver: [
+    'Ver pedidos de delivery',
+    'Atualizar status de entrega',
+    'Ver rotas',
+  ],
+  host: [
+    'Gerenciar reservas',
+    'Receber clientes',
+    'Ver disponibilidade de mesas',
   ],
 };

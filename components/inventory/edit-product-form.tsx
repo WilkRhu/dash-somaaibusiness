@@ -18,19 +18,21 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
     brand: product.brand || '',
     costPrice: product.costPrice,
     salePrice: product.salePrice,
-    shelfQuantity: product.shelfQuantity ?? 0,
-    storageQuantity: Math.max(totalQuantity - (product.shelfQuantity ?? 0), 0),
-    minQuantity: product.minQuantity,
+    quantity: Number(product.quantity || 0),
+    shelfQuantity: Number(product.shelfQuantity ?? 0),
+    storageQuantity: Math.max(Number(product.quantity || 0) - Number(product.shelfQuantity ?? 0), 0),
+    minQuantity: Number(product.minQuantity || 0),
     unit: product.unit,
     expirationDate: product.expirationDate || '',
     description: product.description || '',
+    trackStock: product.trackStock ?? true,
     image: product.image,
     images: product.images,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const shelfQuantity = Number(formData.shelfQuantity || 0);
-  const storageQuantity = Math.max(totalQuantity - shelfQuantity, 0);
-  const calculatedTotalQuantity = totalQuantity;
+  const storageQuantity = Math.max(Number(formData.quantity || 0) - shelfQuantity, 0);
+  const calculatedTotalQuantity = Number(formData.quantity || 0);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,9 +51,10 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
       if (formData.unit !== product.unit) dataToSend.unit = formData.unit;
       if (formData.expirationDate !== (product.expirationDate || '')) dataToSend.expirationDate = formData.expirationDate || undefined;
       if (formData.description !== (product.description || '')) dataToSend.description = formData.description || undefined;
+      if (formData.quantity !== product.quantity) dataToSend.quantity = formData.quantity;
       if (shelfQuantity !== (product.shelfQuantity ?? 0)) dataToSend.shelfQuantity = shelfQuantity;
       if (storageQuantity !== (product.storageQuantity ?? Math.max(product.quantity - (product.shelfQuantity ?? 0), 0))) dataToSend.storageQuantity = storageQuantity;
-      if (calculatedTotalQuantity !== product.quantity) dataToSend.quantity = calculatedTotalQuantity;
+      if (formData.trackStock !== (product.trackStock ?? true)) dataToSend.trackStock = formData.trackStock;
       
       // NUNCA enviar image ou images no update - eles são gerenciados separadamente
       // Isso evita sobrescrever as imagens existentes
@@ -64,6 +67,30 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900">Controle de Estoque</h3>
+          <p className="text-xs text-gray-600 mt-1">
+            {formData.trackStock 
+              ? 'O estoque será controlado automaticamente nas vendas'
+              : 'O estoque não será controlado (produto sem rastreamento)'}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setFormData({ ...formData, trackStock: !formData.trackStock })}
+          className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors ${
+            formData.trackStock ? 'bg-green-500' : 'bg-gray-300'
+          }`}
+        >
+          <span
+            className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+              formData.trackStock ? 'translate-x-7' : 'translate-x-1'
+            }`}
+          />
+        </button>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -173,50 +200,74 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
 
         <div className="md:col-span-2">
           <div className="border-t border-gray-200 pt-4 mt-2">
-            <div className="flex items-center justify-between gap-3 mb-3">
-              <div>
-                <h3 className="text-sm font-semibold text-gray-900">Localização do estoque</h3>
-                <p className="text-xs text-gray-500">
-                  A prateleira é informada manualmente; o depósito é calculado como restante do total.
-                </p>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Estoque</h3>
+            
+            {formData.trackStock && (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Quantidade Total *
+                    </label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      step="1"
+                      value={formData.quantity}
+                      onChange={(e) => {
+                        const newTotal = parseInt(e.target.value) || 0;
+                        const currentShelf = formData.shelfQuantity;
+                        const newStorage = Math.max(newTotal - currentShelf, 0);
+                        setFormData({ 
+                          ...formData, 
+                          quantity: newTotal,
+                          shelfQuantity: Math.min(currentShelf, newTotal),
+                          storageQuantity: newStorage
+                        });
+                      }}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Quantidade total em estoque</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Prateleira
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={formData.shelfQuantity}
+                      onChange={(e) => setFormData({ ...formData, shelfQuantity: parseInt(e.target.value) || 0 })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Quantidade exposta na loja</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Depósito
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={storageQuantity}
+                      readOnly
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent bg-gray-50"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Calculado automaticamente</p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
+                  <p className="font-medium mb-1">Distribuição de estoque:</p>
+                  <p>Prateleira: {shelfQuantity} {formData.unit} + Depósito: {storageQuantity} {formData.unit} = Total: {calculatedTotalQuantity} {formData.unit}</p>
+                </div>
               </div>
-              <div className="text-xs font-semibold text-brand-blue">
-                Total atual: {calculatedTotalQuantity} {formData.unit}
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prateleira
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.shelfQuantity}
-                  onChange={(e) => setFormData({ ...formData, shelfQuantity: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">Quantidade exposta na loja</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Depósito
-                </label>
-                <input
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={storageQuantity}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
-                />
-                <p className="text-xs text-gray-500 mt-1">Calculado automaticamente: total - prateleira</p>
-              </div>
-            </div>
-            <div className="mt-3 rounded-lg bg-blue-50 border border-blue-200 p-3 text-xs text-blue-800">
-              Prateleira + depósito = {shelfQuantity} + {storageQuantity} = {calculatedTotalQuantity} {formData.unit}
-            </div>
+            )}
           </div>
         </div>
       </div>

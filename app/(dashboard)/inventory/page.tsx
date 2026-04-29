@@ -647,6 +647,7 @@ export default function InventoryPage() {
             <AddProductForm
               onSubmit={handleAddProduct}
               onCancel={() => setShowAddModal(false)}
+              categories={categories}
             />
           </div>
         </div>

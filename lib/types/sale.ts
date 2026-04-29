@@ -68,11 +68,12 @@ export interface CreateSaleItemDto {
 }
 
 export interface CreateSaleDto {
-  items: CreateSaleItemDto[];
+  items?: CreateSaleItemDto[];
   paymentMethod: PaymentMethod;
   customerId?: string;
   discount?: number;
   notes?: string;
+  orderId?: number;
 }
 
 export interface SalesFilters {

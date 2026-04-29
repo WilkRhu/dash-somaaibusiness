@@ -25,6 +25,13 @@ export function EditMemberForm({ member, onSave, onCancel }: EditMemberFormProps
     'business_sales',
     'business_stock',
     'business_marketing',
+    'kitchen_chef',
+    'kitchen_cook',
+    'kitchen_assistant',
+    'waiter',
+    'cashier',
+    'delivery_driver',
+    'host',
   ];
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,19 +128,78 @@ export function EditMemberForm({ member, onSave, onCancel }: EditMemberFormProps
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Cargos *
                 </label>
-                <div className="space-y-2">
-                  {availableRoles.map((role) => (
-                    <label key={role} className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={selectedRoles.includes(role)}
-                        onChange={() => toggleRole(role)}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                        disabled={loading}
-                      />
-                      <span className="text-sm text-gray-700">{ROLE_LABELS[role]}</span>
-                    </label>
-                  ))}
+                <div className="space-y-3 max-h-64 overflow-y-auto">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">Administrativo</p>
+                    <div className="space-y-2 ml-2">
+                      {['business_admin', 'business_sales', 'business_stock', 'business_marketing'].map((role) => (
+                        <label key={role} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role as MemberRole)}
+                            onChange={() => toggleRole(role as MemberRole)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            disabled={loading}
+                          />
+                          <span className="text-sm text-gray-700">{ROLE_LABELS[role as MemberRole]}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">Cozinha</p>
+                    <div className="space-y-2 ml-2">
+                      {['kitchen_chef', 'kitchen_cook', 'kitchen_assistant'].map((role) => (
+                        <label key={role} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role as MemberRole)}
+                            onChange={() => toggleRole(role as MemberRole)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            disabled={loading}
+                          />
+                          <span className="text-sm text-gray-700">{ROLE_LABELS[role as MemberRole]}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">Atendimento</p>
+                    <div className="space-y-2 ml-2">
+                      {['waiter', 'cashier', 'host'].map((role) => (
+                        <label key={role} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role as MemberRole)}
+                            onChange={() => toggleRole(role as MemberRole)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            disabled={loading}
+                          />
+                          <span className="text-sm text-gray-700">{ROLE_LABELS[role as MemberRole]}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-2 uppercase">Delivery</p>
+                    <div className="space-y-2 ml-2">
+                      {['delivery_driver'].map((role) => (
+                        <label key={role} className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedRoles.includes(role as MemberRole)}
+                            onChange={() => toggleRole(role as MemberRole)}
+                            className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                            disabled={loading}
+                          />
+                          <span className="text-sm text-gray-700">{ROLE_LABELS[role as MemberRole]}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
 
