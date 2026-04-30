@@ -40,6 +40,19 @@ export const PERMISSIONS = {
   
   // Assinatura
   MANAGE_SUBSCRIPTION: [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES, BusinessRole.STOCK, BusinessRole.MARKETING],
+
+  // Cozinha
+  VIEW_KITCHEN: [
+    BusinessRole.OWNER,
+    BusinessRole.ADMIN,
+    BusinessRole.SALES,
+    BusinessRole.STOCK,
+    BusinessRole.MARKETING,
+    BusinessRole.KITCHEN_CHEF,
+    BusinessRole.KITCHEN_COOK,
+    BusinessRole.KITCHEN_MANAGER,
+    BusinessRole.KITCHEN_ASSISTANT,
+  ],
 };
 
 // Helper para verificar múltiplas permissões

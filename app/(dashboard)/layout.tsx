@@ -10,6 +10,7 @@ import { UpgradeRequiredModal } from '@/components/subscription/upgrade-required
 import { OrderToastProvider } from '@/components/providers/order-toast-provider';
 import { OrderToastListener } from '@/components/providers/order-toast-listener';
 import { useEstablishmentInit } from '@/lib/hooks/use-establishment-init';
+import { useAuthEstablishmentInit } from '@/lib/hooks/use-auth-establishment-init';
 import { useTrialModal } from '@/lib/hooks/use-trial-modal';
 import { useRouteProtection } from '@/lib/hooks/use-route-protection';
 import { useAdminProtection } from '@/lib/hooks/use-admin-protection';
@@ -29,6 +30,9 @@ export default function DashboardLayout({
   const { user } = useAuthStore();
   const { currentEstablishment } = useEstablishmentStore();
   const router = useRouter();
+  
+  // Inicializa os establishments a partir do login
+  useAuthEstablishmentInit();
   
   // Inicializa o estabelecimento automaticamente
   useEstablishmentInit();

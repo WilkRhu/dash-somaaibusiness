@@ -34,12 +34,31 @@ export default function ProfilePage() {
 
   const loadProfile = async () => {
     try {
-      const data = await profileApi.get();
-      setProfile(data);
-      setFormData({
-        name: data.name,
-        phone: data.phone || '',
-      });
+      // Se o usuário está logado, usar os dados do auth store
+      if (user) {
+        const profileData: UserProfile = {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          phone: user.phone || '',
+          avatar: user.avatar,
+          createdAt: new Date().toISOString(),
+          subscriptionPlan: (user.subscriptionPlan || 'FREE') as any,
+        };
+        setProfile(profileData);
+        setFormData({
+          name: profileData.name,
+          phone: profileData.phone || '',
+        });
+      } else {
+        // Se não tem user no store, tentar carregar da API
+        const data = await profileApi.get();
+        setProfile(data);
+        setFormData({
+          name: data.name,
+          phone: data.phone || '',
+        });
+      }
     } catch (error) {
       console.error('Erro ao carregar perfil:', error);
       addToast({

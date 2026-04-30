@@ -6,6 +6,7 @@ import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
 import { useInventory } from '@/lib/hooks/use-inventory';
 import { OrderType } from '@/lib/types/kitchen-order';
+import { isKitchenEstablishment } from '@/lib/constants/establishment-types';
 import { showToast } from '@/components/ui/toast';
 import OpenCloseModal from '@/components/establishments/open-close-modal';
 
@@ -26,6 +27,15 @@ export default function CreateKitchenOrderPage() {
   const [isAuthorized, setIsAuthorized] = useState(true);
   const [showOpenCloseModal, setShowOpenCloseModal] = useState(false);
 
+  // Validar se o estabelecimento é do tipo que possui cozinha
+  const isKitchenTypeEstablishment = isKitchenEstablishment(currentEstablishment?.type);
+
+  useEffect(() => {
+    if (!isKitchenTypeEstablishment) {
+      router.push('/home');
+    }
+  }, [isKitchenTypeEstablishment, router]);
+
   // Verificar se o estabelecimento está aberto
   useEffect(() => {
     if (currentEstablishment && currentEstablishment.isOpen === false) {
@@ -35,12 +45,20 @@ export default function CreateKitchenOrderPage() {
 
   // Verificar se o usuário tem permissão para criar pedidos
   useEffect(() => {
-    const hasKitchenRole = currentEstablishment?.roles?.some(r => r.includes('kitchen'));
-    if (hasKitchenRole) {
-      // Usuário com cargo de cozinha não pode criar pedidos
+    // Apenas proprietários e admins podem criar pedidos
+    // Funcionários de cozinha podem criar pedidos normalmente
+    const userRole = currentEstablishment?.role;
+    const userRoles = currentEstablishment?.roles || [];
+    
+    const isOwnerOrAdmin = userRole === 'business_owner' || userRole === 'business_admin' ||
+      userRoles.includes('business_owner') || userRoles.includes('business_admin');
+    
+    // Se não é owner/admin, pode ser funcionário de cozinha que tem permissão
+    // Remover a restrição para funcionários de cozinha
+    if (!isOwnerOrAdmin && !userRoles.some(r => r.includes('kitchen'))) {
       setIsAuthorized(false);
       showToast('Você não tem permissão para criar pedidos', 'error');
-      router.push('/kitchen/display');
+      router.push('/home');
     }
   }, [currentEstablishment, router]);
 

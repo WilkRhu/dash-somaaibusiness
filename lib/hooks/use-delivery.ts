@@ -44,6 +44,21 @@ export function useDeliveryOrders(filters?: {
   const fetchOrders = useCallback(async () => {
     if (!currentEstablishment?.id) return;
     
+    // Não carregar dados de delivery para funcionários de cozinha
+    const roles = currentEstablishment?.roles || [];
+    const isKitchenEmployee = roles.some((role: any) =>
+      role === 'kitchen_cook' ||
+      role === 'kitchen_manager' ||
+      role === 'kitchen_chef' ||
+      role === 'kitchen_assistant'
+    );
+
+    if (isKitchenEmployee) {
+      setLoading(false);
+      setOrders([]);
+      return;
+    }
+    
     try {
       setLoading(true);
       setError(null);
@@ -60,7 +75,7 @@ export function useDeliveryOrders(filters?: {
     } finally {
       setLoading(false);
     }
-  }, [currentEstablishment?.id, requestFilters]);
+  }, [currentEstablishment?.id, currentEstablishment?.roles, requestFilters]);
 
   useEffect(() => {
     fetchOrders();

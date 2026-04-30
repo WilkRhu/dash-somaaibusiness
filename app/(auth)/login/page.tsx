@@ -6,13 +6,14 @@ import Image from 'next/image';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { useRouter } from 'next/navigation';
 import GoogleLoginButton from '@/components/GoogleLoginButton';
+import { getRedirectPathAfterLogin } from '@/lib/utils/redirect-helper';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
-  const { login, isLoading } = useAuthStore();
+  const { login, isLoading, user } = useAuthStore();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -23,8 +24,12 @@ export default function LoginPage() {
     
     try {
       await login(email, password);
-      console.log('Login bem-sucedido, redirecionando...');
-      router.push('/home');
+      
+      // Aguardar um pouco para o user ser atualizado no store
+      setTimeout(() => {
+        const redirectPath = getRedirectPathAfterLogin(user);
+        router.push(redirectPath);
+      }, 500);
     } catch (err: any) {
       console.error('Erro no login:', err);
       const message = err.response?.data?.message || err.message || 'Erro ao fazer login';

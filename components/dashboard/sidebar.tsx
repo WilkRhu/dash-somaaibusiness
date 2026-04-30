@@ -5,11 +5,12 @@ import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
-import { canAccess, PERMISSIONS } from '@/lib/utils/permissions';
+import { PERMISSIONS } from '@/lib/utils/permissions';
 import { canAccessRoute } from '@/lib/utils/plan-restrictions';
 import { BusinessRole } from '@/lib/types/establishment';
 import { SubscriptionPlan } from '@/lib/types/subscription';
 import { usePendingDeliveryCount } from '@/lib/hooks/use-pending-delivery-count';
+import { isKitchenEstablishment } from '@/lib/constants/establishment-types';
 import { ReactNode, useState, useEffect } from 'react';
 
 interface SubMenuItem {
@@ -23,6 +24,7 @@ interface MenuItem {
   label: string;
   icon: ReactNode;
   requiredPermissions: BusinessRole[];
+  requiresKitchenType?: boolean;
   children?: SubMenuItem[];
 }
 
@@ -151,7 +153,8 @@ const menuItems: MenuItem[] = [
   { 
     href: '/kitchen', 
     label: 'Cozinha',
-    requiredPermissions: PERMISSIONS.VIEW_SALES,
+    requiredPermissions: PERMISSIONS.VIEW_KITCHEN,
+    requiresKitchenType: true,
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
@@ -178,15 +181,25 @@ const menuItems: MenuItem[] = [
       },
       {
         href: '/kitchen/tickets',
-        label: 'Acompanhamento',
+        label: 'Acompanhamento Interno',
         icon: (
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         ),
       },
+      {
+        href: '/kitchen/customer-tracking',
+        label: 'Acompanhamento Cliente',
+        icon: (
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-2.21 0-4 1.79-4 4m4-4c2.21 0 4 1.79 4 4m-4-4V4m0 8v8m-6-6h12" />
+          </svg>
+        ),
+      },
     ]
   },
+
   { 
     href: '/reports', 
     label: 'Relatórios',
@@ -217,29 +230,6 @@ interface SidebarProps {
 // Páginas que funcionam offline
 const offlineSupported = ['/sales', '/sales/pos', '/inventory'];
 
-// Categorias de estabelecimento que usam cozinha
-const KITCHEN_CATEGORIES = [
-  'Restaurante',
-  'Bar',
-  'Lanchonete',
-  'Pizzaria',
-  'Churrascaria',
-  'Sorveteria',
-  'Café',
-  'Padaria',
-  'Confeitaria',
-  'Pastelaria',
-  'Açaí',
-  'Hamburgueria',
-  'Sushi',
-  'Comida Árabe',
-  'Comida Chinesa',
-  'Comida Italiana',
-  'Comida Mexicana',
-  'Comida Tailandesa',
-  'Comida Vegana',
-];
-
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
   const { currentEstablishment } = useEstablishmentStore();
@@ -269,38 +259,70 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const isSuperAdmin = userGlobalRole === 'super_admin';
   
   // Filtrar itens do menu baseado nas permissões do usuário
-  const userRoles = currentEstablishment?.roles || [];
-  const userRole = currentEstablishment?.role;
+  // Usar roles do currentEstablishment, ou fallback para os roles do user.establishments (dados do login)
+  const loginEstablishments = (user as any)?.establishments || [];
+  const loginEstablishment = loginEstablishments.find((e: any) => e.id === currentEstablishment?.id) || loginEstablishments[0];
+  
+  const userRoles: string[] = currentEstablishment?.roles?.length 
+    ? currentEstablishment.roles 
+    : (loginEstablishment?.roles || []);
+  const userRole: string | undefined = currentEstablishment?.role || loginEstablishment?.role || (loginEstablishment?.roles?.[0]);
   const userPlan = user?.subscriptionPlan || SubscriptionPlan.FREE;
+
+
   
   // Owner tem acesso a tudo
   const isOwner = userRole === BusinessRole.OWNER || 
     userRoles.includes(BusinessRole.OWNER) ||
-    userRole === 'business_owner' as any ||
-    userRoles.some(r => r === ('business_owner' as any));
-  
-  // Roles de cozinha do backend
-  const KITCHEN_ROLES = ['kitchen_chef', 'kitchen_cook', 'kitchen_assistant'];
+    userRole === 'business_owner' ||
+    userRoles.some(r => r === 'business_owner');
+
+  // Verificar se é funcionário de cozinha
+  const isKitchenEmployee = userRoles.some(r => 
+    r === BusinessRole.KITCHEN_CHEF ||
+    r === BusinessRole.KITCHEN_COOK ||
+    r === BusinessRole.KITCHEN_MANAGER ||
+    r === BusinessRole.KITCHEN_ASSISTANT ||
+    r === 'kitchen_chef' ||
+    r === 'kitchen_cook' ||
+    r === 'kitchen_manager' ||
+    r === 'kitchen_assistant'
+  ) || (
+    userRole === BusinessRole.KITCHEN_CHEF ||
+    userRole === BusinessRole.KITCHEN_COOK ||
+    userRole === BusinessRole.KITCHEN_MANAGER ||
+    userRole === BusinessRole.KITCHEN_ASSISTANT ||
+    userRole === 'kitchen_chef' ||
+    userRole === 'kitchen_cook' ||
+    userRole === 'kitchen_manager' ||
+    userRole === 'kitchen_assistant'
+  );
+
   const allUserRoles = userRole ? [...userRoles, userRole] : [...userRoles];
-  const hasKitchenRole = allUserRoles.some(r => KITCHEN_ROLES.includes(r as string));
+  
+  // Validar se o estabelecimento é do tipo que possui cozinha
+  const isKitchenTypeEstablishment = isKitchenEstablishment(currentEstablishment?.type);
   
   const visibleMenuItems = menuItems.filter(item => {
     // super_admin vê todos os itens
     if (isSuperAdmin) return true;
-    
+
+    // Funcionário de cozinha: mostrar apenas item Cozinha
+    if (isKitchenEmployee) {
+      return item.href === '/kitchen';
+    }
+
+    // Cozinha aparece se: é tipo kitchen OU usuário é funcionário de cozinha
+    if (item.requiresKitchenType && !isKitchenTypeEstablishment && !isKitchenEmployee) return false;
+
     // Owner vê tudo
     if (isOwner) return true;
     
     // Se não tem roles definido, mostra todos os itens (ainda carregando)
     if (userRoles.length === 0 && !userRole) return true;
-    
-    // Funcionário de cozinha só vê o menu Cozinha e Dashboard
-    if (hasKitchenRole && (item.href === '/kitchen' || item.href === '/home')) {
-      return true;
-    }
-    
+
     // Verificar permissão baseada nos requiredPermissions do item
-    return item.requiredPermissions.some(role => allUserRoles.includes(role));
+    return item.requiredPermissions.some(role => allUserRoles.includes(role as string));
   });
 
   return (
@@ -394,14 +416,10 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               {hasChildren && isSubmenuOpen && (
                 <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-100 pl-3">
                   {item.children!
-                    .filter((child) => {
-                      // Funcionário de cozinha não vê "Criar Pedido"
-                      if (child.href === '/kitchen/create' && hasKitchenRole && !isOwner && !isSuperAdmin) {
-                        // Só esconde se o usuário NÃO tem roles administrativos
-                        const hasAdminRole = allUserRoles.some(r => 
-                          [BusinessRole.OWNER, BusinessRole.ADMIN, BusinessRole.SALES].includes(r as BusinessRole)
-                        );
-                        return hasAdminRole;
+                    .filter(child => {
+                      // Funcionários de cozinha não veem "Criar Pedido"
+                      if (isKitchenEmployee && child.href === '/kitchen/create') {
+                        return false;
                       }
                       return true;
                     })

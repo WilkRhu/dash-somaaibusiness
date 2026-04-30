@@ -4,6 +4,11 @@ export enum BusinessRole {
   SALES = 'business_sales',
   STOCK = 'business_stock',
   MARKETING = 'business_marketing',
+  KITCHEN_CHEF = 'kitchen_chef',
+  KITCHEN_COOK = 'kitchen_cook',
+  KITCHEN_MANAGER = 'kitchen_manager',
+  KITCHEN_ASSISTANT = 'kitchen_assistant',
+  WAITER = 'waiter',
 }
 
 export interface Establishment {

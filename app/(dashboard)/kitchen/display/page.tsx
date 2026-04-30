@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef, DragEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
 import { KitchenOrderStatus } from '@/lib/types/kitchen-order';
 import { showToast } from '@/components/ui/toast';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { BusinessRole } from '@/lib/types/establishment';
+import { isKitchenEstablishment } from '@/lib/constants/establishment-types';
 import KitchenOrderCard from '@/components/kitchen/kitchen-order-card';
 import UpdateKitchenOrderStatusModal from '@/components/kitchen/update-kitchen-order-status-modal';
 import NewKitchenOrderToast from '@/components/kitchen/new-order-toast';
@@ -101,11 +103,28 @@ const DISPLAY_COLUMNS = [
 export default function KitchenDisplayPage() {
   const { currentEstablishment } = useEstablishmentStore();
   const { user } = useAuthStore();
+  const router = useRouter();
   const userRoles = currentEstablishment?.roles || [];
   const userRole = currentEstablishment?.role;
   const isOwner = userRole === BusinessRole.OWNER ||
     userRoles.includes(BusinessRole.OWNER) ||
     user?.role === 'super_admin';
+
+  // Validar se o estabelecimento é do tipo que possui cozinha OU se é funcionário de cozinha
+  const isKitchenTypeEstablishment = isKitchenEstablishment(currentEstablishment?.type);
+  const isKitchenEmployee = userRoles.some((role: any) =>
+    role === 'kitchen_cook' ||
+    role === 'kitchen_manager' ||
+    role === 'kitchen_chef' ||
+    role === 'kitchen_assistant'
+  );
+  const canAccessKitchen = isKitchenTypeEstablishment || isKitchenEmployee;
+
+  useEffect(() => {
+    if (!canAccessKitchen && currentEstablishment) {
+      router.push('/home');
+    }
+  }, [canAccessKitchen, currentEstablishment, router]);
 
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [showUpdateModal, setShowUpdateModal] = useState(false);

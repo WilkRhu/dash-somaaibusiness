@@ -5,19 +5,8 @@ import {
   CreateKitchenOrderDto,
   UpdateKitchenOrderStatusDto,
   KitchenOrdersFilters,
+  OrderStatusChange,
 } from '@/lib/types/kitchen-order';
-
-// Converte qualquer formato de data para timestamp (ms)
-function toTimestamp(dateStr: string | number | null | undefined): number {
-  if (!dateStr) return 0;
-  // Se já é número ou string numérica
-  const num = Number(dateStr);
-  if (!isNaN(num) && num > 1000000000000) return num; // já é timestamp ms
-  if (!isNaN(num) && num > 1000000000) return num * 1000; // timestamp em segundos
-  // ISO string
-  const ts = new Date(String(dateStr)).getTime();
-  return isNaN(ts) ? 0 : ts;
-}
 
 // Normaliza os dados do backend para o formato do frontend
 function normalizeOrder(raw: any): KitchenOrder {
@@ -42,12 +31,12 @@ function normalizeOrder(raw: any): KitchenOrder {
     total: parseFloat(raw.total) || 0,
     status: raw.status,
     estimatedPrepTime: raw.estimatedPrepTime || 0,
-    createdAt: String(toTimestamp(raw.createdAt)),
-    updatedAt: raw.updatedAt ? String(toTimestamp(raw.updatedAt)) : undefined,
-    confirmedAt: raw.confirmedAt ? String(toTimestamp(raw.confirmedAt)) : undefined,
-    startedAt: raw.startedAt ? String(toTimestamp(raw.startedAt)) : undefined,
-    readyAt: raw.readyAt ? String(toTimestamp(raw.readyAt)) : undefined,
-    pickedUpAt: raw.pickedUpAt ? String(toTimestamp(raw.pickedUpAt)) : undefined,
+    createdAt: raw.createdAt || new Date().toISOString(),
+    updatedAt: raw.updatedAt || undefined,
+    confirmedAt: raw.confirmedAt || undefined,
+    startedAt: raw.startedAt || undefined,
+    readyAt: raw.readyAt || undefined,
+    pickedUpAt: raw.pickedUpAt || undefined,
     notes: raw.notes || undefined,
     priority: raw.priority || 'normal',
     history: raw.history || [],
@@ -142,5 +131,16 @@ export const kitchenOrdersApi = {
     await apiClient.delete(
       `/business/establishments/${establishmentId}/kitchen-orders/${orderId}`
     );
+  },
+
+  // Obter histórico de mudanças de status
+  getStatusHistory: async (
+    establishmentId: string,
+    orderId: string
+  ): Promise<OrderStatusChange[]> => {
+    const { data } = await apiClient.get(
+      `/business/establishments/${establishmentId}/kitchen-orders/${orderId}/history`
+    );
+    return data.data || [];
   },
 };

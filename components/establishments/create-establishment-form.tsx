@@ -5,12 +5,14 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { maskCNPJ, maskPhone, maskCEP, unmask } from '@/lib/utils/format';
 import { validateCNPJ } from '@/lib/utils/validation';
+import { ESTABLISHMENT_TYPE_GROUPS } from '@/lib/constants/establishment-types';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { establishmentsApi } from '@/lib/api/establishments';
 import { SubscriptionPlan, PLAN_LIMITS } from '@/lib/types/subscription';
 import { canCreateEstablishment } from '@/lib/utils/subscription';
 import { LimitReachedModal } from '@/components/subscription/limit-reached-modal';
+import { CreateEstablishmentDto } from '@/lib/types/establishment';
 
 interface EstablishmentFormData {
   name: string;
@@ -196,7 +198,7 @@ export function CreateEstablishmentForm() {
       console.log('📦 Payload:', { ...payload, logo: logoBase64 ? '[BASE64_IMAGE]' : undefined });
 
       // Usa a API do establishments que já tem o token configurado
-      const data = await establishmentsApi.create(payload as any);
+      const data = await establishmentsApi.create(payload as CreateEstablishmentDto);
       
       console.log('✅ Estabelecimento criado:', data);
 
@@ -206,13 +208,15 @@ export function CreateEstablishmentForm() {
       });
       
       router.push('/establishments');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('❌ Erro ao criar estabelecimento:', error);
-      console.error('❌ Error response:', error.response?.data);
+      const responseError = error as { response?: { data?: { message?: string } } } | null;
+      const responseMessage = responseError?.response?.data?.message;
+      console.error('❌ Error response:', responseError?.response?.data);
       
       addToast({
         type: 'error',
-        message: error.response?.data?.message || 'Erro ao criar estabelecimento',
+        message: responseMessage || 'Erro ao criar estabelecimento',
       });
     } finally {
       setLoading(false);
@@ -413,105 +417,15 @@ export function CreateEstablishmentForm() {
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-blue"
             >
               <option value="">Selecione o tipo</option>
-              
-              {/* Alimentação */}
-              <optgroup label="🍽️ Alimentação">
-                <option value="Restaurante">Restaurante</option>
-                <option value="Lanchonete">Lanchonete</option>
-                <option value="Padaria">Padaria</option>
-                <option value="Confeitaria">Confeitaria</option>
-                <option value="Pizzaria">Pizzaria</option>
-                <option value="Churrascaria">Churrascaria</option>
-                <option value="Sorveteria">Sorveteria</option>
-                <option value="Café">Café</option>
-                <option value="Bar">Bar</option>
-                <option value="Pub">Pub</option>
-                <option value="Boteco">Boteco</option>
-                <option value="Pastelaria">Pastelaria</option>
-                <option value="Açaí">Açaí</option>
-                <option value="Sushi">Sushi</option>
-                <option value="Comida Árabe">Comida Árabe</option>
-                <option value="Comida Chinesa">Comida Chinesa</option>
-                <option value="Comida Mexicana">Comida Mexicana</option>
-                <option value="Comida Italiana">Comida Italiana</option>
-              </optgroup>
-
-              {/* Varejo */}
-              <optgroup label="🛍️ Varejo">
-                <option value="Supermercado">Supermercado</option>
-                <option value="Mercado">Mercado</option>
-                <option value="Loja de Roupas">Loja de Roupas</option>
-                <option value="Loja de Eletrônicos">Loja de Eletrônicos</option>
-                <option value="Loja de Móveis">Loja de Móveis</option>
-                <option value="Loja de Calçados">Loja de Calçados</option>
-                <option value="Loja de Cosméticos">Loja de Cosméticos</option>
-                <option value="Loja de Brinquedos">Loja de Brinquedos</option>
-                <option value="Loja de Livros">Loja de Livros</option>
-                <option value="Loja de Esportes">Loja de Esportes</option>
-                <option value="Loja de Departamentos">Loja de Departamentos</option>
-              </optgroup>
-
-              {/* Saúde e Beleza */}
-              <optgroup label="💊 Saúde e Beleza">
-                <option value="Farmácia">Farmácia</option>
-                <option value="Drogaria">Drogaria</option>
-                <option value="Salão de Beleza">Salão de Beleza</option>
-                <option value="Barbearia">Barbearia</option>
-                <option value="Clínica">Clínica</option>
-                <option value="Consultório">Consultório</option>
-                <option value="Spa">Spa</option>
-                <option value="Academia">Academia</option>
-              </optgroup>
-
-              {/* Serviços */}
-              <optgroup label="🔧 Serviços">
-                <option value="Oficina Mecânica">Oficina Mecânica</option>
-                <option value="Lavagem de Carros">Lavagem de Carros</option>
-                <option value="Encanador">Encanador</option>
-                <option value="Eletricista">Eletricista</option>
-                <option value="Marcenaria">Marcenaria</option>
-                <option value="Serralheria">Serralheria</option>
-                <option value="Vidraçaria">Vidraçaria</option>
-                <option value="Pintura">Pintura</option>
-                <option value="Limpeza">Limpeza</option>
-                <option value="Manutenção">Manutenção</option>
-              </optgroup>
-
-              {/* Educação e Cultura */}
-              <optgroup label="📚 Educação e Cultura">
-                <option value="Escola">Escola</option>
-                <option value="Universidade">Universidade</option>
-                <option value="Curso">Curso</option>
-                <option value="Academia de Dança">Academia de Dança</option>
-                <option value="Aula de Música">Aula de Música</option>
-                <option value="Biblioteca">Biblioteca</option>
-                <option value="Museu">Museu</option>
-                <option value="Cinema">Cinema</option>
-                <option value="Teatro">Teatro</option>
-              </optgroup>
-
-              {/* Hospedagem e Turismo */}
-              <optgroup label="🏨 Hospedagem e Turismo">
-                <option value="Hotel">Hotel</option>
-                <option value="Pousada">Pousada</option>
-                <option value="Hostel">Hostel</option>
-                <option value="Resort">Resort</option>
-                <option value="Agência de Turismo">Agência de Turismo</option>
-              </optgroup>
-
-              {/* Transportes */}
-              <optgroup label="🚗 Transportes">
-                <option value="Táxi">Táxi</option>
-                <option value="Uber">Uber</option>
-                <option value="Ônibus">Ônibus</option>
-                <option value="Locadora de Carros">Locadora de Carros</option>
-              </optgroup>
-
-              {/* Outros */}
-              <optgroup label="📦 Outros">
-                <option value="Loja">Loja</option>
-                <option value="Outro">Outro</option>
-              </optgroup>
+              {ESTABLISHMENT_TYPE_GROUPS.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
             </select>
           </div>
 

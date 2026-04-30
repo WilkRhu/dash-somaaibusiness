@@ -77,6 +77,17 @@ export interface KitchenOrderHistory {
   staffName?: string;
 }
 
+export interface OrderStatusChange {
+  id: string;
+  previousStatus: KitchenOrderStatus;
+  newStatus: KitchenOrderStatus;
+  changedBy: {
+    id: string;
+    name: string;
+  };
+  createdAt: string;
+}
+
 export interface CreateKitchenOrderDto {
   orderType: OrderType;
   customerName?: string;

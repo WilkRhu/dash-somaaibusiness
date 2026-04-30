@@ -42,6 +42,7 @@ interface User {
   name: string;
   email: string;
   avatar?: string;
+  phone?: string;
   role?: string;
   isActive?: boolean;
   subscriptionPlan?: SubscriptionPlan;
@@ -50,6 +51,14 @@ interface User {
   planType?: string; // Campo do backend (deprecated)
   planExpiresAt?: string;
   business_plan?: BusinessPlan; // Nova estrutura do backend
+  establishments?: Array<{
+    id: string;
+    name: string;
+    logo?: string;
+    roles?: string[];
+    role?: string;
+    [key: string]: any;
+  }>;
 }
 
 interface AuthStore {

@@ -15,6 +15,21 @@ export function usePendingDeliveryCount() {
       return;
     }
 
+    // Não carregar dados de delivery para funcionários de cozinha
+    const roles = currentEstablishment?.roles || [];
+    const isKitchenEmployee = roles.some((role: any) =>
+      role === 'kitchen_cook' ||
+      role === 'kitchen_manager' ||
+      role === 'kitchen_chef' ||
+      role === 'kitchen_assistant'
+    );
+
+    if (isKitchenEmployee) {
+      setLoading(false);
+      setCount(0);
+      return;
+    }
+
     const fetchPendingCount = async () => {
       try {
         setLoading(true);
@@ -37,7 +52,7 @@ export function usePendingDeliveryCount() {
     const interval = setInterval(fetchPendingCount, 30000);
 
     return () => clearInterval(interval);
-  }, [currentEstablishment?.id]);
+  }, [currentEstablishment?.id, currentEstablishment?.roles]);
 
   return { count, loading };
 }
