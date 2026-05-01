@@ -27,9 +27,11 @@ export default function SalesPage() {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [showConfirmPaymentModal, setShowConfirmPaymentModal] = useState(false);
   const [showReasonModal, setShowReasonModal] = useState(false);
+  const [showItemsModal, setShowItemsModal] = useState(false);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [selectedCancellationReason, setSelectedCancellationReason] = useState<string>('');
   const [cancelReason, setCancelReason] = useState('');
+  const [selectedSaleItems, setSelectedSaleItems] = useState<any[]>([]);
   
   const { sales, isLoading, cancelSale, refetch } = useSales(
     statusFilter !== 'all' ? { status: statusFilter } : undefined
@@ -57,6 +59,11 @@ export default function SalesPage() {
   const handleViewReason = (reason: string) => {
     setSelectedCancellationReason(reason);
     setShowReasonModal(true);
+  };
+
+  const handleViewItems = (items: any[]) => {
+    setSelectedSaleItems(items);
+    setShowItemsModal(true);
   };
 
   const handleConfirmPayment = async () => {
@@ -143,7 +150,14 @@ export default function SalesPage() {
                         minute: '2-digit',
                       })}
                     </td>
-                    <td className="py-3 px-4 text-gray-600">{sale.items.length} item(s)</td>
+                    <td className="py-3 px-4 text-gray-600">
+                      <button
+                        onClick={() => handleViewItems(sale.items)}
+                        className="text-brand-blue hover:text-brand-green font-medium underline"
+                      >
+                        {sale.items.length} item(s)
+                      </button>
+                    </td>
                     <td className="py-3 px-4 text-gray-600">{paymentLabels[sale.paymentMethod]}</td>
                     <td className="py-3 px-4 text-right font-semibold text-brand-navy">
                       R$ {Number(sale.total || 0).toFixed(2)}
@@ -302,6 +316,86 @@ export default function SalesPage() {
                 onClick={() => {
                   setShowReasonModal(false);
                   setSelectedCancellationReason('');
+                }}
+                className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showItemsModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 sticky top-0 bg-white">
+              <h2 className="text-xl font-bold text-brand-navy">Itens da Venda</h2>
+            </div>
+
+            <div className="p-6">
+              {selectedSaleItems.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">Nenhum item nesta venda</p>
+              ) : (
+                <div className="space-y-3">
+                  {selectedSaleItems.map((item, index) => (
+                    <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                      <>{console.log(item.item)}</>
+                      <div className="flex items-start gap-4">
+                        {/* Imagem do produto */}
+                        <div className="flex-shrink-0">
+                          <div className="h-24 w-24 rounded-lg bg-gray-100 overflow-hidden flex items-center justify-center">
+                            {item.item?.images && item.item.images.length > 0 ? (
+                              <img
+                                src={item.item.images[0]}
+                                alt={item.productName}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : item.productImage ? (
+                              <img
+                                src={item.productImage}
+                                alt={item.productName}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <svg className="h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                              </svg>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Informações do produto */}
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-gray-900">{item.productName || 'Produto sem nome'}</h3>
+                          {item.description && (
+                            <p className="text-sm text-gray-600 mt-1">{item.description}</p>
+                          )}
+                          <div className="flex items-center gap-4 mt-3 text-sm text-gray-600">
+                            <span>Quantidade: <strong>{item.quantity}</strong> un</span>
+                            <span>Preço unitário: <strong>R$ {Number(item.unitPrice || 0).toFixed(2)}</strong></span>
+                          </div>
+                        </div>
+
+                        {/* Subtotal */}
+                        <div className="text-right flex-shrink-0">
+                          <p className="text-sm text-gray-600">Subtotal</p>
+                          <p className="text-lg font-bold text-brand-navy">
+                            R$ {Number(item.subtotal || 0).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="p-6 border-t border-gray-200 flex justify-end sticky bottom-0 bg-white">
+              <button
+                onClick={() => {
+                  setShowItemsModal(false);
+                  setSelectedSaleItems([]);
                 }}
                 className="px-4 py-2 bg-brand-blue text-white rounded-lg hover:opacity-90 transition-opacity font-medium"
               >

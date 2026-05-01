@@ -17,6 +17,8 @@ export interface SaleItem {
   saleId: string;
   itemId: string;
   productName: string;
+  productImage?: string | null;
+  images?: string[];
   unitPrice: number;
   quantity: number;
   discount: number;

@@ -16,6 +16,12 @@ apiClient.interceptors.request.use((config) => {
       config.headers.Authorization = `Bearer ${token}`;
     }
   }
+  
+  // Garantir que PATCH sempre envia um body, mesmo que vazio
+  if (config.method === 'patch' && !config.data) {
+    config.data = {};
+  }
+  
   return config;
 });
 

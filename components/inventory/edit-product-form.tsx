@@ -38,23 +38,29 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Preparar dados para envio
-      const dataToSend: UpdateProductDto = {};
+      // Preparar dados para envio - enviar TODOS os campos para garantir sincronização
+      const dataToSend: UpdateProductDto = {
+        name: formData.name,
+        category: formData.category || undefined,
+        brand: formData.brand || undefined,
+        costPrice: formData.costPrice,
+        salePrice: formData.salePrice,
+        quantity: formData.quantity,
+        shelfQuantity: shelfQuantity,
+        storageQuantity: storageQuantity,
+        minQuantity: formData.minQuantity,
+        unit: formData.unit,
+        expirationDate: formData.expirationDate || undefined,
+        description: formData.description || undefined,
+        trackStock: formData.trackStock,
+      };
       
-      // Adicionar apenas campos que foram modificados ou que têm valor
-      if (formData.name !== product.name) dataToSend.name = formData.name;
-      if (formData.category !== (product.category || '')) dataToSend.category = formData.category || undefined;
-      if (formData.brand !== (product.brand || '')) dataToSend.brand = formData.brand || undefined;
-      if (formData.costPrice !== product.costPrice) dataToSend.costPrice = formData.costPrice;
-      if (formData.salePrice !== product.salePrice) dataToSend.salePrice = formData.salePrice;
-      if (formData.minQuantity !== product.minQuantity) dataToSend.minQuantity = formData.minQuantity;
-      if (formData.unit !== product.unit) dataToSend.unit = formData.unit;
-      if (formData.expirationDate !== (product.expirationDate || '')) dataToSend.expirationDate = formData.expirationDate || undefined;
-      if (formData.description !== (product.description || '')) dataToSend.description = formData.description || undefined;
-      if (formData.quantity !== product.quantity) dataToSend.quantity = formData.quantity;
-      if (shelfQuantity !== (product.shelfQuantity ?? 0)) dataToSend.shelfQuantity = shelfQuantity;
-      if (storageQuantity !== (product.storageQuantity ?? Math.max(product.quantity - (product.shelfQuantity ?? 0), 0))) dataToSend.storageQuantity = storageQuantity;
-      if (formData.trackStock !== (product.trackStock ?? true)) dataToSend.trackStock = formData.trackStock;
+      // Remover campos undefined para não sobrescrever dados no backend
+      Object.keys(dataToSend).forEach(key => {
+        if (dataToSend[key as keyof UpdateProductDto] === undefined) {
+          delete dataToSend[key as keyof UpdateProductDto];
+        }
+      });
       
       // NUNCA enviar image ou images no update - eles são gerenciados separadamente
       // Isso evita sobrescrever as imagens existentes
@@ -202,7 +208,7 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
           <div className="border-t border-gray-200 pt-4 mt-2">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Estoque</h3>
             
-            {formData.trackStock && (
+            {formData.trackStock ? (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
                   <div>
@@ -266,6 +272,15 @@ export function EditProductForm({ product, onSubmit, onCancel }: EditProductForm
                   <p className="font-medium mb-1">Distribuição de estoque:</p>
                   <p>Prateleira: {shelfQuantity} {formData.unit} + Depósito: {storageQuantity} {formData.unit} = Total: {calculatedTotalQuantity} {formData.unit}</p>
                 </div>
+              </div>
+            ) : (
+              <div className="rounded-lg bg-gray-50 border border-gray-200 p-4 text-center">
+                <p className="text-sm text-gray-600">
+                  <strong>Controle de estoque desativado</strong>
+                </p>
+                <p className="text-xs text-gray-500 mt-1">
+                  Ative o controle de estoque acima para gerenciar quantidades
+                </p>
               </div>
             )}
           </div>

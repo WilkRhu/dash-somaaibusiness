@@ -9,6 +9,7 @@ import { OrderType } from '@/lib/types/kitchen-order';
 import { isKitchenEstablishment } from '@/lib/constants/establishment-types';
 import { showToast } from '@/components/ui/toast';
 import OpenCloseModal from '@/components/establishments/open-close-modal';
+import { BusinessRole } from '@/lib/types/establishment';
 
 interface OrderItem {
   inventoryItemId: string;
@@ -51,8 +52,8 @@ export default function CreateKitchenOrderPage() {
     const userRole = currentEstablishment?.role;
     const userRoles = currentEstablishment?.roles || [];
     
-    const isOwnerOrAdmin = userRole === 'business_owner' || userRole === 'business_admin' ||
-      userRoles.includes('business_owner') || userRoles.includes('business_admin');
+    const isOwnerOrAdmin = userRole === BusinessRole.OWNER || userRole === BusinessRole.ADMIN ||
+      userRoles.includes(BusinessRole.OWNER) || userRoles.includes(BusinessRole.ADMIN);
     
     // Se não é owner/admin, pode ser funcionário de cozinha que tem permissão
     // Remover a restrição para funcionários de cozinha

@@ -113,9 +113,9 @@ export const ESTABLISHMENT_TYPE_GROUPS = [
       { value: 'Outro', label: 'Outro', category: 'Outros', hasKitchen: false },
     ],
   },
-] as const;
+];
 
-export const ESTABLISHMENT_TYPE_OPTIONS = ESTABLISHMENT_TYPE_GROUPS.flatMap((group) => group.options);
+export const ESTABLISHMENT_TYPE_OPTIONS: EstablishmentTypeOption[] = ESTABLISHMENT_TYPE_GROUPS.flatMap((group) => group.options);
 
 export const ESTABLISHMENT_TYPES_WITH_KITCHEN = ESTABLISHMENT_TYPE_OPTIONS
   .filter((option) => option.hasKitchen)

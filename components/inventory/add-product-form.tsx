@@ -295,7 +295,7 @@ export function AddProductForm({ onSubmit, onCancel, categories = [] }: AddProdu
         </div>
 
         {/* Opção de cálculo em lote/fardo - ANTES do campo de custo */}
-        {['kg', 'g', 'l', 'ml'].includes(formData.unit) && (
+        {['kg', 'g', 'l', 'ml'].includes(formData.unit) && formData.trackStock && (
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-3 p-3 bg-gray-50 rounded-lg">
               <input
@@ -402,23 +402,21 @@ export function AddProductForm({ onSubmit, onCancel, categories = [] }: AddProdu
           </div>
         )}
 
-        {formData.trackStock && (
-          <>
-            <CurrencyInput
-              label={useBulkCalculation ? "Preço de Custo (calculado automaticamente)" : "Preço de Custo *"}
-              required
-              value={formData.costPrice}
-              onChange={(value) => setFormData({ ...formData, costPrice: value })}
-              disabled={useBulkCalculation}
-            />
-            <CurrencyInput
-              label="Preço de Venda *"
-              required
-              value={formData.salePrice}
-              onChange={(value) => setFormData({ ...formData, salePrice: value })}
-            />
+        <CurrencyInput
+          label={useBulkCalculation ? "Preço de Custo (calculado automaticamente)" : "Preço de Custo *"}
+          required={formData.trackStock}
+          value={formData.costPrice}
+          onChange={(value) => setFormData({ ...formData, costPrice: value })}
+          disabled={useBulkCalculation}
+        />
+        <CurrencyInput
+          label="Preço de Venda *"
+          required={formData.trackStock}
+          value={formData.salePrice}
+          onChange={(value) => setFormData({ ...formData, salePrice: value })}
+        />
 
-            {formData.costPrice > 0 && formData.salePrice > 0 && (
+        {formData.costPrice > 0 && formData.salePrice > 0 && (
               <div className="md:col-span-2">
                 <div className={`border-2 rounded-lg p-4 ${
                   getProfitMargin() >= 0 
@@ -476,6 +474,8 @@ export function AddProductForm({ onSubmit, onCancel, categories = [] }: AddProdu
               </div>
             )}
 
+        {formData.trackStock && (
+          <>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Quantidade Inicial *
