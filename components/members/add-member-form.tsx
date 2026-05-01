@@ -128,6 +128,13 @@ export function AddMemberForm({ onSuccess, onCancel }: AddMemberFormProps) {
           <option value="business_sales">{ROLE_LABELS.business_sales}</option>
           <option value="business_stock">{ROLE_LABELS.business_stock}</option>
           <option value="business_marketing">{ROLE_LABELS.business_marketing}</option>
+          <option value="kitchen_chef">{ROLE_LABELS.kitchen_chef}</option>
+          <option value="kitchen_cook">{ROLE_LABELS.kitchen_cook}</option>
+          <option value="kitchen_assistant">{ROLE_LABELS.kitchen_assistant}</option>
+          <option value="waiter">{ROLE_LABELS.waiter}</option>
+          <option value="cashier">{ROLE_LABELS.cashier}</option>
+          <option value="delivery_driver">{ROLE_LABELS.delivery_driver}</option>
+          <option value="host">{ROLE_LABELS.host}</option>
         </select>
       </div>
 

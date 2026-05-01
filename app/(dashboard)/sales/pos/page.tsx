@@ -7,6 +7,7 @@ import { useSales } from '@/lib/hooks/use-sales';
 import { useUIStore } from '@/lib/stores/ui-store';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { useAuthStore } from '@/lib/stores/auth-store';
+import { useKitchenOrdersStore } from '@/lib/stores/kitchen-orders-store';
 import { inventoryApi } from '@/lib/api/inventory';
 import { offersApi } from '@/lib/api/offers';
 import { offlineDB, PendingSale } from '@/lib/offline-db';
@@ -32,6 +33,7 @@ import { salesApi } from '@/lib/api/sales';
 export default function POSPage() {
   const [barcode, setBarcode] = useState('');
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [kitchenRefreshTrigger, setKitchenRefreshTrigger] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -52,6 +54,7 @@ export default function POSPage() {
   const { sales, refetch: refetchSales } = useSales({ limit: 5, status: SaleStatus.COMPLETED });
   const { setFullscreenMode } = useUIStore();
   const { currentEstablishment } = useEstablishmentStore();
+  const { removeOrder: removeKitchenOrder, setOrder: setKitchenOrder } = useKitchenOrdersStore();
   const [isOnline, setIsOnline] = useState(true);
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isClient, setIsClient] = useState(false);
@@ -77,11 +80,12 @@ export default function POSPage() {
     order.items.forEach((item) => {
       const price = Number(item.unitPrice) || 0;
       addItem({
-        itemId: `kitchen-${order.id}-${item.id}`,
+        itemId: item.inventoryItemId || `kitchen-${order.id}-${item.id}`,
         name: item.productName,
         quantity: item.quantity,
         unitPrice: price,
         discount: 0,
+        isCustom: !item.inventoryItemId,
       });
     });
     setSelectedKitchenOrder(order);
@@ -107,9 +111,14 @@ export default function POSPage() {
         notes: `Pedido cozinha #${selectedKitchenOrder.orderNumber}`,
       });
 
+      const paidOrder = { ...selectedKitchenOrder, isPaid: true };
+      setKitchenOrder(paidOrder);
+      removeKitchenOrder(selectedKitchenOrder.id);
+
       showToast(`Pedido #${selectedKitchenOrder.orderNumber} cobrado!`, 'success');
       setShowKitchenPayment(false);
       setSelectedKitchenOrder(null);
+      setKitchenRefreshTrigger((t) => t + 1);
     } catch (error: any) {
       showToast(error.message || 'Erro ao cobrar pedido', 'error');
     } finally {
@@ -249,7 +258,7 @@ export default function POSPage() {
       } else if (e.key === 'Escape') {
         e.preventDefault();
         if (isCheckoutOpen) {
-          setIsCheckoutOpen(false);
+          // Não fecha via Escape — deixa o CheckoutModal gerenciar (pode ter receipt aberto)
         } else if (isPreviewOpen) {
           setIsPreviewOpen(false);
         } else if (items.length > 0) {
@@ -412,6 +421,7 @@ export default function POSPage() {
         discount,
         notes,
         customerId: selectedCustomer?.id,
+        orderId: selectedKitchenOrder ? Number(selectedKitchenOrder.id) : undefined,
       });
       
       // Emitir evento de venda concluída para o WebSocket (apenas fluxo normal, não MP)
@@ -431,7 +441,8 @@ export default function POSPage() {
         showToast('Venda realizada com sucesso!', 'success');
         clear();
         setSelectedCustomer(null);
-        setIsCheckoutOpen(false);
+        setKitchenRefreshTrigger((t) => t + 1);
+        // Não fecha o checkout aqui — o ReceiptPreviewModal vai chamar onClose ao fechar
         refetchInventory();
         refetchSales();
       }
@@ -654,10 +665,12 @@ export default function POSPage() {
 
         {/* Indicador de Caixa Livre - Aparece apenas quando não há itens */}
         {isClient && items.length === 0 && isOnline && (
-          <div className="fixed top-6 left-6 z-50 flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
-            <div className="w-3 h-3 bg-white rounded-full"></div>
-            <span>Caixa Livre</span>
-          </div>
+          <DraggableBadge storageKey="pos-caixa-livre-badge" defaultPosition={{ x: 24, y: 24 }}>
+            <div className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg shadow-lg font-semibold animate-pulse">
+              <div className="w-3 h-3 bg-white rounded-full"></div>
+              <span>Caixa Livre</span>
+            </div>
+          </DraggableBadge>
         )}
 
         {/* Indicador de conexão com App Mobile */}
@@ -729,7 +742,7 @@ export default function POSPage() {
                     className="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-transparent"
                   />
                   <div className="mt-2">
-                    <ReadyOrdersSelect onSelectOrder={handleKitchenOrderSelect} />
+                    <ReadyOrdersSelect onSelectOrder={handleKitchenOrderSelect} refreshTrigger={kitchenRefreshTrigger} />
                   </div>
                 </div>
                 <div>

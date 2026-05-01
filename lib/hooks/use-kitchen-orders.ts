@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useCallback } from 'react';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { kitchenOrdersApi } from '@/lib/api/kitchen-orders';
+import { useKitchenOrdersStore } from '@/lib/stores/kitchen-orders-store';
+import { useKitchenSocket } from '@/lib/hooks/use-kitchen-socket';
 import {
   KitchenOrder,
   KitchenOrderStatus,
@@ -13,62 +15,34 @@ import {
 
 export function useKitchenOrders(filters?: KitchenOrdersFilters) {
   const { currentEstablishment } = useEstablishmentStore();
-  const [orders, setOrders] = useState<KitchenOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 50 });
+  const {
+    orders: allOrders,
+    isLoading,
+    error,
+    fetchOrders,
+    setOrder,
+    addOrder,
+  } = useKitchenOrdersStore();
 
-  const fetchOrders = useCallback(async () => {
-    if (!currentEstablishment?.id) return;
-
-    try {
-      setIsLoading(true);
-      setError(null);
-      const response = await kitchenOrdersApi.list(currentEstablishment.id, filters);
-      setOrders(response.data);
-      setPagination({
-        total: response.total,
-        page: response.page,
-        limit: response.limit,
-      });
-    } catch (err: any) {
-      // Se for 404, significa que a rota não existe no backend ainda
-      // Retorna array vazio em vez de erro
-      if (err.response?.status === 404) {
-        setOrders([]);
-        setPagination({ total: 0, page: 1, limit: 50 });
-        setError(null);
-      } else {
-        const message = err.response?.data?.message || err.message || 'Erro ao carregar pedidos';
-        setError(message);
-        console.error('Erro ao carregar pedidos:', err);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  }, [currentEstablishment?.id, JSON.stringify(filters)]);
-
+  // Fetch inicial
   useEffect(() => {
-    fetchOrders();
-  }, [fetchOrders]);
+    if (!currentEstablishment?.id) return;
+    fetchOrders(currentEstablishment.id);
+  }, [currentEstablishment?.id]);
+
+  // Aplica filtros localmente sobre o store
+  const orders = filters?.status
+    ? allOrders.filter((o) => o.status === filters.status)
+    : allOrders;
+
+  const pagination = { total: orders.length, page: 1, limit: filters?.limit || 100 };
 
   const createOrder = useCallback(
     async (dto: CreateKitchenOrderDto) => {
       if (!currentEstablishment?.id) throw new Error('Estabelecimento não selecionado');
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const newOrder = await kitchenOrdersApi.create(currentEstablishment.id, dto);
-        setOrders((prev) => [newOrder, ...prev]);
-        return newOrder;
-      } catch (err: any) {
-        const message = err.response?.data?.message || err.message || 'Erro ao criar pedido';
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setIsLoading(false);
-      }
+      const newOrder = await kitchenOrdersApi.create(currentEstablishment.id, dto);
+      addOrder(newOrder);
+      return newOrder;
     },
     [currentEstablishment?.id]
   );
@@ -76,26 +50,13 @@ export function useKitchenOrders(filters?: KitchenOrdersFilters) {
   const updateStatus = useCallback(
     async (orderId: string, dto: UpdateKitchenOrderStatusDto) => {
       if (!currentEstablishment?.id) throw new Error('Estabelecimento não selecionado');
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        const updatedOrder = await kitchenOrdersApi.updateStatus(
-          currentEstablishment.id,
-          orderId,
-          dto.status
-        );
-        setOrders((prev) =>
-          prev.map((order) => (order.id === orderId ? updatedOrder : order))
-        );
-        return updatedOrder;
-      } catch (err: any) {
-        const message = err.response?.data?.message || err.message || 'Erro ao atualizar status';
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setIsLoading(false);
-      }
+      const updatedOrder = await kitchenOrdersApi.updateStatus(
+        currentEstablishment.id,
+        orderId,
+        dto.status
+      );
+      setOrder(updatedOrder);
+      return updatedOrder;
     },
     [currentEstablishment?.id]
   );
@@ -103,40 +64,16 @@ export function useKitchenOrders(filters?: KitchenOrdersFilters) {
   const cancelOrder = useCallback(
     async (orderId: string) => {
       if (!currentEstablishment?.id) throw new Error('Estabelecimento não selecionado');
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        await kitchenOrdersApi.delete(currentEstablishment.id, orderId);
-        setOrders((prev) =>
-          prev.map((order) => (order.id === orderId ? { ...order, status: KitchenOrderStatus.CANCELLED } : order))
-        );
-      } catch (err: any) {
-        const message = err.response?.data?.message || err.message || 'Erro ao cancelar pedido';
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setIsLoading(false);
-      }
+      await kitchenOrdersApi.delete(currentEstablishment.id, orderId);
+      setOrder({ ...allOrders.find((o) => o.id === orderId)!, status: KitchenOrderStatus.CANCELLED });
     },
-    [currentEstablishment?.id]
+    [currentEstablishment?.id, allOrders]
   );
 
   const getByOrderNumber = useCallback(
     async (orderNumber: string) => {
       if (!currentEstablishment?.id) throw new Error('Estabelecimento não selecionado');
-
-      try {
-        setIsLoading(true);
-        setError(null);
-        return await kitchenOrdersApi.getById(currentEstablishment.id, orderNumber);
-      } catch (err: any) {
-        const message = err.response?.data?.message || err.message || 'Pedido não encontrado';
-        setError(message);
-        throw new Error(message);
-      } finally {
-        setIsLoading(false);
-      }
+      return await kitchenOrdersApi.getById(currentEstablishment.id, orderNumber);
     },
     [currentEstablishment?.id]
   );
@@ -146,7 +83,7 @@ export function useKitchenOrders(filters?: KitchenOrdersFilters) {
     isLoading,
     error,
     pagination,
-    refetch: fetchOrders,
+    refetch: () => currentEstablishment?.id && fetchOrders(currentEstablishment.id),
     createOrder,
     updateStatus,
     cancelOrder,

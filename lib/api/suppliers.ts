@@ -10,6 +10,13 @@ import type {
 } from '../types/supplier';
 
 export const suppliersApi = {
+  unwrapSupplierResponse<T>(payload: T | { success?: boolean; data?: T }): T {
+    if (payload && typeof payload === 'object' && 'data' in payload) {
+      return (payload as { data?: T }).data as T;
+    }
+    return payload as T;
+  },
+
   // Listar fornecedores
   async list(establishmentId: string): Promise<Supplier[]> {
     const response = await apiClient.get<{ success: boolean; data: Supplier[] } | Supplier[]>(
@@ -37,7 +44,7 @@ export const suppliersApi = {
       `/business/establishments/${establishmentId}/suppliers`,
       data
     );
-    return response.data;
+    return suppliersApi.unwrapSupplierResponse(response.data);
   },
 
   // Atualizar fornecedor
@@ -50,7 +57,7 @@ export const suppliersApi = {
       `/business/establishments/${establishmentId}/suppliers/${supplierId}`,
       data
     );
-    return response.data;
+    return suppliersApi.unwrapSupplierResponse(response.data);
   },
 
   // Deletar fornecedor

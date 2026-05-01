@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { KitchenOrder, KitchenOrderStatus } from '@/lib/types/kitchen-order';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { useInventory } from '@/lib/hooks/use-inventory';
 import { showToast } from '@/components/ui/toast';
 
 interface UpdateKitchenOrderStatusModalProps {
@@ -49,8 +50,23 @@ export default function UpdateKitchenOrderStatusModal({
   const [isLoading, setIsLoading] = useState(false);
   const { currentEstablishment } = useEstablishmentStore();
   const { updateStatus } = useKitchenOrders();
+  const { items: inventoryItems } = useInventory({}, { fetchAll: true });
 
   const availableTransitions = statusTransitions[order.status] || [];
+  const resolveProductImage = (item: KitchenOrder['items'][number]) => {
+    const normalize = (value: string) =>
+      value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+
+    const inventoryItem =
+      (item.inventoryItemId && inventoryItems.find((product) => String(product.id) === String(item.inventoryItemId))) ||
+      inventoryItems.find((product) => normalize(product.name) === normalize(item.productName));
+
+    return inventoryItem?.images?.[0] || inventoryItem?.image || '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,20 +120,57 @@ export default function UpdateKitchenOrderStatusModal({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Detalhes do Pedido */}
           <div className="bg-gray-50 rounded-lg p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">Itens do Pedido</h3>
-            <div className="space-y-2">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="font-semibold text-gray-900">Itens do Pedido</h3>
+              <span className="rounded-full bg-gray-200 px-2.5 py-1 text-[11px] font-semibold text-gray-700">
+                {order.items.length} item{order.items.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {order.items.map((item, idx) => (
-                <div key={idx}>
-                  <div className="flex justify-between text-sm">
-                    <span>
-                      <span className="font-semibold">{item.quantity}x</span> {item.productName}
-                    </span>
-                  </div>
-                  {item.notes && (
-                    <div className="mt-1 ml-4 p-2 bg-orange-100 border-l-4 border-orange-500 rounded text-sm font-semibold text-orange-800">
-                      ⚠️ {item.notes}
+                <div key={idx} className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md">
+                  <div className="flex gap-3 p-3">
+                    <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-gray-100 ring-1 ring-gray-200">
+                    {resolveProductImage(item) ? (
+                      <img
+                        src={resolveProductImage(item)}
+                        alt={item.productName}
+                        className="h-full w-full object-cover"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold text-gray-400">
+                          Sem foto
+                        </div>
+                      )}
                     </div>
-                  )}
+                    <div className="min-w-0 flex-1">
+                      <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">
+                        Item {idx + 1}
+                      </div>
+                      <div className="mt-0.5 truncate text-sm font-bold text-gray-900">
+                        {item.productName}
+                      </div>
+                      <div className="mt-2 flex items-center justify-between">
+                        <span className="text-xs text-gray-500">Quantidade</span>
+                        <span className="shrink-0 rounded-full bg-gray-900 px-2.5 py-1 text-[11px] font-bold text-white">
+                          {item.quantity}x
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="border-t border-gray-100 bg-gray-50 px-3 py-2">
+                    {item.notes ? (
+                      <div className="rounded-lg border border-orange-200 bg-orange-50 px-3 py-2 text-xs font-semibold text-orange-800">
+                        <span className="mr-1">⚠️</span>
+                        {item.notes}
+                      </div>
+                    ) : (
+                      <div className="text-xs text-gray-400">Sem observações</div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

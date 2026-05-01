@@ -8,9 +8,10 @@ import { playNotificationSound } from '@/lib/utils/notification-sound';
 
 interface ReadyOrdersSelectProps {
   onSelectOrder: (order: KitchenOrder) => void;
+  refreshTrigger?: number;
 }
 
-export default function ReadyOrdersSelect({ onSelectOrder }: ReadyOrdersSelectProps) {
+export default function ReadyOrdersSelect({ onSelectOrder, refreshTrigger }: ReadyOrdersSelectProps) {
   const { currentEstablishment } = useEstablishmentStore();
   const [readyOrders, setReadyOrders] = useState<KitchenOrder[]>([]);
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +24,7 @@ export default function ReadyOrdersSelect({ onSelectOrder }: ReadyOrdersSelectPr
         currentEstablishment.id,
         'ready'
       );
-      const orders = result.data || [];
+      const orders = (result.data || []).filter((o) => !o.isPaid);
 
       // Detectar novos pedidos prontos
       const newIds = orders.map((o) => o.id);
@@ -40,9 +41,7 @@ export default function ReadyOrdersSelect({ onSelectOrder }: ReadyOrdersSelectPr
 
   useEffect(() => {
     fetchReadyOrders();
-    const interval = setInterval(fetchReadyOrders, 5000);
-    return () => clearInterval(interval);
-  }, [currentEstablishment?.id]);
+  }, [currentEstablishment?.id, refreshTrigger]);
 
   if (readyOrders.length === 0) return null;
 

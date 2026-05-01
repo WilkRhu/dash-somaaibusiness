@@ -2,17 +2,38 @@
 
 import { FinancialBalance } from '@/lib/api/expenses';
 import { formatCurrency } from '@/lib/utils/format';
-import {
-  EXPENSE_CATEGORY_LABELS,
-  PAYMENT_METHOD_LABELS,
-  EXPENSE_STATUS_LABELS,
-} from '@/lib/utils/expense-labels';
 
 interface FinancialBalanceCardProps {
   balance: FinancialBalance;
 }
 
 export function FinancialBalanceCard({ balance }: FinancialBalanceCardProps) {
+  const getCategoryLabel = (category: string, fallback?: string) => fallback || category;
+
+  const getPaymentMethodLabel = (method: string) => {
+    const labels: Record<string, string> = {
+      cash: 'Dinheiro',
+      debit_card: 'Cartão de Débito',
+      credit_card: 'Cartão de Crédito',
+      pix: 'PIX',
+      bank_transfer: 'Transferência Bancária',
+      bank_slip: 'Boleto',
+      check: 'Cheque',
+      other: 'Outro',
+    };
+    return labels[method] || method;
+  };
+
+  const getStatusLabel = (status: string) => {
+    const labels: Record<string, string> = {
+      pending: 'Pendente',
+      paid: 'Pago',
+      overdue: 'Vencido',
+      cancelled: 'Cancelado',
+    };
+    return labels[status] || status;
+  };
+
   return (
     <div className="space-y-6">
       {/* Resumo Principal */}
@@ -65,7 +86,7 @@ export function FinancialBalanceCard({ balance }: FinancialBalanceCardProps) {
               <div className="flex-1">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-sm text-gray-700">
-                    {EXPENSE_CATEGORY_LABELS[item.category]}
+                    {getCategoryLabel(item.category, item.categoryLabel)}
                   </span>
                   <span className="text-sm font-medium text-gray-900">
                     {formatCurrency(item.total)} ({item.percentage.toFixed(1)}%)
@@ -92,7 +113,7 @@ export function FinancialBalanceCard({ balance }: FinancialBalanceCardProps) {
           {balance.revenueByPaymentMethod.map((item) => (
             <div key={item.method} className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">
-                {PAYMENT_METHOD_LABELS[item.method]}
+                {getPaymentMethodLabel(item.method)}
               </p>
               <p className="text-lg font-bold text-gray-900">
                 {formatCurrency(item.total)}
@@ -110,7 +131,7 @@ export function FinancialBalanceCard({ balance }: FinancialBalanceCardProps) {
           {balance.expensesByStatus.map((item) => (
             <div key={item.status} className="p-4 bg-gray-50 rounded-lg">
               <p className="text-sm text-gray-600 mb-1">
-                {EXPENSE_STATUS_LABELS[item.status]}
+                {getStatusLabel(item.status)}
               </p>
               <p className="text-lg font-bold text-gray-900">
                 {formatCurrency(item.total)}

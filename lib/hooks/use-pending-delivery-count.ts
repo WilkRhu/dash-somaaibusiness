@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { deliveryApi } from '@/lib/api/delivery';
+import { smartInterval } from '@/lib/utils/smart-interval';
 
 export function usePendingDeliveryCount() {
   const { currentEstablishment } = useEstablishmentStore();
@@ -48,10 +49,8 @@ export function usePendingDeliveryCount() {
 
     fetchPendingCount();
 
-    // Refetch every 30 seconds
-    const interval = setInterval(fetchPendingCount, 30000);
-
-    return () => clearInterval(interval);
+    // Refetch a cada 60 segundos, pausando quando aba oculta
+    return smartInterval(fetchPendingCount, 60000);
   }, [currentEstablishment?.id, currentEstablishment?.roles]);
 
   return { count, loading };

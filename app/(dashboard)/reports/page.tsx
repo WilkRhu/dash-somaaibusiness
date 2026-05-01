@@ -45,6 +45,34 @@ export default function ReportsPage() {
   const [previousReport, setPreviousReport] = useState<any>(null);
   const [loadingComparison, setLoadingComparison] = useState(false);
 
+  const formatQuantity = (value: unknown) => {
+    if (Array.isArray(value)) {
+      return value
+        .map((item) => Number(String(item).replace(/[^\d,.-]/g, '').replace(/\./g, '').replace(',', '.')))
+        .reduce((sum, n) => sum + (Number.isFinite(n) ? n : 0), 0)
+        .toLocaleString('pt-BR');
+    }
+
+    if (typeof value === 'string') {
+      const matches = value.match(/-?\d+(?:[.,]\d+)?/g);
+      if (matches && matches.length > 1) {
+        const sum = matches.reduce((acc, item) => {
+          const normalized = Number(item.replace(/\./g, '').replace(',', '.'));
+          return acc + (Number.isFinite(normalized) ? normalized : 0);
+        }, 0);
+        return sum.toLocaleString('pt-BR');
+      }
+
+      const normalized = Number(value.replace(/\./g, '').replace(',', '.'));
+      if (Number.isFinite(normalized)) {
+        return normalized.toLocaleString('pt-BR');
+      }
+    }
+
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric.toLocaleString('pt-BR') : '0';
+  };
+
   const loadComparison = async () => {
     const { currentEstablishment } = useEstablishmentStore.getState();
     if (!currentEstablishment) return;
@@ -218,7 +246,7 @@ export default function ReportsPage() {
                         </div>
                       </td>
                       <td className="py-3 px-4 text-brand-navy font-medium">{product.productName}</td>
-                      <td className="text-right py-3 px-4 text-brand-navy">{product.quantity}</td>
+                      <td className="text-right py-3 px-4 text-brand-navy">{formatQuantity(product.quantity)}</td>
                       <td className="text-right py-3 px-4 text-brand-navy font-semibold">
                         {formatCurrency(product.revenue)}
                       </td>
@@ -284,5 +312,4 @@ export default function ReportsPage() {
     </div>
   );
 }
-
 

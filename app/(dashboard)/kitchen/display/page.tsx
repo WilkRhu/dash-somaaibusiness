@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, DragEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
+import { useKitchenSocket } from '@/lib/hooks/use-kitchen-socket';
 import { KitchenOrderStatus } from '@/lib/types/kitchen-order';
 import { showToast } from '@/components/ui/toast';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
@@ -145,6 +146,7 @@ export default function KitchenDisplayPage() {
     status: undefined,
     limit: 100,
   });
+  useKitchenSocket(currentEstablishment?.id);
 
   // Aplicar optimistic updates nos pedidos
   const orders = rawOrders.map((order) => {
@@ -154,13 +156,10 @@ export default function KitchenDisplayPage() {
     return order;
   });
 
-  // Auto-refresh a cada 3 segundos (pausa durante drag)
+  // WebSocket mantém atualizado — refetch manual disponível no botão
   useEffect(() => {
     if (!autoRefresh || draggedOrderId) return;
-    const interval = setInterval(() => { refetch(); }, 3000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, refetch, draggedOrderId]);
-
+  }, [autoRefresh, draggedOrderId]);
   // Tocar som e mostrar toast quando chegar novo pedido
   const isFirstLoadRef = useRef(true);
   

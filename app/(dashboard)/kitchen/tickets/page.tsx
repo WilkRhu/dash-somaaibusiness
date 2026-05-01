@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
+import { useKitchenSocket } from '@/lib/hooks/use-kitchen-socket';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { isKitchenEstablishment } from '@/lib/constants/establishment-types';
 import { KitchenOrderStatus } from '@/lib/types/kitchen-order';
@@ -24,15 +25,14 @@ export default function KitchenTicketsPage() {
   }, [isKitchenTypeEstablishment, router]);
 
   const { orders, refetch } = useKitchenOrders({ limit: 100 });
+  useKitchenSocket(currentEstablishment?.id);
 
+  // WebSocket mantém atualizado — polling removido
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(() => {
-      setNow(Date.now());
-      refetch();
-    }, 2000);
-    return () => clearInterval(interval);
-  }, [autoRefresh, refetch]);
+    const clock = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(clock);
+  }, [autoRefresh]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {

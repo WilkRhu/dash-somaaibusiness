@@ -50,6 +50,9 @@ export function MembersTable() {
     }
   };
 
+  const getRoleChipLabel = (role: MemberRole) => ROLE_LABELS[role] || role;
+  const getPrimaryRole = (member: Member) => member.roles?.[0] || 'business_employee';
+
   if (loading && members.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -119,7 +122,7 @@ export function MembersTable() {
                       </div>
                     ) : (
                       <select
-                        value={member.roles[0] || 'business_sales'}
+                        value={getPrimaryRole(member)}
                         onChange={(e) => handleRoleChange(member, e.target.value as MemberRole)}
                         className="text-sm border border-gray-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         disabled={loading}
@@ -128,6 +131,13 @@ export function MembersTable() {
                         <option value="business_sales">{ROLE_LABELS.business_sales}</option>
                         <option value="business_stock">{ROLE_LABELS.business_stock}</option>
                         <option value="business_marketing">{ROLE_LABELS.business_marketing}</option>
+                        <option value="kitchen_chef">{getRoleChipLabel('kitchen_chef')}</option>
+                        <option value="kitchen_cook">{getRoleChipLabel('kitchen_cook')}</option>
+                        <option value="kitchen_assistant">{getRoleChipLabel('kitchen_assistant')}</option>
+                        <option value="waiter">{getRoleChipLabel('waiter')}</option>
+                        <option value="cashier">{getRoleChipLabel('cashier')}</option>
+                        <option value="delivery_driver">{getRoleChipLabel('delivery_driver')}</option>
+                        <option value="host">{getRoleChipLabel('host')}</option>
                       </select>
                     )}
                   </td>

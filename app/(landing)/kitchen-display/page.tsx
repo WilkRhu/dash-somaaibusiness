@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
+import { useKitchenSocket } from '@/lib/hooks/use-kitchen-socket';
 import { KitchenOrderStatus, KitchenOrder } from '@/lib/types/kitchen-order';
 
 const statusConfig = {
@@ -43,17 +44,15 @@ export default function KitchenDisplayPage() {
   const [autoRefresh, setAutoRefresh] = useState(true);
 
   const { orders, refetch } = useKitchenOrders({ limit: 100 });
+  useKitchenSocket(establishmentId || undefined);
 
   // Atualizar a cada 2 segundos
+  // WebSocket mantém atualizado — polling removido
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(() => {
-      setNow(Date.now());
-      refetch();
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refetch]);
+    const clock = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(clock);
+  }, [autoRefresh]);
 
   const activeOrders = orders
     .filter((o) => o.status !== KitchenOrderStatus.PICKED_UP && o.status !== KitchenOrderStatus.CANCELLED)

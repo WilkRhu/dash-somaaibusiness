@@ -77,11 +77,26 @@ export function Header({ onMenuClick }: HeaderProps) {
         <div className="flex items-center gap-4 ml-6">
           {/* Establishment Info */}
           {currentEstablishment && (
-            <div className="hidden md:block text-right">
-              <p className="text-sm font-semibold text-[#142D4A]">
-                {currentEstablishment.name}
-              </p>
-              <p className="text-xs text-[#142D4A]/60">Estabelecimento</p>
+            <div className="hidden md:flex items-center gap-3">
+              <div className="h-11 w-11 overflow-hidden rounded-full border border-gray-200 bg-gray-100 shadow-sm">
+                {currentEstablishment.logo ? (
+                  <img
+                    src={currentEstablishment.logo}
+                    alt={currentEstablishment.name}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[#4C99C2] to-[#7CBD6A] text-white font-bold">
+                    {currentEstablishment.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-semibold text-[#142D4A]">
+                  {currentEstablishment.name}
+                </p>
+                <p className="text-xs text-[#142D4A]/60">Estabelecimento</p>
+              </div>
             </div>
           )}
 

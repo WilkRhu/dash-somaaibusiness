@@ -2,57 +2,44 @@
 
 import { useEffect, useRef } from 'react';
 import { useOrderToast } from '@/lib/context/order-toast-context';
-import { useDeliveryOrders } from './use-delivery';
+import { useAuthStore } from '@/lib/stores/auth-store';
+import { io, Socket } from 'socket.io-client';
 import { DeliveryStatus } from '@/lib/types/delivery';
 
 export function useOrderNotifications(establishmentId: string) {
   const { showNewOrder } = useOrderToast();
-  const { orders, refetch } = useDeliveryOrders({ limit: 100 });
-  const previousOrdersRef = useRef<string[]>([]);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Verificar novos pedidos quando a lista muda
-  useEffect(() => {
-    previousOrdersRef.current = [];
-  }, [establishmentId]);
+  const { token } = useAuthStore();
+  const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
-    if (!orders || orders.length === 0) return;
+    if (!establishmentId || !token) return;
 
-    // Pegar IDs dos pedidos atuais (apenas ativos)
-    const currentOrderIds = orders
-      .filter(o => o.status !== DeliveryStatus.DELIVERED && o.status !== DeliveryStatus.CANCELLED)
-      .map(o => o.id);
+    const socket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001', {
+      auth: { token: `Bearer ${token}` },
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      reconnectionAttempts: 5,
+    });
 
-    // Encontrar novos pedidos (que não estavam antes)
-    const newOrders = orders.filter(
-      order => 
-        !previousOrdersRef.current.includes(order.id) &&
+    socketRef.current = socket;
+
+    socket.on('connect', () => {
+      socket.emit('subscribe:establishment', { establishmentId });
+    });
+
+    socket.on('order:new', (order: any) => {
+      if (
         order.status !== DeliveryStatus.DELIVERED &&
         order.status !== DeliveryStatus.CANCELLED
-    );
-
-    // Se houver novos pedidos, mostrar notificação
-    if (newOrders.length > 0) {
-      newOrders.forEach(order => {
+      ) {
         showNewOrder(order);
-      });
-    }
-
-    // Atualizar referência
-    previousOrdersRef.current = currentOrderIds;
-  }, [orders, showNewOrder]);
-
-  // Polling automático a cada 5 segundos
-  useEffect(() => {
-    pollingIntervalRef.current = setInterval(() => {
-      refetch();
-    }, 5000); // 5 segundos
+      }
+    });
 
     return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
+      socket.disconnect();
+      socketRef.current = null;
     };
-  }, [refetch]);
+  }, [establishmentId, token, showNewOrder]);
 }

@@ -42,7 +42,9 @@ export const useSuppliersStore = create<SuppliersStore>((set) => ({
   setSuppliers: (suppliers) => set({ suppliers }),
   
   addSupplier: (supplier) => set((state) => ({
-    suppliers: [...state.suppliers, supplier]
+    suppliers: state.suppliers.some((item) => item.id === supplier.id)
+      ? state.suppliers.map((item) => (item.id === supplier.id ? supplier : item))
+      : [...state.suppliers, supplier]
   })),
   
   updateSupplier: (id, updates) => set((state) => ({

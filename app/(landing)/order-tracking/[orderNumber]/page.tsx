@@ -81,25 +81,27 @@ export default function OrderTrackingPage() {
     fetchOrder();
   }, [orderNumber]);
 
-  // Atualizar a cada 3 segundos
+  // Atualizar a cada 10 segundos, para quando pronto ou cancelado
   useEffect(() => {
+    if (!order) return;
+    if (order.status === KitchenOrderStatus.READY || order.status === KitchenOrderStatus.PICKED_UP) return;
+
     const interval = setInterval(() => {
       setNow(Date.now());
-      if (order) {
-        const fetchOrder = async () => {
-          try {
-            const response = await fetch(`/api/kitchen-orders/search?orderNumber=${orderNumber}`);
-            if (response.ok) {
-              const data = await response.json();
-              setOrder(data);
-            }
-          } catch (err) {
-            console.error('Erro ao atualizar pedido:', err);
+      if (document.hidden) return;
+      const fetchOrder = async () => {
+        try {
+          const response = await fetch(`/api/kitchen-orders/search?orderNumber=${orderNumber}`);
+          if (response.ok) {
+            const data = await response.json();
+            setOrder(data);
           }
-        };
-        fetchOrder();
-      }
-    }, 3000);
+        } catch (err) {
+          console.error('Erro ao atualizar pedido:', err);
+        }
+      };
+      fetchOrder();
+    }, 10000);
 
     return () => clearInterval(interval);
   }, [orderNumber, order]);

@@ -2,25 +2,25 @@
 
 import { useEffect, useState } from 'react';
 import { useKitchenOrders } from '@/lib/hooks/use-kitchen-orders';
+import { useKitchenSocket } from '@/lib/hooks/use-kitchen-socket';
+import { useEstablishmentStore } from '@/lib/stores/establishment-store';
 import { KitchenOrderStatus, KitchenOrder } from '@/lib/types/kitchen-order';
 
 export default function KitchenDisplayFullscreenPage() {
+  const { currentEstablishment } = useEstablishmentStore();
   const [now, setNow] = useState(Date.now());
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'all' | 'ready' | 'preparing'>('all');
 
   const { orders, refetch } = useKitchenOrders({ limit: 100 });
+  useKitchenSocket(currentEstablishment?.id);
 
-  // Atualizar a cada 2 segundos
+  // WebSocket mantém atualizado — polling removido
   useEffect(() => {
     if (!autoRefresh) return;
-    const interval = setInterval(() => {
-      setNow(Date.now());
-      refetch();
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [autoRefresh, refetch]);
+    const clock = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(clock);
+  }, [autoRefresh]);
 
   const activeOrders = orders.filter(
     (o) => o.status !== KitchenOrderStatus.PICKED_UP && o.status !== KitchenOrderStatus.CANCELLED

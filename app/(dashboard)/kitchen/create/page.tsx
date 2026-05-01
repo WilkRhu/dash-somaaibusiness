@@ -13,6 +13,7 @@ import OpenCloseModal from '@/components/establishments/open-close-modal';
 interface OrderItem {
   inventoryItemId: string;
   productName: string;
+  imageUrl?: string;
   quantity: number;
   unitPrice: number;
   notes: string;
@@ -62,6 +63,27 @@ export default function CreateKitchenOrderPage() {
     }
   }, [currentEstablishment, router]);
 
+  const [orderType, setOrderType] = useState<OrderType>(OrderType.COUNTER);
+  const [tableNumber, setTableNumber] = useState('');
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [items, setItems] = useState<OrderItem[]>([]);
+  const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
+  const [notes, setNotes] = useState('');
+  const [chargeNow, setChargeNow] = useState(true);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const resolveProductImage = (product: any) => {
+    const rawImage = product?.images?.[0] || product?.image || '';
+    if (!rawImage) return '';
+    if (rawImage.startsWith('http://') || rawImage.startsWith('https://') || rawImage.startsWith('data:')) {
+      return rawImage;
+    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    return `${apiUrl}${rawImage.startsWith('/') ? '' : '/'}${rawImage}`;
+  };
+
   if (!isAuthorized) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-6">
@@ -76,17 +98,6 @@ export default function CreateKitchenOrderPage() {
     );
   }
 
-  const [orderType, setOrderType] = useState<OrderType>(OrderType.COUNTER);
-  const [tableNumber, setTableNumber] = useState('');
-  const [customerName, setCustomerName] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [items, setItems] = useState<OrderItem[]>([]);
-  const [priority, setPriority] = useState<'low' | 'normal' | 'high'>('normal');
-  const [notes, setNotes] = useState('');
-  const [chargeNow, setChargeNow] = useState(true);
-  const [showProductModal, setShowProductModal] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-
   const filteredProducts = inventoryItems.filter(item => 
     item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     item.category?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -96,6 +107,7 @@ export default function CreateKitchenOrderPage() {
     const newItem: OrderItem = {
       inventoryItemId: product.id,
       productName: product.name,
+      imageUrl: resolveProductImage(product) || undefined,
       quantity: 1,
       unitPrice: parseFloat(String(product.salePrice)) || 0,
       notes: '',
@@ -111,7 +123,14 @@ export default function CreateKitchenOrderPage() {
 
   const handleItemChange = (index: number, field: string, value: any) => {
     const newItems = [...items];
-    newItems[index] = { ...newItems[index], [field]: value };
+    const safeValue =
+      field === 'quantity'
+        ? Math.max(1, Number.isFinite(Number(value)) ? Number(value) : 1)
+        : field === 'unitPrice'
+          ? Math.max(0, Number.isFinite(Number(value)) ? Number(value) : 0)
+          : value;
+
+    newItems[index] = { ...newItems[index], [field]: safeValue };
     setItems(newItems);
   };
 
@@ -146,6 +165,7 @@ export default function CreateKitchenOrderPage() {
         customerName: customerName || undefined,
         customerPhone: customerPhone || undefined,
         items: items.map(item => ({
+          inventoryItemId: item.inventoryItemId || undefined,
           productName: item.productName,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -337,9 +357,28 @@ export default function CreateKitchenOrderPage() {
               <p>Nenhum item adicionado. Clique em "+ Adicionar Produto" para começar.</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {items.map((item, index) => (
                 <div key={index} className="bg-white p-4 rounded-lg border border-gray-200 space-y-3">
+                  <div className="overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                    <div className="h-40 w-full">
+                      {item.imageUrl ? (
+                        <img
+                          src={item.imageUrl}
+                          alt={item.productName}
+                          className="h-full w-full object-cover"
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      ) : (
+                        <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-gray-400">
+                          Sem foto
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -357,8 +396,8 @@ export default function CreateKitchenOrderPage() {
                       <input
                         type="number"
                         min="1"
-                        value={item.quantity}
-                        onChange={(e) => handleItemChange(index, 'quantity', parseInt(e.target.value))}
+                        value={Number.isFinite(item.quantity) ? item.quantity : 1}
+                        onChange={(e) => handleItemChange(index, 'quantity', e.target.valueAsNumber)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       />
@@ -372,8 +411,8 @@ export default function CreateKitchenOrderPage() {
                         type="number"
                         min="0"
                         step="0.01"
-                        value={item.unitPrice}
-                        onChange={(e) => handleItemChange(index, 'unitPrice', parseFloat(e.target.value))}
+                        value={Number.isFinite(item.unitPrice) ? item.unitPrice : 0}
+                        onChange={(e) => handleItemChange(index, 'unitPrice', e.target.valueAsNumber)}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         required
                       />
@@ -393,12 +432,12 @@ export default function CreateKitchenOrderPage() {
                     <label className="block text-sm font-semibold text-gray-700 mb-1">
                       Observações
                     </label>
-                    <input
-                      type="text"
+                    <textarea
                       value={item.notes}
                       onChange={(e) => handleItemChange(index, 'notes', e.target.value)}
                       placeholder="Ex: Sem cebola, bem passado"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      rows={4}
+                      className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
                     />
                   </div>
 
@@ -462,10 +501,26 @@ export default function CreateKitchenOrderPage() {
                       onClick={() => handleAddProduct(product)}
                       className="w-full text-left p-4 border border-gray-200 rounded-lg hover:bg-blue-50 hover:border-blue-300 transition-colors"
                     >
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <div className="font-semibold text-gray-900">{product.name}</div>
-                          <div className="text-sm text-gray-600">
+                      <div className="flex items-start gap-4">
+                        <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                          {resolveProductImage(product) ? (
+                            <img
+                              src={resolveProductImage(product)}
+                              alt={product.name}
+                              className="h-full w-full object-cover"
+                              onError={(e) => {
+                                (e.currentTarget as HTMLImageElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-xs font-semibold text-gray-400">
+                              Sem foto
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-semibold text-gray-900 truncate">{product.name}</div>
+                          <div className="text-sm text-gray-600 truncate">
                             {product.category && <span>{product.category}</span>}
                             {product.category && product.brand && <span> • </span>}
                             {product.brand && <span>{product.brand}</span>}
@@ -474,7 +529,7 @@ export default function CreateKitchenOrderPage() {
                             Estoque: {product.quantity} {product.unit}
                           </div>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right shrink-0">
                           <div className="font-bold text-blue-600">
                             R$ {(parseFloat(String(product.salePrice)) || 0).toFixed(2)}
                           </div>

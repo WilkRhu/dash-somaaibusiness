@@ -73,6 +73,8 @@ export default function KitchenOrderCard({
   const estimatedTime = order.estimatedPrepTime || 0;
   const isOvertime = estimatedTime > 0 && elapsedTime > estimatedTime;
   const priority = priorityConfig[order.priority] || priorityConfig.normal;
+  const visibleItems = order.items.slice(0, 3);
+  const hiddenItemsCount = Math.max(order.items.length - visibleItems.length, 0);
 
   const handleMouseDown = () => { wasDragged.current = false; };
   const handleDragStartInternal = (e: DragEvent<HTMLDivElement>) => {
@@ -91,12 +93,12 @@ export default function KitchenOrderCard({
       onDragEnd={isDraggable ? onDragEnd : undefined}
       onMouseDown={isDraggable ? handleMouseDown : undefined}
       onClick={handleClick}
-      className={`w-full rounded-lg border text-left transition-all select-none ${
+      className={`w-full rounded-xl border text-left transition-all overflow-hidden ${
         isDragging ? 'opacity-40 scale-95 rotate-1' : ''
       } ${isUpdating ? 'opacity-50 pointer-events-none' : ''} ${
-        isDraggable ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'
+        isDraggable ? 'cursor-default' : 'cursor-pointer'
       } ${
-        isOvertime ? 'bg-red-50 border-red-300 shadow-red-100' : 'bg-white border-gray-200'
+        isOvertime ? 'bg-red-50 border-red-300 shadow-sm shadow-red-100' : 'bg-white border-gray-200 shadow-sm'
       } hover:shadow-md`}
     >
       {/* Header */}
@@ -140,7 +142,7 @@ export default function KitchenOrderCard({
 
       {/* Items */}
       <div className="px-3 pb-2 space-y-1">
-        {order.items.map((item, idx) => (
+        {visibleItems.map((item, idx) => (
           <div key={idx}>
             <div className="flex items-start justify-between text-xs">
               <span className="font-medium text-gray-800">
@@ -157,6 +159,11 @@ export default function KitchenOrderCard({
             )}
           </div>
         ))}
+        {hiddenItemsCount > 0 && (
+          <div className="text-[11px] font-semibold text-gray-500 px-1 pt-0.5">
+            +{hiddenItemsCount} item{hiddenItemsCount > 1 ? 's' : ''} oculto{hiddenItemsCount > 1 ? 's' : ''}
+          </div>
+        )}
       </div>
 
       {/* Notes */}

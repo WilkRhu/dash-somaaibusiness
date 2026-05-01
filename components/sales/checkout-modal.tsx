@@ -307,7 +307,7 @@ export default function CheckoutModal({
             <h2 className="text-2xl font-bold">
               {phase === 'form' ? 'Finalizar Venda' : phase === 'receipt' ? 'Cupom da Venda' : 'Pagamento via PIX'}
             </h2>
-            <button onClick={onClose} disabled={isLoading || phase === 'pix-loading'} className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50">
+            <button onClick={onClose} disabled={isLoading || phase === 'pix-loading' || showReceiptModal} className="p-2 hover:bg-white/20 rounded-lg transition-colors disabled:opacity-50">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>

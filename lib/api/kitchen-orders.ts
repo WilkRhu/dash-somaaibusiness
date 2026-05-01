@@ -20,6 +20,7 @@ function normalizeOrder(raw: any): KitchenOrder {
     tableNumber: raw.tableNumber || undefined,
     items: (raw.items || []).map((item: any): KitchenOrderItem => ({
       id: String(item.id),
+      inventoryItemId: item.inventoryItemId || item.itemId || undefined,
       productName: item.productName,
       quantity: item.quantity,
       unitPrice: parseFloat(item.unitPrice) || 0,
@@ -40,6 +41,7 @@ function normalizeOrder(raw: any): KitchenOrder {
     notes: raw.notes || undefined,
     priority: raw.priority || 'normal',
     history: raw.history || [],
+    isPaid: raw.isPaid ?? false,
   };
 }
 

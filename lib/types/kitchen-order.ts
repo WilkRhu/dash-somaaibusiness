@@ -17,6 +17,7 @@ export enum OrderType {
 
 export interface KitchenOrderItem {
   id: string;
+  inventoryItemId?: string;      // ID do produto no estoque (quando vinculado)
   productName: string;
   quantity: number;
   unitPrice: number;
@@ -27,6 +28,7 @@ export interface KitchenOrderItem {
 export interface KitchenOrder {
   id: string;
   orderNumber: string;           // Número sequencial (senha)
+  isPaid?: boolean;              // Pedido já foi cobrado no PDV
   establishmentId: string;
   
   // Tipo de pedido
@@ -94,6 +96,7 @@ export interface CreateKitchenOrderDto {
   customerPhone?: string;
   tableNumber?: number;
   items: {
+    inventoryItemId?: string;
     productName: string;
     quantity: number;
     unitPrice: number;

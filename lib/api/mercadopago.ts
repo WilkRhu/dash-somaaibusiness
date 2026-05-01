@@ -1,3 +1,5 @@
+import apiClient from './client';
+
 export interface MercadoPagoIntegration {
   id: string;
   isActive: boolean;
@@ -17,42 +19,30 @@ const authHeaders = () => {
 export const mercadoPagoApi = {
   // Retorna null se não conectado (404)
   getIntegration: async (): Promise<MercadoPagoIntegration | null> => {
-    const response = await fetch('/api/business/establishments/mercadopago/integration', {
-      headers: authHeaders(),
-    });
-    console.log('[MP] getIntegration status:', response.status);
-    if (response.status === 404) return null;
-    if (!response.ok) {
-      console.log('[MP] getIntegration not ok, returning null');
+    try {
+      const response = await apiClient.get('/api/business/establishments/mercadopago/integration');
+      return response.data.data ?? response.data ?? null;
+    } catch (error: any) {
+      if (error.response?.status === 404) return null;
       return null;
     }
-    const raw = await response.json();
-    console.log('[MP] getIntegration raw response:', JSON.stringify(raw));
-    const integration = raw.data ?? raw;
-    console.log('[MP] getIntegration parsed:', JSON.stringify(integration));
-    return integration;
   },
 
   // Retorna a integração criada
   connectManual: async (accessToken: string, publicKey: string): Promise<MercadoPagoIntegration> => {
-    const response = await fetch('/api/business/establishments/mercadopago/connect', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify({ accessToken, publicKey }),
+    const response = await apiClient.post('/api/business/establishments/mercadopago/connect', {
+      accessToken,
+      publicKey,
     });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.message || 'Credenciais inválidas');
-    }
-    return data.data ?? data;
+    return response.data.data ?? response.data;
   },
 
   disconnect: async (): Promise<void> => {
-    const response = await fetch('/api/business/establishments/mercadopago/disconnect', {
-      method: 'DELETE',
-      headers: authHeaders(),
-    });
-    if (!response.ok) throw new Error('Erro ao desconectar');
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      console.log('[MP] disconnect token present:', token);
+    }
+    await apiClient.delete('/api/business/establishments/mercadopago/disconnect');
   },
 
   generatePix: async (payload: {
@@ -61,14 +51,8 @@ export const mercadoPagoApi = {
     customerEmail?: string;
     customerName?: string;
   }): Promise<{ paymentId: string; qrCode: string; qrCodeBase64: string; ticketUrl: string }> => {
-    const response = await fetch('/api/business/establishments/mercadopago/payments/pix', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Erro ao gerar PIX');
-    return data.data ?? data;
+    const response = await apiClient.post('/api/business/establishments/mercadopago/payments/pix', payload);
+    return response.data.data ?? response.data;
   },
 
   generateCheckout: async (payload: {
@@ -77,22 +61,12 @@ export const mercadoPagoApi = {
     customerEmail?: string;
     customerName?: string;
   }): Promise<{ paymentId: string; checkoutUrl: string; sandboxUrl?: string }> => {
-    const response = await fetch('/api/business/establishments/mercadopago/payments/checkout', {
-      method: 'POST',
-      headers: authHeaders(),
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.message || 'Erro ao gerar checkout');
-    return data.data ?? data;
+    const response = await apiClient.post('/api/business/establishments/mercadopago/payments/checkout', payload);
+    return response.data.data ?? response.data;
   },
 
   getPaymentStatus: async (paymentId: string): Promise<{ status: 'pending' | 'approved' | 'rejected' | 'cancelled' }> => {
-    const response = await fetch(`/api/business/establishments/mercadopago/payments/status/${paymentId}`, {
-      headers: authHeaders(),
-    });
-    const data = await response.json();
-    if (!response.ok) throw new Error('Erro ao consultar status');
-    return data.data ?? data;
+    const response = await apiClient.get(`/api/business/establishments/mercadopago/payments/status/${paymentId}`);
+    return response.data.data ?? response.data;
   },
 };

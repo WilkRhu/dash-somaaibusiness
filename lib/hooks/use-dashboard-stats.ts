@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { reportsApi, DashboardStats } from '@/lib/api/reports';
 import { useEstablishmentStore } from '@/lib/stores/establishment-store';
+import { smartInterval } from '@/lib/utils/smart-interval';
 
 export function useDashboardStats() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -27,10 +28,8 @@ export function useDashboardStats() {
 
     fetchStats();
 
-    // Atualizar a cada 30 segundos
-    const interval = setInterval(fetchStats, 30000);
-
-    return () => clearInterval(interval);
+    // Atualizar a cada 60 segundos, pausando quando aba oculta
+    return smartInterval(fetchStats, 60000);
   }, [currentEstablishment]);
 
   return { stats, isLoading, error };

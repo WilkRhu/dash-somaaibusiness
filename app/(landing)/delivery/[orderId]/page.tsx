@@ -56,7 +56,7 @@ export default function OrderTrackingPage({ params }: { params: { orderId: strin
 
     const interval = setInterval(() => {
       refetch();
-    }, 10000); // Atualizar a cada 10 segundos
+    }, 30000); // Atualizar a cada 30 segundos
 
     return () => clearInterval(interval);
   }, [autoRefresh, order, refetch]);
