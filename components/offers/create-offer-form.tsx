@@ -12,7 +12,7 @@ interface CreateOfferFormProps {
 }
 
 export function CreateOfferForm({ onSuccess, onCancel }: CreateOfferFormProps) {
-  const { createOffer, isLoading } = useOffers();
+  const { createOffer, isLoading, monthlyUsage } = useOffers();
   const { items } = useInventory();
   
   const [formData, setFormData] = useState<CreateOfferDto>({
@@ -28,11 +28,18 @@ export function CreateOfferForm({ onSuccess, onCancel }: CreateOfferFormProps) {
   });
 
   const [durationType, setDurationType] = useState<'endDate' | 'duration'>('endDate');
+  const [limitError, setLimitError] = useState<any>(null);
 
   const selectedItem = items.find(item => item.id === formData.itemId);
+  const canCreateOffer = !monthlyUsage || monthlyUsage.canCreateOffer;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!canCreateOffer) {
+      showToast('Você atingiu o limite de ofertas do seu plano', 'error');
+      return;
+    }
     
     if (!selectedItem) {
       showToast('Selecione um produto', 'error');
@@ -69,12 +76,101 @@ export function CreateOfferForm({ onSuccess, onCancel }: CreateOfferFormProps) {
       showToast('Oferta criada com sucesso!', 'success');
       onSuccess?.();
     } catch (error: any) {
-      showToast(error.message, 'error');
+      // Verificar se é erro de limite
+      if (error.response?.data?.code === 'OFFERS_LIMIT_EXCEEDED') {
+        setLimitError(error.response.data.details);
+        showToast(error.response.data.message, 'error');
+      } else {
+        showToast(error.message, 'error');
+      }
     }
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Alerta de limite de ofertas */}
+      {monthlyUsage && (
+        <div className={`p-4 rounded-lg border ${
+          monthlyUsage.canCreateOffer 
+            ? 'bg-blue-50 border-blue-200' 
+            : 'bg-red-50 border-red-200'
+        }`}>
+          <div className="flex items-start gap-3">
+            <svg className={`w-5 h-5 flex-shrink-0 mt-0.5 ${
+              monthlyUsage.canCreateOffer ? 'text-blue-600' : 'text-red-600'
+            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {monthlyUsage.canCreateOffer ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              )}
+            </svg>
+            <div className="flex-1">
+              <p className={`font-semibold ${
+                monthlyUsage.canCreateOffer ? 'text-blue-900' : 'text-red-900'
+              }`}>
+                {monthlyUsage.isUnlimited ? (
+                  'Ofertas Ilimitadas'
+                ) : monthlyUsage.canCreateOffer ? (
+                  `Ofertas: ${monthlyUsage.offersUsed}/${monthlyUsage.offersLimit}`
+                ) : (
+                  'Limite de Ofertas Atingido'
+                )}
+              </p>
+              <p className={`text-sm mt-1 ${
+                monthlyUsage.canCreateOffer ? 'text-blue-700' : 'text-red-700'
+              }`}>
+                {monthlyUsage.isUnlimited ? (
+                  'Você tem ofertas ilimitadas neste plano'
+                ) : monthlyUsage.canCreateOffer ? (
+                  `Você pode criar ${monthlyUsage.offersRemaining} oferta(s) ainda este mês`
+                ) : (
+                  `Você atingiu o limite de ${monthlyUsage.offersLimit} ofertas para o plano ${monthlyUsage.currentPlan}`
+                )}
+              </p>
+              {!monthlyUsage.canCreateOffer && (
+                <div className="mt-2 flex gap-2">
+                  <p className="text-xs text-red-600">
+                    Próximo reset: {new Date(monthlyUsage.resetDate).toLocaleDateString('pt-BR')}
+                  </p>
+                  <a
+                    href="/plans"
+                    className="text-xs font-semibold text-red-600 hover:text-red-800 underline"
+                  >
+                    Upgrade do plano
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {limitError && (
+        <div className="p-4 rounded-lg bg-red-50 border border-red-200">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div className="flex-1">
+              <p className="font-semibold text-red-900">Limite de Ofertas Atingido</p>
+              <p className="text-sm text-red-700 mt-1">
+                Você atingiu o limite de {limitError.offersLimit} ofertas por mês no plano {limitError.currentPlan}
+              </p>
+              <p className="text-xs text-red-600 mt-2">
+                Próximo reset: {new Date(limitError.resetDate).toLocaleDateString('pt-BR')}
+              </p>
+              <a
+                href={limitError.upgradeUrl}
+                className="inline-block mt-2 text-sm font-semibold text-red-600 hover:text-red-800 underline"
+              >
+                Fazer upgrade do plano
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Produto *
@@ -294,10 +390,10 @@ export function CreateOfferForm({ onSuccess, onCancel }: CreateOfferFormProps) {
       <div className="flex gap-3 pt-4">
         <button
           type="submit"
-          disabled={isLoading}
-          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+          disabled={isLoading || !canCreateOffer}
+          className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Criando...' : 'Criar Oferta'}
+          {isLoading ? 'Criando...' : !canCreateOffer ? 'Limite de Ofertas Atingido' : 'Criar Oferta'}
         </button>
         {onCancel && (
           <button

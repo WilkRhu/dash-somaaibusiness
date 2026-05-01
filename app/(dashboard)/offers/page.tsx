@@ -9,7 +9,7 @@ import { OfferAnalyticsModal } from '@/components/offers/offer-analytics-modal';
 import { Offer, OfferFilters } from '@/lib/types/offers';
 
 export default function OffersPage() {
-  const { offers, isLoading, fetchOffers } = useOffers();
+  const { offers, isLoading, fetchOffers, monthlyUsage } = useOffers();
   const [currentFilters, setCurrentFilters] = useState<OfferFilters>({});
   
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -63,11 +63,24 @@ export default function OffersPage() {
             {offers?.reduce((sum, o) => sum + (o?.viewCount || 0), 0) || 0}
           </p>
         </div>
-        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-          <p className="text-sm text-purple-600">Total de Conversões</p>
-          <p className="text-2xl font-bold text-purple-900">
-            {offers?.reduce((sum, o) => sum + (o?.conversionCount || 0), 0) || 0}
+        <div className={`p-4 rounded-lg border ${
+          monthlyUsage?.canCreateOffer 
+            ? 'bg-purple-50 border-purple-200' 
+            : 'bg-red-50 border-red-200'
+        }`}>
+          <p className={`text-sm ${
+            monthlyUsage?.canCreateOffer ? 'text-purple-600' : 'text-red-600'
+          }`}>
+            {monthlyUsage?.isUnlimited ? 'Ofertas' : 'Ofertas Mensais'}
           </p>
+          <p className={`text-2xl font-bold ${
+            monthlyUsage?.canCreateOffer ? 'text-purple-900' : 'text-red-900'
+          }`}>
+            {monthlyUsage?.isUnlimited ? '∞' : `${monthlyUsage?.offersUsed || 0}/${monthlyUsage?.offersLimit || 0}`}
+          </p>
+          {!monthlyUsage?.canCreateOffer && (
+            <p className="text-xs text-red-600 mt-1">Limite atingido</p>
+          )}
         </div>
       </div>
 

@@ -86,3 +86,28 @@ export interface ActiveOfferCheck {
     whileStockLasts: boolean;
   } | null;
 }
+
+export interface OffersUsageMonthly {
+  currentPlan: string;
+  offersUsed: number;
+  offersLimit: number;
+  offersRemaining: number;
+  isUnlimited: boolean;
+  currentMonth: string;
+  resetDate: string;
+  canCreateOffer: boolean;
+}
+
+export interface OffersLimitError {
+  statusCode: number;
+  message: string;
+  code: string;
+  details: {
+    currentPlan: string;
+    offersUsed: number;
+    offersLimit: number;
+    offersRemaining: number;
+    resetDate: string;
+    upgradeUrl: string;
+  };
+}

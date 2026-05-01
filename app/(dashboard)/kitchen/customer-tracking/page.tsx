@@ -73,16 +73,6 @@ export default function CustomerTrackingPage() {
   }, [currentEstablishment?.id]);
 
   useEffect(() => {
-    if (!currentEstablishment?.id) return;
-
-    const interval = setInterval(() => {
-      fetchOrders(currentEstablishment.id);
-    }, 120000);
-
-    return () => clearInterval(interval);
-  }, [currentEstablishment?.id, fetchOrders]);
-
-  useEffect(() => {
     const clock = setInterval(() => setNow(Date.now()), 30000);
     return () => clearInterval(clock);
   }, []);

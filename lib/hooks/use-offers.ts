@@ -8,6 +8,7 @@ export function useOffers() {
   const { offers, isLoading, error, setOffers, addOffer, updateOffer, removeOffer, setLoading, setError } = useOffersStore();
   const { currentEstablishment } = useEstablishmentStore();
   const [pagination, setPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 0 });
+  const [monthlyUsage, setMonthlyUsage] = useState<any>(null);
 
   const fetchOffers = async (filters?: OfferFilters) => {
     if (!currentEstablishment) return;
@@ -29,11 +30,25 @@ export function useOffers() {
         limit: response.limit || 20,
         totalPages: response.totalPages || 0,
       });
+      
+      // Buscar uso mensal
+      await fetchMonthlyUsage();
     } catch (err: any) {
       console.error('❌ Erro ao buscar ofertas:', err);
       setError(err.response?.data?.message || 'Erro ao carregar ofertas');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchMonthlyUsage = async () => {
+    if (!currentEstablishment) return;
+    
+    try {
+      const response = await offersApi.getMonthlyUsage(currentEstablishment.id);
+      setMonthlyUsage(response.data);
+    } catch (err: any) {
+      console.error('❌ Erro ao buscar uso mensal:', err);
     }
   };
 
@@ -138,7 +153,9 @@ export function useOffers() {
     isLoading,
     error,
     pagination,
+    monthlyUsage,
     fetchOffers,
+    fetchMonthlyUsage,
     createOffer,
     updateOffer: updateOfferData,
     deleteOffer,

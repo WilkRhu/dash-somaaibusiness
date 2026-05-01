@@ -137,4 +137,11 @@ export const offersApi = {
       }
     }
   },
+
+  getMonthlyUsage: async (establishmentId: string) => {
+    const response = await apiClient.get<ApiResponse<any>>(
+      `/business/establishments/${establishmentId}/offers/usage/monthly`
+    );
+    return response.data;
+  },
 };

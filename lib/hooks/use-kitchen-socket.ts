@@ -43,7 +43,7 @@ function normalize(raw: any): KitchenOrder {
 
 export function useKitchenSocket(establishmentId: string | undefined) {
   const socketRef = useRef<Socket | null>(null);
-  const { addOrder, setOrder, removeOrder } = useKitchenOrdersStore();
+  const { addOrder, setOrder, removeOrder, fetchOrders } = useKitchenOrdersStore();
 
   useEffect(() => {
     if (!establishmentId) return;
@@ -62,23 +62,52 @@ export function useKitchenSocket(establishmentId: string | undefined) {
 
     socketRef.current = socket;
 
+    const syncOrders = () => {
+      fetchOrders(establishmentId);
+    };
+
+    socket.on('connect', () => {
+      console.log('[kitchen-socket] connected');
+      syncOrders();
+    });
+
+    socket.on('reconnect', () => {
+      console.log('[kitchen-socket] reconnected');
+      syncOrders();
+    });
+
+    socket.on('connect_error', (error: any) => {
+      console.error('[kitchen-socket] connect_error', error);
+    });
+
     socket.on('order:created', (raw: any) => {
+      console.log('[kitchen-socket] order:created', raw?.id || raw?.orderId || raw);
       addOrder(normalize(raw));
     });
 
     socket.on('order:status-changed', (raw: any) => {
+      console.log('[kitchen-socket] order:status-changed', raw?.id || raw?.orderId || raw);
       setOrder(normalize(raw));
     });
 
     socket.on('order:updated', (raw: any) => {
+      console.log('[kitchen-socket] order:updated', raw?.id || raw?.orderId || raw);
       setOrder(normalize(raw));
     });
 
     socket.on('order:paid', (raw: any) => {
+      console.log('[kitchen-socket] order:paid', raw?.id || raw?.orderId || raw);
       removeOrder(String(raw.id));
     });
 
     return () => {
+      socket.off('connect');
+      socket.off('reconnect');
+      socket.off('connect_error');
+      socket.off('order:created');
+      socket.off('order:status-changed');
+      socket.off('order:updated');
+      socket.off('order:paid');
       socket.disconnect();
       socketRef.current = null;
     };
