@@ -5,6 +5,8 @@ import { io, Socket } from 'socket.io-client';
 import { useKitchenOrdersStore } from '@/lib/stores/kitchen-orders-store';
 import { KitchenOrder } from '@/lib/types/kitchen-order';
 
+const FALLBACK_POLL_INTERVAL_MS = 30000;
+
 function normalize(raw: any): KitchenOrder {
   return {
     id: String(raw.id),
@@ -43,10 +45,28 @@ function normalize(raw: any): KitchenOrder {
 
 export function useKitchenSocket(establishmentId: string | undefined) {
   const socketRef = useRef<Socket | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const socketConnectedRef = useRef(false);
   const { addOrder, setOrder, removeOrder, fetchOrders } = useKitchenOrdersStore();
 
   useEffect(() => {
     if (!establishmentId) return;
+
+    const stopPolling = () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+
+    const startPolling = () => {
+      if (pollingRef.current) return;
+      pollingRef.current = setInterval(() => {
+        if (!socketConnectedRef.current) {
+          fetchOrders(establishmentId);
+        }
+      }, FALLBACK_POLL_INTERVAL_MS);
+    };
 
     const socket = io(
       `${process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001'}/kitchen`,
@@ -68,16 +88,28 @@ export function useKitchenSocket(establishmentId: string | undefined) {
 
     socket.on('connect', () => {
       console.log('[kitchen-socket] connected');
+      socketConnectedRef.current = true;
+      stopPolling();
       syncOrders();
     });
 
     socket.on('reconnect', () => {
       console.log('[kitchen-socket] reconnected');
+      socketConnectedRef.current = true;
+      stopPolling();
       syncOrders();
     });
 
     socket.on('connect_error', (error: any) => {
       console.error('[kitchen-socket] connect_error', error);
+      socketConnectedRef.current = false;
+      startPolling();
+    });
+
+    socket.on('disconnect', () => {
+      console.warn('[kitchen-socket] disconnected');
+      socketConnectedRef.current = false;
+      startPolling();
     });
 
     socket.on('order:created', (raw: any) => {
@@ -108,6 +140,8 @@ export function useKitchenSocket(establishmentId: string | undefined) {
       socket.off('order:status-changed');
       socket.off('order:updated');
       socket.off('order:paid');
+      stopPolling();
+      socketConnectedRef.current = false;
       socket.disconnect();
       socketRef.current = null;
     };
