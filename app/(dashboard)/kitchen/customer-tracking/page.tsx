@@ -236,7 +236,8 @@ export default function CustomerTrackingPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6"><div className="bg-white rounded-lg shadow-lg overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-span-8">
           <div className="bg-blue-600 text-white px-6 py-4 flex items-center gap-3">
             <TrendingUpIcon />
             <div>
@@ -248,7 +249,7 @@ export default function CustomerTrackingPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nº Comanda</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Cliente</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Tempo</th>
@@ -260,7 +261,11 @@ export default function CustomerTrackingPage() {
                   <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-500">Nenhum pedido em andamento</td></tr>
                 ) : activeOrders.map((order) => (
                   <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-4"><span className="text-2xl font-bold text-blue-600">{order.orderNumber}</span></td>
+                    <td className="px-4 py-4">
+                      <span className="text-3xl font-black tracking-tight text-blue-600">
+                        {order.orderNumber}
+                      </span>
+                    </td>
                     <td className="px-4 py-4"><div className="flex items-center gap-2"><UserIcon /><span className="text-sm">{order.customerName || '-'}</span></div></td>
                     <td className="px-4 py-4"><span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(order.status as KitchenOrderStatus)}`}>{getStatusLabel(order.status as KitchenOrderStatus)}</span></td>
                     <td className="px-4 py-4"><div className="flex items-center gap-1 text-sm font-semibold"><ClockIcon />{elapsed(order.createdAt)}m</div></td>
@@ -272,7 +277,7 @@ export default function CustomerTrackingPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden lg:col-span-4">
           <div className="bg-green-600 text-white px-6 py-4 flex items-center gap-3">
             <CheckIcon />
             <div>
@@ -284,7 +289,7 @@ export default function CustomerTrackingPage() {
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
-                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">#</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Nº Comanda</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Cliente</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Tempo</th>
                   <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Tipo</th>
@@ -295,7 +300,11 @@ export default function CustomerTrackingPage() {
                   <tr><td colSpan={4} className="px-6 py-12 text-center text-gray-500">Nenhum pedido pronto</td></tr>
                 ) : readyOrders.map((order) => (
                   <tr key={order.id} className="bg-green-50 hover:bg-green-100 transition-colors">
-                    <td className="px-4 py-4"><span className="text-2xl font-bold text-green-600">{order.orderNumber}</span></td>
+                    <td className="px-4 py-4">
+                      <span className="text-3xl font-black tracking-tight text-green-600">
+                        {order.orderNumber}
+                      </span>
+                    </td>
                     <td className="px-4 py-4"><div className="flex items-center gap-2"><UserIcon /><span className="text-sm">{order.customerName || '-'}</span></div></td>
                     <td className="px-4 py-4"><div className="flex items-center gap-1 text-sm font-semibold"><ClockIcon />{elapsed(order.createdAt)}m</div></td>
                     <td className="px-4 py-4"><span className="text-sm text-gray-600">{getOrderType(order)}</span></td>

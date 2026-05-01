@@ -5,7 +5,7 @@ import { io, Socket } from 'socket.io-client';
 import { useKitchenOrdersStore } from '@/lib/stores/kitchen-orders-store';
 import { KitchenOrder } from '@/lib/types/kitchen-order';
 
-const FALLBACK_POLL_INTERVAL_MS = 30000;
+const FALLBACK_POLL_INTERVAL_MS = 15000;
 
 function normalize(raw: any): KitchenOrder {
   return {
