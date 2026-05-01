@@ -166,6 +166,7 @@ export default function CustomerTrackingPage() {
       (o) =>
         o.status !== KitchenOrderStatus.PICKED_UP &&
         o.status !== KitchenOrderStatus.CANCELLED &&
+        o.status !== ('cancelled' as any) &&
         o.status !== ('completed' as any) &&
         !o.isPaid
     )
@@ -173,7 +174,14 @@ export default function CustomerTrackingPage() {
     .slice(0, 5);
 
   const readyOrders = todayOrders
-    .filter((o) => o.status === KitchenOrderStatus.READY && !o.isPaid && o.status !== ('completed' as any))
+    .filter(
+      (o) =>
+        o.status === KitchenOrderStatus.READY &&
+        !o.isPaid &&
+        o.status !== ('completed' as any) &&
+        o.status !== KitchenOrderStatus.CANCELLED &&
+        o.status !== ('cancelled' as any)
+    )
     .sort((a, b) =>
       new Date(b.readyAt || b.updatedAt || b.createdAt).getTime() -
       new Date(a.readyAt || a.updatedAt || a.createdAt).getTime()
