@@ -49,6 +49,28 @@ export interface UpdateLoyaltySettingsDto {
   loyaltyPointsPerReal?: number;
 }
 
+export interface EstablishmentSettings {
+  id: string;
+  establishmentId: string;
+  kitchenEnabled: boolean;
+  deliveryEnabled: boolean;
+  kitchenNotificationsEnabled: boolean;
+  autoAcceptOrders: boolean;
+  minOrderValue: string;
+  maxDeliveryRadiusKm: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateEstablishmentSettingsDto {
+  kitchenEnabled?: boolean;
+  deliveryEnabled?: boolean;
+  kitchenNotificationsEnabled?: boolean;
+  autoAcceptOrders?: boolean;
+  minOrderValue?: string;
+  maxDeliveryRadiusKm?: number | null;
+}
+
 export interface EstablishmentMember {
   id: string;
   userId: string;

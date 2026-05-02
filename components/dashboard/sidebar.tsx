@@ -10,6 +10,7 @@ import { canAccessRoute } from '@/lib/utils/plan-restrictions';
 import { BusinessRole } from '@/lib/types/establishment';
 import { SubscriptionPlan } from '@/lib/types/subscription';
 import { usePendingDeliveryCount } from '@/lib/hooks/use-pending-delivery-count';
+import { useEstablishmentSettings } from '@/lib/hooks/use-establishment-settings';
 import { isKitchenEstablishment } from '@/lib/constants/establishment-types';
 import { ReactNode, useState, useEffect } from 'react';
 
@@ -236,6 +237,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user } = useAuthStore();
   const [isOnline, setIsOnline] = useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
   const { count: pendingDeliveryCount } = usePendingDeliveryCount();
+  const { settings } = useEstablishmentSettings(currentEstablishment?.id);
   const [openSubmenus, setOpenSubmenus] = useState({} as { [key: string]: boolean });
   const isClient = typeof window !== 'undefined';
 
@@ -306,6 +308,12 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const visibleMenuItems = menuItems.filter(item => {
     // super_admin vê todos os itens
     if (isSuperAdmin) return true;
+
+    // Esconder delivery se desabilitado nas settings
+    if (item.href === '/delivery' && settings?.deliveryEnabled === false) return false;
+
+    // Esconder kitchen se desabilitado nas settings
+    if (item.href === '/kitchen' && settings?.kitchenEnabled === false) return false;
 
     // Funcionário de cozinha: mostrar apenas item Cozinha
     if (isKitchenEmployee) {

@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { Establishment, CreateEstablishmentDto, LoyaltySettings, UpdateLoyaltySettingsDto } from '@/lib/types/establishment';
+import { Establishment, CreateEstablishmentDto, LoyaltySettings, UpdateLoyaltySettingsDto, EstablishmentSettings, UpdateEstablishmentSettingsDto } from '@/lib/types/establishment';
 
 export const establishmentsApi = {
   list: async (): Promise<Establishment[]> => {
@@ -85,6 +85,16 @@ export const establishmentsApi = {
 
   close: async (establishmentId: string): Promise<Establishment> => {
     const response = await apiClient.post(`/business/establishments/${establishmentId}/close`);
+    return response.data.data || response.data;
+  },
+
+  getSettings: async (establishmentId: string): Promise<EstablishmentSettings> => {
+    const response = await apiClient.get(`/business/establishments/${establishmentId}/settings`);
+    return response.data.data || response.data;
+  },
+
+  updateSettings: async (establishmentId: string, dto: UpdateEstablishmentSettingsDto): Promise<EstablishmentSettings> => {
+    const response = await apiClient.patch(`/business/establishments/${establishmentId}/settings`, dto);
     return response.data.data || response.data;
   },
 };
