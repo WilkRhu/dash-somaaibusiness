@@ -177,10 +177,7 @@ export default function CustomerTrackingPage() {
     .filter(
       (o) =>
         o.status === KitchenOrderStatus.READY &&
-        !o.isPaid &&
-        o.status !== ('completed' as any) &&
-        o.status !== KitchenOrderStatus.CANCELLED &&
-        o.status !== ('cancelled' as any)
+        !o.isPaid
     )
     .sort((a, b) =>
       new Date(b.readyAt || b.updatedAt || b.createdAt).getTime() -
